@@ -1,8 +1,33 @@
 {
+  "name": "openfort-contracts",
+  "version": "0.0.1",
+  "description": "Official Contracts of the Openfort Project",
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.0.1",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@typescript-eslint/eslint-plugin": "^5.59.1",
+    "@typescript-eslint/parser": "^5.59.1",
+    "eslint": "^8.39.0",
+    "eslint-config-standard-with-typescript": "^34.0.1",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-n": "^15.7.0",
+    "eslint-plugin-promise": "^6.1.1",
     "hardhat": "^2.14.0",
     "typescript": "^5.0.4"
-  }
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openfort-xyz/openfort-contracts.git"
+  },
+  "author": "Eloi Manuel <eloi@openfort.xyz> (https://www.openfort.xyz/)",
+  "keywords": [
+    "solidity",
+    "aa",
+    "web3",
+    "evm-blockchain",
+    "erc-4337"
+  ]
 }
