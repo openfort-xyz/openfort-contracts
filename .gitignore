@@ -5,9 +5,17 @@ coverage.json
 typechain
 typechain-types
 
+# Compiler files
+cache/
+
 # Hardhat files
-cache
 artifacts
+
+# Foundry files
+out/
+dist/
+types/
+cache_forge/
 
 /.DS_Store
 .DS_Store
