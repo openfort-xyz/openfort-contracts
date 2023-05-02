@@ -10,6 +10,7 @@ cache/
 
 # Hardhat files
 artifacts
+artifacts-selected
 
 # Foundry files
 out/
