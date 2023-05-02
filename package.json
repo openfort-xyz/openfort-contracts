@@ -2,9 +2,17 @@
   "name": "openfort-contracts",
   "version": "0.0.1",
   "description": "Official Contracts of the Openfort Project",
+  "scripts": {
+    "build": "npm run clean && npm run compile",
+    "clean": "npx hardhat clean",
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.0.1",
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@typechain/ethers-v5": "^10.2.0",
+    "@typechain/hardhat": "^6.1.5",
     "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
     "@types/node": "^18.16.2",
@@ -19,6 +27,7 @@
     "hardhat": "^2.14.0",
     "solhint": "^3.4.1",
     "ts-node": "^10.9.1",
+    "typechain": "^8.1.1",
     "typescript": "^5.0.4"
   },
   "dependencies": {
