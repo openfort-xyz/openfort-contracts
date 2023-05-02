@@ -1,6 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
+import '@typechain/hardhat'
 import { config as dotEnvConfig } from "dotenv";
 import { resolve } from "path";
 import "./tasks/accounts";
