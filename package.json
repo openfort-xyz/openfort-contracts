@@ -3,10 +3,10 @@
   "version": "0.0.1",
   "description": "Official Contracts of the Openfort Project",
   "scripts": {
-    "build": "npm run clean && npm run compile",
-    "clean": "npx hardhat clean",
+    "build": "npm run clean-all && npm run compile",
+    "clean-all": "npx hardhat clean && forge clean",
     "compile": "npx hardhat compile",
-    "test": "npx hardhat test"
+    "test-all": "npx hardhat test && forge test"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.0.1",
