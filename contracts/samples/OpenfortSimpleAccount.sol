@@ -10,7 +10,7 @@ import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
 
 /**
-  * @title OpenfortSimpleAccount
+  * @title OpenfortSimpleAccount (Non-upgradeable)
   * @author Eloi<eloi@openfort.xyz>
   * @notice Minimal smart contract wallet following the ERC-4337 standard.
   * It inherits from:
