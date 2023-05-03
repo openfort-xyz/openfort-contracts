@@ -1,1 +1,6 @@
+@openzeppelin/=node_modules/@openzeppelin/
 account-abstraction/=lib/account-abstraction/contracts/
+ds-test/=lib/forge-std/lib/ds-test/src/
+eth-gas-reporter/=node_modules/eth-gas-reporter/
+forge-std/=lib/forge-std/src/
+hardhat/=node_modules/hardhat/
