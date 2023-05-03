@@ -3,7 +3,7 @@ pragma solidity ^0.8.12;
 
 import {Test} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "account-abstraction/core/EntryPoint.sol";
+import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {OpenfortSimpleAccount} from "contracts/OpenfortSimpleAccount.sol";
 
@@ -58,13 +58,17 @@ contract OpenfortSimpleAccountTest is Test {
         require(addr == ECDSA.recover(hash.toEthSignedMessageHash(), signature), "Invalid signature");
     }
 
+    /**
+     * Send a userOp to the deployed openfortSimpleAccount signed by its
+     * deplyer/owner, user1.
+     */
     function testOpenfortSimpleAccountCounter() public {
         UserOperation[] memory ops = new UserOperation[](1);
         ops[0] = UserOperation({
-            sender: payable(openfortSimpleAccount), //
+            sender: payable(openfortSimpleAccount), // Contract that will receive the UserOp
             nonce: 0,
             initCode: hex"",
-            callData: abi.encodeCall(
+            callData: abi.encodeCall(   // Function that the OpenfortSimpleAccount will execute
                 OpenfortSimpleAccount.execute, (address(testCounter), 0, abi.encodeCall(TestCounter.count, ()))
                 ),
             callGasLimit: 100000,
@@ -78,9 +82,9 @@ contract OpenfortSimpleAccountTest is Test {
         ops[0].signature = signUserOp(ops[0], user1, user1PrivKey);
         address openfortSimpleAccountAddress = address(openfortSimpleAccount);
         uint256 count = testCounter.counters(openfortSimpleAccountAddress);
-        require(count == 0, "The count for openfortSimpleAccount is not 0!");
+        require(count == 0, "Counter is not 0");
         entryPoint.handleOps(ops, bundler);
         count = testCounter.counters(openfortSimpleAccountAddress);
-        require(count == 1, "The count for openfortSimpleAccount has not been updated!");
+        require(count == 1, "Counter has not been updated!");
     }
 }
