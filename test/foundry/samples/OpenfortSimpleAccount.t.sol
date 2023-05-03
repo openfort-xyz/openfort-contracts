@@ -5,7 +5,7 @@ import {Test} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
-import {OpenfortSimpleAccount} from "contracts/OpenfortSimpleAccount.sol";
+import {OpenfortSimpleAccount} from "contracts/samples/OpenfortSimpleAccount.sol";
 
 contract OpenfortSimpleAccountTest is Test {
     using ECDSA for bytes32;
@@ -19,7 +19,7 @@ contract OpenfortSimpleAccountTest is Test {
     uint256 public user1PrivKey;
 
     /**
-     * @notice Initialize the OpenfortSimpleAccountTest testing contract
+     * @notice Initialize the OpenfortSimpleAccountTest testing contract.
      * Scenario:
      * - user1 is the deployer (and owner) of the OpenfortSimpleAccount
      * - openfortSimpleAccount is the smart contract wallet 
@@ -30,13 +30,15 @@ contract OpenfortSimpleAccountTest is Test {
         (user1, user1PrivKey) = makeAddrAndKey("user1");
         bundler = payable(makeAddr("bundler"));
         testCounter = new TestCounter();
+        // Simulate the next TX (creation of an OpenfortSimpleAccount) using user1
         vm.prank(user1);
         openfortSimpleAccount = new OpenfortSimpleAccount(entryPoint);
         entryPoint.depositTo{value: 1000000000000000000}(address(openfortSimpleAccount));
     }
 
     /**
-     * Test that the owner (user1) can withdraw
+     * Test that the owner (user1) can withdraw.
+     * Useful to verify that the deployer/owner can still directly call it.
      */
     function testwithdrawDepositTo() public {
         vm.prank(user1);
