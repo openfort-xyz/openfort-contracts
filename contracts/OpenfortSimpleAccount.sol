@@ -8,12 +8,15 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {BaseAccount, UserOperation} from "account-abstraction/core/BaseAccount.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
-//import {Exec} from "account-abstraction/utils/Exec.sol";
 
 /**
   * @title OpenfortSimpleAccount
   * @author Eloi<eloi@openfort.xyz>
-  * @notice Minimal smart contract wallet following the ERC-4337 standard
+  * @notice Minimal smart contract wallet following the ERC-4337 standard.
+  * It inherits from:
+  *  - Ownable to have permissions
+  *  - BaseAccount to comply with ERC-4337 
+  *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
   */
 contract OpenfortSimpleAccount is Ownable, BaseAccount, TokenCallbackHandler {
     using ECDSA for bytes32;
