@@ -55,8 +55,10 @@ contract OpenfortSimpleAccountTest is Test {
     {
         bytes32 hash = entryPoint.getUserOpHash(op);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(key, hash.toEthSignedMessageHash());
+        // Check that the address can be retrieved from the signature values (v,r,s)
         require(addr == ECDSA.recover(hash.toEthSignedMessageHash(), v, r, s), "Invalid signature");
         signature = abi.encodePacked(r, s, v);
+        // Check that the address can be retrieved from the signature as it will be received by the user (one string value)
         require(addr == ECDSA.recover(hash.toEthSignedMessageHash(), signature), "Invalid signature");
     }
 
