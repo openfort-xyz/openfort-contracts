@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
-import {Test} from "lib/forge-std/src/Test.sol";
+import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
@@ -67,10 +67,13 @@ contract OpenfortSimpleAccountTest is Test {
      * deplyer/owner, user1.
      */
     function testOpenfortSimpleAccountCounter() public {
+        address openfortSimpleAccountAddress = address(openfortSimpleAccount);
+        uint nonce = entryPoint.getNonce(openfortSimpleAccountAddress, 0);
+        require(nonce == 0, "Nonce should be 0");
         UserOperation[] memory ops = new UserOperation[](1);
         ops[0] = UserOperation({
             sender: payable(openfortSimpleAccount), // Contract that will receive the UserOp
-            nonce: 0,
+            nonce: nonce,
             initCode: hex"",
             callData: abi.encodeCall(   // Function that the OpenfortSimpleAccount will execute
                 OpenfortSimpleAccount.execute, (address(testCounter), 0, abi.encodeCall(TestCounter.count, ()))
@@ -84,11 +87,15 @@ contract OpenfortSimpleAccountTest is Test {
             signature: hex""
         });
         ops[0].signature = signUserOp(ops[0], user1, user1PrivKey);
-        address openfortSimpleAccountAddress = address(openfortSimpleAccount);
+        console.log("The signature is %s", string(ops[0].signature));
         uint256 count = testCounter.counters(openfortSimpleAccountAddress);
         require(count == 0, "Counter is not 0");
+        nonce = entryPoint.getNonce(openfortSimpleAccountAddress, 0);
+        require(nonce == 0, "Nonce should still be 0");
         entryPoint.handleOps(ops, bundler);
         count = testCounter.counters(openfortSimpleAccountAddress);
         require(count == 1, "Counter has not been updated!");
+        nonce = entryPoint.getNonce(openfortSimpleAccountAddress, 0);
+        require(nonce == 1, "Nonce should have increased");
     }
 }
