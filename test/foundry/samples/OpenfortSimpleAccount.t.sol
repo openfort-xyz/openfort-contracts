@@ -72,7 +72,7 @@ contract OpenfortSimpleAccountTest is Test {
         require(nonce == 0, "Nonce should be 0");
         UserOperation[] memory ops = new UserOperation[](1);
         ops[0] = UserOperation({
-            sender: payable(openfortSimpleAccount), // Contract that will receive the UserOp
+            sender: openfortSimpleAccountAddress, // Contract address that will receive the UserOp
             nonce: nonce,
             initCode: hex"",
             callData: abi.encodeCall(   // Function that the OpenfortSimpleAccount will execute
