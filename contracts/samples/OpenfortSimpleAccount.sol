@@ -39,7 +39,9 @@ contract OpenfortSimpleAccount is Ownable, BaseAccount, TokenCallbackHandler {
      */
     function _validateSignature(UserOperation calldata userOp, bytes32 userOpHash)
     internal override virtual returns (uint256 validationData) {
+        // Using toEthSignedMessageHash to turn the signature to an Ethereum signed message
         bytes32 hash = userOpHash.toEthSignedMessageHash();
+        // Recover the signer address from the signature and check if it's the address of the owner
         if (owner() != hash.recover(userOp.signature))
             return SIG_VALIDATION_FAILED;
         return 0;
@@ -87,6 +89,7 @@ contract OpenfortSimpleAccount is Ownable, BaseAccount, TokenCallbackHandler {
      * Withdraw value from the account's deposit
      * @param withdrawAddress target to send to
      * @param amount to withdraw
+     * @notice ONLY the owner can call this function (it's not using _requireFromEntryPointOrOwner())
      */
     function withdrawDepositTo(address payable withdrawAddress, uint256 amount) public onlyOwner {
         entryPoint().withdrawTo(withdrawAddress, amount);
