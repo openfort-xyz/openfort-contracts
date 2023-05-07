@@ -11,15 +11,6 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-/** Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
- * @param validAfter this sessionKey is valid only after this timestamp.
- * @param validUntil this sessionKey is valid only after this timestamp.
- */
-struct SessionKeyStruct {
-    uint48 validAfter;
-    uint48 validUntil;
-}
-
 /**
   * @title OpenfortSessionKeyAccount (Non-upgradeable)
   * @author Eloi<eloi@openfort.xyz>
@@ -33,6 +24,15 @@ struct SessionKeyStruct {
   */
 contract OpenfortSessionKeyAccount is Ownable, BaseAccount, TokenCallbackHandler, EIP712 {
     using ECDSA for bytes32;
+
+    /** Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
+     * @param validAfter this sessionKey is valid only after this timestamp.
+     * @param validUntil this sessionKey is valid only after this timestamp.
+     */
+    struct SessionKeyStruct {
+        uint48 validAfter;
+        uint48 validUntil;
+    }
 
     IEntryPoint private immutable _entryPoint;
     mapping(address => SessionKeyStruct) public sessionKeys;
@@ -119,7 +119,7 @@ contract OpenfortSessionKeyAccount is Ownable, BaseAccount, TokenCallbackHandler
      * @param _validUntil - this session key is valid only up to this timestamp.
      */
     function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) external {
-        _requireFromEntryPointOrOwner;
+        _requireFromEntryPointOrOwner();
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
         emit SessionKeyRegistered(_key);
@@ -130,7 +130,7 @@ contract OpenfortSessionKeyAccount is Ownable, BaseAccount, TokenCallbackHandler
      * @param _key session key to revoke
      */
     function revokeSessionKey(address _key) external {
-        _requireFromEntryPointOrOwner;
+        _requireFromEntryPointOrOwner();
         if(sessionKeys[_key].validUntil != 0) {
             sessionKeys[_key].validUntil = 0;
             emit SessionKeyRevoked(_key);
