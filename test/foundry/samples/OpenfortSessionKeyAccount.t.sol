@@ -14,9 +14,15 @@ contract OpenfortSessionKeyAccountTest is Test {
     OpenfortSessionKeyAccount public openfortSessionKeyAccount;
     TestCounter public testCounter;
 
+    // Key pair to simulate Openfort's master key
     address public openfort;
     uint256 public openfortPrivKey;
+
+    // Address to simulate the bundler
     address payable public bundler;
+
+    // Key pair that the user would generate and ask Openfort to register for a
+    // limited time as session key
     address public sessionKey;
     uint256 public sessionKeyPrivKey;
     
@@ -32,12 +38,19 @@ contract OpenfortSessionKeyAccountTest is Test {
         (openfort, openfortPrivKey) = makeAddrAndKey("openfort");
         bundler = payable(makeAddr("bundler"));
         testCounter = new TestCounter();
-        
-        // Simulate the next TX (creation of an OpenfortSessionKeyAccount) using openfort
+
+        // Simulate the next TX (creation of an OpenfortSessionKeyAccount) is sent by openfort
         vm.prank(openfort);
         openfortSessionKeyAccount = new OpenfortSessionKeyAccount(entryPoint);
 
         entryPoint.depositTo{value: 1000000000000000000}(address(openfortSessionKeyAccount));
+
+        // Generate a new key pair as session key
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        // Openfort register the new session key
+        vm.prank(openfort);
+        openfortSessionKeyAccount.registerSessionKey(sessionKey, 0, 2**48 - 1);
     }
 
     /**
@@ -53,22 +66,185 @@ contract OpenfortSessionKeyAccountTest is Test {
      * Test that the default account cannot register a new session key
      */
     function testFailregisterSessionKey() public {
+        address sessionKey2;
+        uint256 sessionKeyPrivKey2;
         // Generate a new key pair as session key
-        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        (sessionKey2, sessionKeyPrivKey2) = makeAddrAndKey("sessionKey2");
 
         // Try to register the new session key
-        openfortSessionKeyAccount.registerSessionKey(sessionKey, 0, 2**48 - 1);
+        openfortSessionKeyAccount.registerSessionKey(sessionKey2, 0, 2**48 - 1);
     }
 
     /**
      * Test that Openfort can register a new session key
      */
     function testregisterSessionKey() public {
+        address sessionKey2;
+        uint256 sessionKeyPrivKey2;
         // Generate a new key pair as session key
-        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        (sessionKey2, sessionKeyPrivKey2) = makeAddrAndKey("sessionKey2");
 
         // Openfort register the new session key
         vm.prank(openfort);
-        openfortSessionKeyAccount.registerSessionKey(sessionKey, 0, 2**48 - 1);
+        openfortSessionKeyAccount.registerSessionKey(sessionKey2, 0, 2**48 - 1);
+    }
+
+    /**
+     * Auxiliary function to sign user ops
+     */
+    function signUserOp(UserOperation memory op, address addr, uint256 key)
+        public
+        view
+        returns (bytes memory signature)
+    {
+        bytes32 hash = entryPoint.getUserOpHash(op);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(key, hash.toEthSignedMessageHash());
+        // Check that the address can be retrieved from the signature values (v,r,s)
+        require(addr == ECDSA.recover(hash.toEthSignedMessageHash(), v, r, s), "Invalid signature");
+        signature = abi.encodePacked(r, s, v);
+        // Check that the address can be retrieved from the signature as it will be received by the user (one string value)
+        require(addr == ECDSA.recover(hash.toEthSignedMessageHash(), signature), "Invalid signature");
+    }
+
+    /**
+     * Send a userOp to the deployed OpenfortSessionKeyAccount signed by the
+     * registered session key.
+     */
+    function testOpenfortSessionKeyAccountCounter() public {
+        address openfortSessionKeyAccountAddress = address(openfortSessionKeyAccount);
+        uint nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 0, "Nonce should be 0");
+        UserOperation[] memory ops = new UserOperation[](1);
+        ops[0] = UserOperation({
+            sender: openfortSessionKeyAccountAddress, // Contract address that will receive the UserOp
+            nonce: nonce,
+            initCode: hex"",
+            callData: abi.encodeCall(   // Function that the OpenfortSessionKeyAccount will execute
+                openfortSessionKeyAccount.execute, (address(testCounter), 0, abi.encodeCall(TestCounter.count, ()))
+                ),
+            callGasLimit: 100000,
+            verificationGasLimit: 200000,
+            preVerificationGas: 200000,
+            maxFeePerGas: 100000,
+            maxPriorityFeePerGas: 100000,
+            paymasterAndData: hex"",
+            signature: hex""
+        });
+        ops[0].signature = signUserOp(ops[0], sessionKey, sessionKeyPrivKey);
+        console.log("The signature is %s", string(ops[0].signature));
+        
+        uint256 count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 0, "Counter is not 0");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 0, "Nonce should still be 0");
+        entryPoint.handleOps(ops, bundler);
+        count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 1, "Counter has not been updated!");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 1, "Nonce should have increased");
+
+        // Perform a second user operation
+
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 1, "Nonce should be 1");
+        ops[0] = UserOperation({
+            sender: openfortSessionKeyAccountAddress, // Contract address that will receive the UserOp
+            nonce: nonce,
+            initCode: hex"",
+            callData: abi.encodeCall(   // Function that the OpenfortSessionKeyAccount will execute
+                openfortSessionKeyAccount.execute, (address(testCounter), 0, abi.encodeCall(TestCounter.count, ()))
+                ),
+            callGasLimit: 100000,
+            verificationGasLimit: 200000,
+            preVerificationGas: 200000,
+            maxFeePerGas: 100000,
+            maxPriorityFeePerGas: 100000,
+            paymasterAndData: hex"",
+            signature: hex""
+        });
+        ops[0].signature = signUserOp(ops[0], sessionKey, sessionKeyPrivKey);
+        console.log("The signature is %s", string(ops[0].signature));
+
+        count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 1, "Counter is not 1");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 1, "Nonce should still be 1");
+        entryPoint.handleOps(ops, bundler);
+        count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 2, "Counter has not been updated!");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 2, "Nonce should have increased");
+    }
+
+    /**
+     * Send a userOp to the deployed OpenfortSessionKeyAccount signed by the
+     * registered session key.
+     */
+    function testFailOpenfortSessionKeyAccountCounter() public {
+        address openfortSessionKeyAccountAddress = address(openfortSessionKeyAccount);
+        uint nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 0, "Nonce should be 0");
+        UserOperation[] memory ops = new UserOperation[](1);
+        ops[0] = UserOperation({
+            sender: openfortSessionKeyAccountAddress, // Contract address that will receive the UserOp
+            nonce: nonce,
+            initCode: hex"",
+            callData: abi.encodeCall(   // Function that the OpenfortSessionKeyAccount will execute
+                openfortSessionKeyAccount.execute, (address(testCounter), 0, abi.encodeCall(TestCounter.count, ()))
+                ),
+            callGasLimit: 100000,
+            verificationGasLimit: 200000,
+            preVerificationGas: 200000,
+            maxFeePerGas: 100000,
+            maxPriorityFeePerGas: 100000,
+            paymasterAndData: hex"",
+            signature: hex""
+        });
+        ops[0].signature = signUserOp(ops[0], sessionKey, sessionKeyPrivKey);
+        console.log("The signature is %s", string(ops[0].signature));
+        
+        uint256 count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 0, "Counter is not 0");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 0, "Nonce should still be 0");
+        entryPoint.handleOps(ops, bundler);
+        count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 1, "Counter has not been updated!");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 1, "Nonce should have increased");
+
+        // Perform a second user operation. This time lets revoke last session key
+        vm.prank(openfort);
+        openfortSessionKeyAccount.revokeSessionKey(sessionKey);
+
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 1, "Nonce should be 1");
+        ops[0] = UserOperation({
+            sender: openfortSessionKeyAccountAddress, // Contract address that will receive the UserOp
+            nonce: nonce,
+            initCode: hex"",
+            callData: abi.encodeCall(   // Function that the OpenfortSessionKeyAccount will execute
+                openfortSessionKeyAccount.execute, (address(testCounter), 0, abi.encodeCall(TestCounter.count, ()))
+                ),
+            callGasLimit: 100000,
+            verificationGasLimit: 200000,
+            preVerificationGas: 200000,
+            maxFeePerGas: 100000,
+            maxPriorityFeePerGas: 100000,
+            paymasterAndData: hex"",
+            signature: hex""
+        });
+        ops[0].signature = signUserOp(ops[0], sessionKey, sessionKeyPrivKey);
+        console.log("The signature is %s", string(ops[0].signature));
+
+        count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 1, "Counter is not 1");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 1, "Nonce should still be 1");
+        entryPoint.handleOps(ops, bundler);
+        count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 2, "Counter has not been updated!");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 2, "Nonce should have increased");
     }
 }

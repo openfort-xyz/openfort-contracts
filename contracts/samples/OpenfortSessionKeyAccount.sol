@@ -58,10 +58,15 @@ contract OpenfortSessionKeyAccount is Ownable, BaseAccount, TokenCallbackHandler
     internal override virtual returns (uint256 validationData) {
         // Using toEthSignedMessageHash to turn the signature to an Ethereum signed message
         bytes32 hash = userOpHash.toEthSignedMessageHash();
-        // Recover the signer address from the signature and check if it's the address of the owner
-        if (owner() != hash.recover(userOp.signature))
-            return SIG_VALIDATION_FAILED;
-        return 0;
+
+        // Recover the signer address from the signature
+        address sessionKey = hash.recover(userOp.signature);
+        
+        // If the signer is a session key that is still valid
+        if (sessionKeys[sessionKey].validUntil != 0 ) {
+            return 0;
+        }
+        return SIG_VALIDATION_FAILED;
     }
 
     /**
