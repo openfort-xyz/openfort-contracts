@@ -63,7 +63,8 @@ contract OpenfortSessionKeyAccountTest is Test {
     }
 
     /**
-     * Test that the default account cannot register a new session key
+     * Test that the default account cannot register a new session key.
+     * It should fail!
      */
     function testFailregisterSessionKeyNotOwner() public {
         address sessionKey2;
@@ -76,7 +77,7 @@ contract OpenfortSessionKeyAccountTest is Test {
     }
 
     /**
-     * Test that Openfort can register a new session key
+     * Test that Openfort can register a new session key.
      */
     function testregisterSessionKey() public {
         address sessionKey2;
@@ -90,7 +91,7 @@ contract OpenfortSessionKeyAccountTest is Test {
     }
 
     /**
-     * Auxiliary function to sign user ops
+     * Auxiliary function to sign user ops.
      */
     function signUserOp(UserOperation memory op, address addr, uint256 key)
         public
