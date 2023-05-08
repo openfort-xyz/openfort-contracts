@@ -5,7 +5,6 @@ pragma solidity ^0.8.12;
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {BaseAccount, UserOperation} from "account-abstraction/core/BaseAccount.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
@@ -18,10 +17,9 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
   *  - Ownable2Step to have permissions
   *  - BaseAccount to comply with ERC-4337 
   *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
-  *  - EIP712 for message signing
   *  - ECDSA for signature verifications
   */
-contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHandler, EIP712 {
+contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHandler {
     using ECDSA for bytes32;
 
     /** Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
@@ -39,7 +37,7 @@ contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHa
     event SessionKeyRegistered(address indexed key);
     event SessionKeyRevoked(address indexed key);
 
-    constructor(IEntryPoint _anEntryPoint) EIP712("OpenfortSessionKeyAccount", "0.0.1") {
+    constructor(IEntryPoint _anEntryPoint) {
         _entryPoint = _anEntryPoint;
     }
 
