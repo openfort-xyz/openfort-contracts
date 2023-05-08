@@ -3,7 +3,7 @@ pragma solidity ^0.8.12;
 
 // solhint-disable no-inline-assembly
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {BaseAccount, UserOperation} from "account-abstraction/core/BaseAccount.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
@@ -14,11 +14,11 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
   * @author Eloi<eloi@openfort.xyz>
   * @notice Minimal smart contract wallet following the ERC-4337 standard.
   * It inherits from:
-  *  - Ownable to have permissions
+  *  - Ownable2Step to have permissions
   *  - BaseAccount to comply with ERC-4337 
   *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
   */
-contract OpenfortSimpleAccount is Ownable, BaseAccount, TokenCallbackHandler {
+contract OpenfortSimpleAccount is Ownable2Step, BaseAccount, TokenCallbackHandler {
     using ECDSA for bytes32;
 
     IEntryPoint private immutable _entryPoint;
