@@ -64,6 +64,9 @@ contract OpenfortSessionKeyAccount is Ownable, BaseAccount, TokenCallbackHandler
         
         // If the signer is a session key that is still valid
         if (sessionKeys[sessionKey].validUntil != 0 ) {
+            // Calculate the time range
+            bool outOfTimeRange = block.timestamp > sessionKeys[sessionKey].validUntil || block.timestamp < sessionKeys[sessionKey].validAfter;
+            require(!outOfTimeRange, "Session key expired");
             return 0;
         }
         return SIG_VALIDATION_FAILED;
