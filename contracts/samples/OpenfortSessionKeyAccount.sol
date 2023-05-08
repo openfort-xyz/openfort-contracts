@@ -15,9 +15,9 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
   * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
   * It inherits from:
   *  - Ownable2Step to have permissions
+  *  - ECDSA for signature verifications
   *  - BaseAccount to comply with ERC-4337 
   *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
-  *  - ECDSA for signature verifications
   */
 contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHandler {
     using ECDSA for bytes32;
