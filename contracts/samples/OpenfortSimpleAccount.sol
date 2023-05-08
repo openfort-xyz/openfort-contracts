@@ -62,6 +62,17 @@ contract OpenfortSimpleAccount is Ownable, BaseAccount, TokenCallbackHandler {
         _call(dest, value, func);
     }
 
+    /**
+     * Execute a sequence of transactions
+     */
+    function executeBatch(address[] calldata dest, bytes[] calldata func) external {
+        _requireFromEntryPointOrOwner();
+        require(dest.length == func.length, "wrong array lengths");
+        for (uint256 i = 0; i < dest.length; i++) {
+            _call(dest[i], 0, func[i]);
+        }
+    }
+
     function _call(address target, uint256 value, bytes memory data) internal {
         (bool success, bytes memory result) = target.call{value : value}(data);
         if (!success) {
