@@ -177,8 +177,8 @@ contract OpenfortSessionKeyAccountTest is Test {
     }
 
     /**
-     * Send a userOp to the deployed OpenfortSessionKeyAccount signed by the
-     * registered session key.
+     * Send a userOp to the deployed OpenfortSessionKeyAccount signed by a
+     * revoked session key. It should fail!
      */
     function testFailOpenfortSessionKeyAccountCounter() public {
         address openfortSessionKeyAccountAddress = address(openfortSessionKeyAccount);
@@ -249,8 +249,8 @@ contract OpenfortSessionKeyAccountTest is Test {
     }
 
     /**
-     * Send a userOp to the deployed OpenfortSessionKeyAccount signed by the
-     * registered session key.
+     * Send a userOp to the deployed OpenfortSessionKeyAccount signed by a
+     * registered session key. Then register a second session key and use it.
      */
     function testOpenfortSessionKeyAccountCounterSecondSessionKey() public {
         address openfortSessionKeyAccountAddress = address(openfortSessionKeyAccount);
