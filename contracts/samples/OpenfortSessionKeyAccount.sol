@@ -8,6 +8,7 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {BaseAccount, UserOperation} from "account-abstraction/core/BaseAccount.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
+import {console} from "lib/forge-std/src/Test.sol";
 
 /**
   * @title OpenfortSessionKeyAccount (Non-upgradeable)
@@ -25,10 +26,14 @@ contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHa
     /** Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
      * @param validAfter this sessionKey is valid only after this timestamp.
      * @param validUntil this sessionKey is valid only after this timestamp.
+     * @param masterSessionKey if set to true, the session key does not have any limitation other than the validity time
+     * @param _whitelist - this session key can only interact with the addresses in the whitelist.
      */
     struct SessionKeyStruct {
         uint48 validAfter;
         uint48 validUntil;
+        bool masterSessionKey;
+        mapping(address => bool) whitelist;
     }
 
     IEntryPoint private immutable _entryPoint;
@@ -64,6 +69,13 @@ contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHa
             // Calculate the time range
             bool outOfTimeRange = block.timestamp > sessionKeys[sessionKey].validUntil || block.timestamp < sessionKeys[sessionKey].validAfter;
             require(!outOfTimeRange, "Session key expired");
+            if(sessionKeys[sessionKey].masterSessionKey)
+                return 0;
+            console.logBytes(userOp.callData);
+            address to_address = address(bytes20(userOp.callData[16:36]));
+            console.log(to_address);
+            require(sessionKeys[sessionKey].whitelist[to_address], "Forbidden address");
+            //sessionKeys[sessionKey].whitelist
             return 0;
         }
         return SIG_VALIDATION_FAILED;
@@ -129,8 +141,8 @@ contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHa
     }
 
     /**
-     * Register a session key to the account
-     * @param _key session key to revoke
+     * Register a master session key to the account
+     * @param _key session key to register
      * @param _validAfter - this session key is valid only after this timestamp.
      * @param _validUntil - this session key is valid only up to this timestamp.
      */
@@ -138,6 +150,28 @@ contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHa
         _requireFromEntryPointOrOwner();
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
+        sessionKeys[_key].masterSessionKey = true;
+        emit SessionKeyRegistered(_key);
+    }
+
+    /**
+     * Register a session key to the account
+     * @param _key session key to register
+     * @param _validAfter - this session key is valid only after this timestamp.
+     * @param _validUntil - this session key is valid only up to this timestamp.
+     * @param _whitelist - this session key can only interact with the addresses in the _whitelist.
+     */
+    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, address[] calldata _whitelist) external {
+        _requireFromEntryPointOrOwner();
+        sessionKeys[_key].validAfter = _validAfter;
+        sessionKeys[_key].validUntil = _validUntil;
+        sessionKeys[_key].masterSessionKey = false;
+        uint whitelistLen = _whitelist.length;
+        for (uint256 i = 0; i < whitelistLen; i++) {
+            console.log(_whitelist[i]);
+            sessionKeys[_key].whitelist[_whitelist[i]] = true;
+        }  
+        //sessionKeys[_key].whitelist = _whitelist;
         emit SessionKeyRegistered(_key);
     }
 

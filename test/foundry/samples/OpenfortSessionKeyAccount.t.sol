@@ -115,6 +115,10 @@ contract OpenfortSessionKeyAccountTest is Test {
         address openfortSessionKeyAccountAddress = address(openfortSessionKeyAccount);
         uint nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
         require(nonce == 0, "Nonce should be 0");
+        console.log('openfortSessionKeyAccountAddress: ');
+        console.log(openfortSessionKeyAccountAddress);
+        console.log('Test counter: ');
+        console.log(address(testCounter));
         UserOperation[] memory ops = new UserOperation[](1);
         ops[0] = UserOperation({
             sender: openfortSessionKeyAccountAddress, // Contract address that will receive the UserOp
@@ -387,6 +391,95 @@ contract OpenfortSessionKeyAccountTest is Test {
         vm.prank(openfort);
         openfortSessionKeyAccount.registerSessionKey(sessionKey2, uint48(block.timestamp), uint48(block.timestamp));
         vm.warp(200);
+
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 1, "Nonce should be 1");
+        ops[0] = UserOperation({
+            sender: openfortSessionKeyAccountAddress, // Contract address that will receive the UserOp
+            nonce: nonce,
+            initCode: hex"",
+            callData: abi.encodeCall(   // Function that the OpenfortSessionKeyAccount will execute
+                openfortSessionKeyAccount.execute, (address(testCounter), 0, abi.encodeCall(TestCounter.count, ()))
+                ),
+            callGasLimit: 100000,
+            verificationGasLimit: 200000,
+            preVerificationGas: 200000,
+            maxFeePerGas: 100000,
+            maxPriorityFeePerGas: 100000,
+            paymasterAndData: hex"",
+            signature: hex""
+        });
+        ops[0].signature = signUserOp(ops[0], sessionKey2, sessionKeyPrivKey2);
+        console.log("The signature is %s", string(ops[0].signature));
+
+        count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 1, "Counter is not 1");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 1, "Nonce should still be 1");
+        entryPoint.handleOps(ops, bundler);
+        count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 2, "Counter has not been updated!");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 2, "Nonce should have increased");
+    }
+
+    /**
+     * Send a userOp to the deployed OpenfortSessionKeyAccount signed by the
+     * registered session key to a whitelisted address.
+     */
+    function testOpenfortSessionKeyAccountCounterWhitelisted() public {
+        address openfortSessionKeyAccountAddress = address(openfortSessionKeyAccount);
+        uint nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 0, "Nonce should be 0");
+        console.log('openfortSessionKeyAccountAddress: ');
+        console.log(openfortSessionKeyAccountAddress);
+        console.log('Test counter: ');
+        console.log(address(testCounter));
+        UserOperation[] memory ops = new UserOperation[](1);
+        ops[0] = UserOperation({
+            sender: openfortSessionKeyAccountAddress, // Contract address that will receive the UserOp
+            nonce: nonce,
+            initCode: hex"",
+            callData: abi.encodeCall(   // Function that the OpenfortSessionKeyAccount will execute
+                openfortSessionKeyAccount.execute, (address(testCounter), 0, abi.encodeCall(TestCounter.count, ()))
+                ),
+            callGasLimit: 100000,
+            verificationGasLimit: 200000,
+            preVerificationGas: 200000,
+            maxFeePerGas: 100000,
+            maxPriorityFeePerGas: 100000,
+            paymasterAndData: hex"",
+            signature: hex""
+        });
+        ops[0].signature = signUserOp(ops[0], sessionKey, sessionKeyPrivKey);
+        console.log("The signature is %s", string(ops[0].signature));
+        
+        uint256 count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 0, "Counter is not 0");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 0, "Nonce should still be 0");
+        entryPoint.handleOps(ops, bundler);
+        count = testCounter.counters(openfortSessionKeyAccountAddress);
+        require(count == 1, "Counter has not been updated!");
+        nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
+        require(nonce == 1, "Nonce should have increased");
+
+        // Perform a second user operation using a second session key
+        // First, let's revoke last session key (actually not needed)
+        vm.prank(openfort);
+        openfortSessionKeyAccount.revokeSessionKey(sessionKey);
+        
+        // Then, let's create a new session key
+        address sessionKey2;
+        uint256 sessionKeyPrivKey2;
+        // Generate a new key pair as session key
+        (sessionKey2, sessionKeyPrivKey2) = makeAddrAndKey("sessionKey2");
+
+        // Ask Openfort to register the new session key
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = address(testCounter);
+        vm.prank(openfort);
+        openfortSessionKeyAccount.registerSessionKey(sessionKey2, 0, 2**48 - 1, whitelist);
 
         nonce = entryPoint.getNonce(openfortSessionKeyAccountAddress, 0);
         require(nonce == 1, "Nonce should be 1");
