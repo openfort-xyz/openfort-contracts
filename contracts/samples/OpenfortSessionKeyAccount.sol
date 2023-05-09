@@ -71,7 +71,7 @@ contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHa
             require(!outOfTimeRange, "Session key expired");
             if(sessionKeys[sessionKey].masterSessionKey)
                 return 0;
-            console.logBytes(userOp.callData);
+
             address to_address = address(bytes20(userOp.callData[16:36]));
             console.log(to_address);
             require(sessionKeys[sessionKey].whitelist[to_address], "Forbidden address");
