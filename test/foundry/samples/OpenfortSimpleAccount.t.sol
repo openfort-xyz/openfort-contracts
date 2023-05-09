@@ -98,4 +98,54 @@ contract OpenfortSimpleAccountTest is Test {
         nonce = entryPoint.getNonce(openfortSimpleAccountAddress, 0);
         require(nonce == 1, "Nonce should have increased");
     }
+
+    /**
+     * Send a userOp containing three calls to the deployed openfortSimpleAccount
+     * signed by its deplyer/owner, user1. It uses executeBatch() instead of execute()
+     */
+    function testOpenfortSimpleAccountCounterBatch() public {
+        address openfortSimpleAccountAddress = address(openfortSimpleAccount);
+        uint nonce = entryPoint.getNonce(openfortSimpleAccountAddress, 0);
+        require(nonce == 0, "Nonce should be 0");
+
+        address[] memory contracts = new address[](3);
+        contracts[0] = address(testCounter);
+        contracts[1] = address(testCounter);
+        contracts[2] = address(testCounter);
+        
+        bytes[] memory functions = new bytes[](3);
+        functions[0] = abi.encodeCall(TestCounter.count, ());
+        functions[1] = abi.encodeCall(TestCounter.count, ());
+        functions[2] = abi.encodeCall(TestCounter.count, ());
+        
+        UserOperation[] memory ops = new UserOperation[](1);
+        ops[0] = UserOperation({
+            sender: openfortSimpleAccountAddress, // Contract address that will receive the UserOp
+            nonce: nonce,
+            initCode: hex"",
+            callData: abi.encodeCall(   // Function that the OpenfortSimpleAccount will execute
+                OpenfortSimpleAccount.executeBatch, (contracts, functions)
+            ),
+            callGasLimit: 100000,
+            verificationGasLimit: 200000,
+            preVerificationGas: 200000,
+            maxFeePerGas: 100000,
+            maxPriorityFeePerGas: 100000,
+            paymasterAndData: hex"",
+            signature: hex""
+        });
+        ops[0].signature = signUserOp(ops[0], user1, user1PrivKey);
+
+        uint256 count = testCounter.counters(openfortSimpleAccountAddress);
+        require(count == 0, "Counter is not 0");
+        nonce = entryPoint.getNonce(openfortSimpleAccountAddress, 0);
+        require(nonce == 0, "Nonce should still be 0");
+
+        entryPoint.handleOps(ops, bundler);
+        
+        count = testCounter.counters(openfortSimpleAccountAddress);
+        require(count == 3, "Counter has not been updated!");
+        nonce = entryPoint.getNonce(openfortSimpleAccountAddress, 0);
+        require(nonce == 1, "Nonce should have increased");
+    }
 }
