@@ -75,7 +75,6 @@ contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHa
             address to_address = address(bytes20(userOp.callData[16:36]));
             console.log(to_address);
             require(sessionKeys[sessionKey].whitelist[to_address], "Forbidden address");
-            //sessionKeys[sessionKey].whitelist
             return 0;
         }
         return SIG_VALIDATION_FAILED;
@@ -145,6 +144,8 @@ contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHa
      * @param _key session key to register
      * @param _validAfter - this session key is valid only after this timestamp.
      * @param _validUntil - this session key is valid only up to this timestamp.
+     * @notice using this function will automatically set the sessionkey as a
+     * master session key because no further restricion was set.
      */
     function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) external {
         _requireFromEntryPointOrOwner();
@@ -166,12 +167,12 @@ contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHa
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
         sessionKeys[_key].masterSessionKey = false;
+
         uint whitelistLen = _whitelist.length;
         for (uint256 i = 0; i < whitelistLen; i++) {
-            console.log(_whitelist[i]);
             sessionKeys[_key].whitelist[_whitelist[i]] = true;
-        }  
-        //sessionKeys[_key].whitelist = _whitelist;
+        }
+
         emit SessionKeyRegistered(_key);
     }
 
