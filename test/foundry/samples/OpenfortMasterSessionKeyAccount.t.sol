@@ -132,13 +132,14 @@ contract OpenfortMasterSessionKeyAccountTest is Test {
             signature: hex""
         });
         ops[0].signature = signUserOp(ops[0], sessionKey, sessionKeyPrivKey);
-        console.log("The signature is %s", string(ops[0].signature));
         
         uint256 count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 0, "Counter is not 0");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
         require(nonce == 0, "Nonce should still be 0");
+
         entryPoint.handleOps(ops, bundler);
+
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 1, "Counter has not been updated!");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
@@ -164,13 +165,14 @@ contract OpenfortMasterSessionKeyAccountTest is Test {
             signature: hex""
         });
         ops[0].signature = signUserOp(ops[0], sessionKey, sessionKeyPrivKey);
-        console.log("The signature is %s", string(ops[0].signature));
 
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 1, "Counter is not 1");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
         require(nonce == 1, "Nonce should still be 1");
+
         entryPoint.handleOps(ops, bundler);
+
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 2, "Counter has not been updated!");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
@@ -202,13 +204,14 @@ contract OpenfortMasterSessionKeyAccountTest is Test {
             signature: hex""
         });
         ops[0].signature = signUserOp(ops[0], sessionKey, sessionKeyPrivKey);
-        console.log("The signature is %s", string(ops[0].signature));
         
         uint256 count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 0, "Counter is not 0");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
         require(nonce == 0, "Nonce should still be 0");
+
         entryPoint.handleOps(ops, bundler);
+
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 1, "Counter has not been updated!");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
@@ -236,13 +239,14 @@ contract OpenfortMasterSessionKeyAccountTest is Test {
             signature: hex""
         });
         ops[0].signature = signUserOp(ops[0], sessionKey, sessionKeyPrivKey);
-        console.log("The signature is %s", string(ops[0].signature));
 
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 1, "Counter is not 1");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
         require(nonce == 1, "Nonce should still be 1");
+
         entryPoint.handleOps(ops, bundler);
+
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 2, "Counter has not been updated!");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
@@ -274,13 +278,14 @@ contract OpenfortMasterSessionKeyAccountTest is Test {
             signature: hex""
         });
         ops[0].signature = signUserOp(ops[0], sessionKey, sessionKeyPrivKey);
-        console.log("The signature is %s", string(ops[0].signature));
         
         uint256 count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 0, "Counter is not 0");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
         require(nonce == 0, "Nonce should still be 0");
+
         entryPoint.handleOps(ops, bundler);
+
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 1, "Counter has not been updated!");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
@@ -319,13 +324,14 @@ contract OpenfortMasterSessionKeyAccountTest is Test {
             signature: hex""
         });
         ops[0].signature = signUserOp(ops[0], sessionKey2, sessionKeyPrivKey2);
-        console.log("The signature is %s", string(ops[0].signature));
 
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 1, "Counter is not 1");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
         require(nonce == 1, "Nonce should still be 1");
+
         entryPoint.handleOps(ops, bundler);
+
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 2, "Counter has not been updated!");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
@@ -358,13 +364,14 @@ contract OpenfortMasterSessionKeyAccountTest is Test {
             signature: hex""
         });
         ops[0].signature = signUserOp(ops[0], sessionKey, sessionKeyPrivKey);
-        console.log("The signature is %s", string(ops[0].signature));
         
         uint256 count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 0, "Counter is not 0");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
         require(nonce == 0, "Nonce should still be 0");
+
         entryPoint.handleOps(ops, bundler);
+
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 1, "Counter has not been updated!");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
@@ -406,13 +413,14 @@ contract OpenfortMasterSessionKeyAccountTest is Test {
             signature: hex""
         });
         ops[0].signature = signUserOp(ops[0], sessionKey2, sessionKeyPrivKey2);
-        console.log("The signature is %s", string(ops[0].signature));
 
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 1, "Counter is not 1");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
         require(nonce == 1, "Nonce should still be 1");
+        
         entryPoint.handleOps(ops, bundler);
+
         count = testCounter.counters(openfortMasterSessionKeyAccountAddress);
         require(count == 2, "Counter has not been updated!");
         nonce = entryPoint.getNonce(openfortMasterSessionKeyAccountAddress, 0);
