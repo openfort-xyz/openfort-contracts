@@ -130,7 +130,7 @@ contract OpenfortMasterSessionKeyAccount is Ownable2Step, BaseAccount, TokenCall
 
     /**
      * Register a session key to the account
-     * @param _key session key to revoke
+     * @param _key session key to register
      * @param _validAfter - this session key is valid only after this timestamp.
      * @param _validUntil - this session key is valid only up to this timestamp.
      */
