@@ -108,15 +108,19 @@ contract OpenfortSimpleAccountTest is Test {
         uint nonce = entryPoint.getNonce(openfortSimpleAccountAddress, 0);
         require(nonce == 0, "Nonce should be 0");
 
-        address[] memory contracts = new address[](3);
+        address[] memory contracts = new address[](5);
         contracts[0] = address(testCounter);
         contracts[1] = address(testCounter);
         contracts[2] = address(testCounter);
+        contracts[3] = address(testCounter);
+        contracts[4] = address(testCounter);
         
-        bytes[] memory functions = new bytes[](3);
+        bytes[] memory functions = new bytes[](5);
         functions[0] = abi.encodeCall(TestCounter.count, ());
         functions[1] = abi.encodeCall(TestCounter.count, ());
         functions[2] = abi.encodeCall(TestCounter.count, ());
+        functions[3] = abi.encodeCall(TestCounter.count, ());
+        functions[4] = abi.encodeCall(TestCounter.count, ());
         
         UserOperation[] memory ops = new UserOperation[](1);
         ops[0] = UserOperation({
@@ -144,7 +148,7 @@ contract OpenfortSimpleAccountTest is Test {
         entryPoint.handleOps(ops, bundler);
         
         count = testCounter.counters(openfortSimpleAccountAddress);
-        require(count == 3, "Counter has not been updated!");
+        require(count == 5, "Counter has not been updated!");
         nonce = entryPoint.getNonce(openfortSimpleAccountAddress, 0);
         require(nonce == 1, "Nonce should have increased");
     }
