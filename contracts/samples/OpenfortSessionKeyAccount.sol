@@ -23,6 +23,8 @@ import {console} from "lib/forge-std/src/Test.sol";
 contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHandler {
     using ECDSA for bytes32;
 
+    IEntryPoint private immutable _entryPoint;
+
     /** Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
      * @param validAfter this sessionKey is valid only after this timestamp.
      * @param validUntil this sessionKey is valid only after this timestamp.
@@ -35,8 +37,6 @@ contract OpenfortSessionKeyAccount is Ownable2Step, BaseAccount, TokenCallbackHa
         bool masterSessionKey;
         mapping(address => bool) whitelist;
     }
-
-    IEntryPoint private immutable _entryPoint;
     mapping(address => SessionKeyStruct) public sessionKeys;
 
     event SessionKeyRegistered(address indexed key);
