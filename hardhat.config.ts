@@ -1,7 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
-import '@typechain/hardhat'
+import "@typechain/hardhat";
 import { config as dotEnvConfig } from "dotenv";
 import { resolve } from "path";
 
@@ -26,7 +26,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       chainId: 31337,
     },
-  }
+  },
 };
 
 export default config;
