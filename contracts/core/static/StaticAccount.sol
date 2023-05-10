@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -151,19 +150,11 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, AccessControlEnu
     /// @notice Registers a signer in the factory.
     function _setupRole(bytes32 role, address account) internal virtual override {
         super._setupRole(role, account);
-
-        if (role == SIGNER_ROLE && factory.code.length > 0) {
-            StaticAccountFactory(factory).addSigner(account);
-        }
     }
 
     /// @notice Un-registers a signer in the factory.
     function _revokeRole(bytes32 role, address account) internal virtual override {
         super._revokeRole(role, account);
-
-        if (role == SIGNER_ROLE && factory.code.length > 0) {
-            StaticAccountFactory(factory).removeSigner(account);
-        }
     }
 
     /**

@@ -5,18 +5,12 @@ interface IBaseAccountFactory {
     /// @notice Emitted when a new Account is created.
     event AccountCreated(address indexed account, address indexed accountAdmin);
 
-    /// @notice Emitted when a new signer is added to an Account.
-    event SignerAdded(address indexed account, address indexed signer);
-
-    /// @notice Emitted when a new signer is added to an Account.
-    event SignerRemoved(address indexed account, address indexed signer);
-
     /// @notice Deploys a new Account for admin.
     function createAccount(address admin, bytes calldata _data) external returns (address account);
 
-    /// @notice Callback function for an Account to register its signers.
-    function addSigner(address signer) external;
+    /// @notice Returns the address of the Account implementation.
+    function accountImplementation() external view returns (address);
 
-    /// @notice Callback function for an Account to un-register its signers.
-    function removeSigner(address signer) external;
+    /// @notice Returns the address of an Account that would be deployed with the given admin signer.
+    function getAddress(address adminSigner) external view returns (address);
 }
