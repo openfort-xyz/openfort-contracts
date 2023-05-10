@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
@@ -20,7 +20,9 @@ abstract contract BaseAccountFactory is IBaseAccountFactory {
         accountImplementation = _accountImpl;
     }
 
-    /// @notice Deploys a new Account for admin.
+    /*
+     * @notice Deploy a new Account for admin.
+     */
     function createAccount(address _admin, bytes calldata _data) external virtual override returns (address) {
         address impl = accountImplementation;
         bytes32 salt = keccak256(abi.encode(_admin));
@@ -39,13 +41,16 @@ abstract contract BaseAccountFactory is IBaseAccountFactory {
         return account;
     }
 
-    /// @notice Returns the address of an Account that would be deployed with the given admin signer.
+    /*
+     * @notice Return the address of an Account that would be deployed with the given admin signer.
+     */
     function getAddress(address _adminSigner) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_adminSigner));
         return Clones.predictDeterministicAddress(accountImplementation, salt);
     }
 
-    /* @dev Called in `createAccount`.
+    /*
+     * @dev Called in `createAccount`.
      * Initializes the account contract created in `createAccount`.
      */
     function _initializeAccount(
