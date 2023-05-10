@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {BaseAccount} from "account-abstraction/core/BaseAccount.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {BaseAccountFactory} from "../BaseAccountFactory.sol";
