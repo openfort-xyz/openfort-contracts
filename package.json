@@ -4,7 +4,7 @@
   "description": "Official Contracts of the Openfort Project",
   "scripts": {
     "build": "npm run clean-all && npm run compile",
-    "clean-all": "npx hardhat clean && forge clean && rm -rf cache/",
+    "clean-all": "npx hardhat clean && forge clean && rm -rf cache/ broadcast/",
     "compile": "npx hardhat compile",
     "test-all": "npx hardhat test && forge test"
   },
