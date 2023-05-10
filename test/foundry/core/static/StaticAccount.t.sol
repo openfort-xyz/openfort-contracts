@@ -5,8 +5,8 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation, IEntryPoint} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
-import {StaticAccountFactory} from "contracts/core/StaticAccountFactory.sol";
-import {StaticAccount} from "contracts/core/StaticAccount.sol";
+import {StaticAccountFactory} from "contracts/core/static/StaticAccountFactory.sol";
+import {StaticAccount} from "contracts/core/static/StaticAccount.sol";
 
 contract StaticAccountTest is Test {
     using ECDSA for bytes32;
