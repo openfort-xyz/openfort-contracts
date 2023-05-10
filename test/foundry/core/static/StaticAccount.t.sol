@@ -220,4 +220,130 @@ contract StaticAccountTest is Test {
         // Verifiy that the counter has increased
         assertEq(testCounter.counters(account), 3);
     }
+
+    /// Should fail, sessionKey not registered
+    function testFailCreateAccountTestCounterViaSessionKeyNotregistered() public {
+        // Create an static account wallet and get its address
+        staticAccountFactory.createAccount(accountAdmin,"");
+        address account = staticAccountFactory.getAddress(accountAdmin);
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+    }
+
+    /// Should succeed
+    function testCreateAccountTestCounterViaSessionKey() public {
+        // Create an static account wallet and get its address
+        staticAccountFactory.createAccount(accountAdmin,"");
+        address account = staticAccountFactory.getAddress(accountAdmin);
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        vm.prank(accountAdmin);
+        StaticAccount(payable(account)).registerSessionKey(sessionKey , 0, 2**48 - 1);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+    }
+
+    /// Should fail
+    function testFailCreateAccountTestCounterViaSessionKeyExpired() public {
+        // Create an static account wallet and get its address
+        staticAccountFactory.createAccount(accountAdmin,"");
+        address account = staticAccountFactory.getAddress(accountAdmin);
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        vm.prank(accountAdmin);
+        StaticAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+    }
+
+        /// Should fail
+    function testFailCreateAccountTestCounterViaSessionKeyRevoked() public {
+        // Create an static account wallet and get its address
+        staticAccountFactory.createAccount(accountAdmin,"");
+        address account = staticAccountFactory.getAddress(accountAdmin);
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        vm.prank(accountAdmin);
+        StaticAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
+        StaticAccount(payable(account)).revokeSessionKey(sessionKey);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+    }
 }
