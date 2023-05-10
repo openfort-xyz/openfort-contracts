@@ -24,10 +24,13 @@ contract StaticAccountTest is Test {
 
     uint256 private nonSignerPKey = 300;
     address private nonSigner;
+    
+    address payable beneficiary = payable(makeAddr("beneficiary"));
 
     event AccountCreated(address indexed account, address indexed accountAdmin);
-/*
+
     function _setupUserOp(
+        address sender,
         uint256 _signerPKey,
         bytes memory _initCode,
         bytes memory _callDataForEntrypoint
@@ -50,7 +53,7 @@ contract StaticAccountTest is Test {
         });
 
         // Sign UserOp
-        bytes32 opHash = EntryPoint(entrypoint).getUserOpHash(op);
+        bytes32 opHash = EntryPoint(entryPoint).getUserOpHash(op);
         bytes32 msgHash = ECDSA.toEthSignedMessageHash(opHash);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(_signerPKey, msgHash);
@@ -66,7 +69,25 @@ contract StaticAccountTest is Test {
         ops = new UserOperation[](1);
         ops[0] = op;
     }
-*/
+
+    function _setupUserOpExecute(
+        address sender,
+        uint256 _signerPKey,
+        bytes memory _initCode,
+        address _target,
+        uint256 _value,
+        bytes memory _callData
+    ) internal returns (UserOperation[] memory) {
+        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
+            "execute(address,uint256,bytes)",
+            _target,
+            _value,
+            _callData
+        );
+
+        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
+    }
+
     /**
      * @notice Initialize the StaticAccount testing contract.
      * Scenario:
@@ -105,7 +126,7 @@ contract StaticAccountTest is Test {
     }
 
     /// Create an account by directly calling the factory and make it call count()
-    function testCreateAccountTestCounter() public {
+    function testCreateAccountTestCounterDirect() public {
         // Create an static account wallet and get its address
         staticAccountFactory.createAccount(accountAdmin,"");
         address account = staticAccountFactory.getAddress(accountAdmin);
@@ -121,28 +142,28 @@ contract StaticAccountTest is Test {
         assertEq(testCounter.counters(account), 1);
     }
 
-    /**
-     * Auxiliary function to sign user ops
-     */
-    function signUserOp(UserOperation memory op, address addr, uint256 key)
-        public
-        view
-        returns (bytes memory signature)
-    {
-        bytes32 hash = entryPoint.getUserOpHash(op);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(key, hash.toEthSignedMessageHash());
-        // Check that the address can be retrieved from the signature values (v,r,s)
-        require(addr == ECDSA.recover(hash.toEthSignedMessageHash(), v, r, s), "Invalid signature");
-        signature = abi.encodePacked(r, s, v);
-        // Check that the address can be retrieved from the signature as it will be received by the user (one string value)
-        require(addr == ECDSA.recover(hash.toEthSignedMessageHash(), signature), "Invalid signature");
+    /// Create an account by directly calling the factory and make it call count()
+    function testCreateAccountTestCounterViaEntrypoint() public {
+        // Create an static account wallet and get its address
+        staticAccountFactory.createAccount(accountAdmin,"");
+        address account = staticAccountFactory.getAddress(accountAdmin);
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        EntryPoint(entryPoint).handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
     }
 
-    /**
-     * Send a userOp to the deployed 
-     * deployer/owner, user1.
-     */
-    function testStaticAccountCounter() public {
-
-    }
 }
