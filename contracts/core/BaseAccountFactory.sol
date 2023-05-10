@@ -21,7 +21,7 @@ abstract contract BaseAccountFactory is IBaseAccountFactory {
     }
 
     /*
-     * @notice Deploy a new Account for admin.
+     * @notice Deploy a new Account for _admin.
      */
     function createAccount(address _admin, bytes calldata _data) external virtual override returns (address) {
         address impl = accountImplementation;
@@ -42,10 +42,39 @@ abstract contract BaseAccountFactory is IBaseAccountFactory {
     }
 
     /*
+     * @notice Deploy a new Account for _admin and a given nonce.
+     */
+    function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce) external virtual override returns (address) {
+        address impl = accountImplementation;
+        bytes32 salt = keccak256(abi.encode(_admin, nonce));
+        address account = Clones.predictDeterministicAddress(impl, salt);
+
+        if (account.code.length > 0) {
+            return account;
+        }
+
+        account = Clones.cloneDeterministic(impl, salt);
+
+        _initializeAccount(account, _admin, _data);
+
+        emit AccountCreated(account, _admin);
+
+        return account;
+    }
+
+    /*
      * @notice Return the address of an Account that would be deployed with the given admin signer.
      */
     function getAddress(address _adminSigner) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_adminSigner));
+        return Clones.predictDeterministicAddress(accountImplementation, salt);
+    }
+
+    /*
+     * @notice Return the address of an Account that would be deployed with the given admin signer and nonce.
+     */
+    function getAddressWithNonce(address _adminSigner, uint256 nonce) public view returns (address) {
+        bytes32 salt = keccak256(abi.encode(_adminSigner, nonce));
         return Clones.predictDeterministicAddress(accountImplementation, salt);
     }
 
