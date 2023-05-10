@@ -20,6 +20,24 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, To
 
     IEntryPoint private immutable entrypointContract;
     address public immutable factory;
+
+    /** Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
+     * @param validAfter this sessionKey is valid only after this timestamp.
+     * @param validUntil this sessionKey is valid only after this timestamp.
+     * @param masterSessionKey if set to true, the session key does not have any limitation other than the validity time
+     * @param canSign if set to true, the session key can sign as the account (future)
+     * @param _whitelist - this session key can only interact with the addresses in the whitelist.
+     */
+    struct SessionKeyStruct {
+        uint48 validAfter;
+        uint48 validUntil;
+        bool masterSessionKey;
+        mapping(address => bool) whitelist;
+    }
+    mapping(address => SessionKeyStruct) public sessionKeys;
+
+    event SessionKeyRegistered(address indexed key);
+    event SessionKeyRevoked(address indexed key);
     
     // solhint-disable-next-line no-empty-blocks
     receive() external payable virtual {}
@@ -158,5 +176,54 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, To
         if (!isValidSigner(signer))
             return SIG_VALIDATION_FAILED;
         return 0;
+    }
+
+        /**
+     * Register a master session key to the account
+     * @param _key session key to register
+     * @param _validAfter - this session key is valid only after this timestamp.
+     * @param _validUntil - this session key is valid only up to this timestamp.
+     * @notice using this function will automatically set the sessionkey as a
+     * master session key because no further restricion was set.
+     */
+    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) external {
+        _requireFromEntryPointOrOwner();
+        sessionKeys[_key].validAfter = _validAfter;
+        sessionKeys[_key].validUntil = _validUntil;
+        sessionKeys[_key].masterSessionKey = true;
+        emit SessionKeyRegistered(_key);
+    }
+
+    /**
+     * Register a session key to the account
+     * @param _key session key to register
+     * @param _validAfter - this session key is valid only after this timestamp.
+     * @param _validUntil - this session key is valid only up to this timestamp.
+     * @param _whitelist - this session key can only interact with the addresses in the _whitelist.
+     */
+    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, address[] calldata _whitelist) external {
+        _requireFromEntryPointOrOwner();
+        sessionKeys[_key].validAfter = _validAfter;
+        sessionKeys[_key].validUntil = _validUntil;
+        sessionKeys[_key].masterSessionKey = false;
+
+        uint whitelistLen = _whitelist.length;
+        for (uint256 i = 0; i < whitelistLen; i++) {
+            sessionKeys[_key].whitelist[_whitelist[i]] = true;
+        }
+
+        emit SessionKeyRegistered(_key);
+    }
+
+    /**
+     * Revoke a session key from the account
+     * @param _key session key to revoke
+     */
+    function revokeSessionKey(address _key) external {
+        _requireFromEntryPointOrOwner();
+        if(sessionKeys[_key].validUntil != 0) {
+            sessionKeys[_key].validUntil = 0;
+            emit SessionKeyRevoked(_key);
+        }
     }
 }
