@@ -74,7 +74,9 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, To
         return entryPoint().balanceOf(address(this));
     }
 
-    /// @notice Returns whether a signer is authorized to perform transactions using the wallet.
+    /*
+     * @notice Return whether a signer is authorized.
+     */
     function isValidSigner(address _signer) public view virtual returns (bool valid) {
         if(owner() == _signer)
             return true;
@@ -173,7 +175,7 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, To
         return 0;
     }
 
-        /**
+    /**
      * Register a master session key to the account
      * @param _key session key to register
      * @param _validAfter - this session key is valid only after this timestamp.
