@@ -15,15 +15,12 @@ contract StaticAccountTest is Test {
     StaticAccountFactory public staticAccountFactory;
     TestCounter public testCounter;
     
-    // Test params
-    uint256 private accountAdminPKey = 100;
+    // Testing addresses
+    address private factoryAdmin;
+    uint256 private factoryAdminPKey;
+
     address private accountAdmin;
-
-    uint256 private accountSignerPKey = 200;
-    address private accountSigner;
-
-    uint256 private nonSignerPKey = 300;
-    address private nonSigner;
+    uint256 private accountAdminPKey;
     
     address payable beneficiary = payable(makeAddr("beneficiary"));
 
@@ -91,21 +88,22 @@ contract StaticAccountTest is Test {
     /**
      * @notice Initialize the StaticAccount testing contract.
      * Scenario:
-     * - user1 is the deployer (and owner) of the OpenfortSimpleAccount
-     * 
+     * - factoryAdmin is the deployer (and owner) of the staticAccountFactory
+     * - accountAdmin is the account used to deploy new static accounts
+     * - entryPoint is the singleton EntryPoint
      * - testCounter is the counter used to test userOps
      */
     function setUp() public {
-        // Setup signers.
-        accountAdmin = vm.addr(accountAdminPKey); // Generate addr from priv key
+        // Setup and fund signers
+        (factoryAdmin, factoryAdminPKey) = makeAddrAndKey("factoryAdmin");
+        vm.deal(factoryAdmin, 100 ether);
+        (accountAdmin, accountAdminPKey) = makeAddrAndKey("accountAdmin");
         vm.deal(accountAdmin, 100 ether);
-
-        accountSigner = vm.addr(accountSignerPKey);
-        nonSigner = vm.addr(nonSignerPKey);
 
         // deploy entryPoint
         entryPoint = new EntryPoint();
         // deploy account factory
+        vm.prank(factoryAdmin);
         staticAccountFactory = new StaticAccountFactory(IEntryPoint(payable(address(entryPoint))));
 
         testCounter = new TestCounter();
@@ -117,6 +115,10 @@ contract StaticAccountTest is Test {
         address account = staticAccountFactory.getAddress(accountAdmin);
         console.log(account);
 
+        // Expect that we will see an event containing the account and admin
+        vm.expectEmit(true, true, false, true);
+        emit AccountCreated(account, accountAdmin);
+
         // Deploy a static account to the counterfactual address
         staticAccountFactory.createAccount(accountAdmin, bytes(""));
 
@@ -125,7 +127,7 @@ contract StaticAccountTest is Test {
         console.log(account);
     }
 
-    /// Create an account by directly calling the factory and make it call count()
+    /// Create an account by directly calling the factory and make it call count() directly.
     function testCreateAccountTestCounterDirect() public {
         // Create an static account wallet and get its address
         staticAccountFactory.createAccount(accountAdmin,"");
@@ -142,7 +144,7 @@ contract StaticAccountTest is Test {
         assertEq(testCounter.counters(account), 1);
     }
 
-    /// Create an account by directly calling the factory and make it call count()
+    /// Create an account by directly calling the factory and make it call count() via EntryPoint.
     function testCreateAccountTestCounterViaEntrypoint() public {
         // Create an static account wallet and get its address
         staticAccountFactory.createAccount(accountAdmin,"");
@@ -165,5 +167,4 @@ contract StaticAccountTest is Test {
         // Verifiy that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
-
 }
