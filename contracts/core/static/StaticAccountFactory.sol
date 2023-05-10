@@ -12,7 +12,9 @@ import {StaticAccount} from "./StaticAccount.sol";
 contract StaticAccountFactory is BaseAccountFactory {
     constructor(IEntryPoint _entrypoint) BaseAccountFactory(address(new StaticAccount(_entrypoint, address(this)))) {}
 
-    /// @dev Called in `createAccount`. Initializes the account contract created in `createAccount`.
+    /*
+     * @dev Called in `createAccount`. Initializes the account contract created in `createAccount`.
+     */
     function _initializeAccount(
         address _account,
         address _admin,

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.12;
 
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 
@@ -12,17 +12,14 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
 import {StaticAccountFactory} from "./StaticAccountFactory.sol";
 
 
-contract StaticAccount is Initializable, IERC1271, BaseAccount, AccessControlEnumerable, TokenCallbackHandler {
+contract StaticAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, TokenCallbackHandler {
     using ECDSA for bytes32;
     
     // bytes4(keccak256("isValidSignature(bytes32,bytes)")
     bytes4 internal constant MAGICVALUE = 0x1626ba7e;
 
-    bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
-
-    address public immutable factory;
-
     IEntryPoint private immutable entrypointContract;
+    address public immutable factory;
     
     // solhint-disable-next-line no-empty-blocks
     receive() external payable virtual {}
@@ -35,16 +32,14 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, AccessControlEnu
 
     /// @notice Initializes the smart contract wallet.
     function initialize(address _defaultAdmin, bytes calldata) public virtual initializer {
-        _setupRole(DEFAULT_ADMIN_ROLE, _defaultAdmin);
+        _transferOwnership(_defaultAdmin);
     }
 
-    /// @notice Checks whether the caller is the EntryPoint contract or the admin.
-    modifier onlyAdminOrEntrypoint() {
-        require(
-            msg.sender == address(entryPoint()) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
-            "Account: not admin or EntryPoint."
-        );
-        _;
+    /**
+     * Require the function call went through EntryPoint or owner
+     */
+    function _requireFromEntryPointOrOwner() internal view {
+        require(msg.sender == address(entryPoint()) || msg.sender == owner(), "Account: not Owner or EntryPoint");
     }
 
     /**
@@ -62,8 +57,24 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, AccessControlEnu
     }
 
     /// @notice Returns whether a signer is authorized to perform transactions using the wallet.
-    function isValidSigner(address _signer) public view virtual returns (bool) {
-        return hasRole(SIGNER_ROLE, _signer) || hasRole(DEFAULT_ADMIN_ROLE, _signer);
+    function isValidSigner(address _signer) public view virtual returns (bool valid) {
+        if(owner() == _signer)
+            return true;
+        /*
+        // If the signer is a session key that is still valid
+        if (sessionKeys[sessionKey].validUntil != 0 ) {
+            // Calculate the time range
+            bool outOfTimeRange = block.timestamp > sessionKeys[sessionKey].validUntil || block.timestamp < sessionKeys[sessionKey].validAfter;
+            require(!outOfTimeRange, "Session key expired");
+            if(sessionKeys[sessionKey].masterSessionKey)
+                return 0;
+
+            address to_address = address(bytes20(userOp.callData[16:36]));
+            console.log(to_address);
+            require(sessionKeys[sessionKey].whitelist[to_address], "Forbidden address");
+            return 0;
+        }*/
+        
     }
 
     /// @notice See EIP-1271
@@ -83,14 +94,16 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, AccessControlEnu
     /**
      * Execute a transaction (called directly from owner, or by entryPoint)
      */
-    function execute(address dest, uint256 value, bytes calldata func) external onlyAdminOrEntrypoint {
+    function execute(address dest, uint256 value, bytes calldata func) external {
+        _requireFromEntryPointOrOwner();
         _call(dest, value, func);
     }
 
     /**
      * Execute a sequence of transactions
      */
-    function executeBatch(address[] calldata dest, bytes[] calldata func) external onlyAdminOrEntrypoint {
+    function executeBatch(address[] calldata dest, bytes[] calldata func) external {
+        _requireFromEntryPointOrOwner();
         require(dest.length == func.length, "wrong array lengths");
         for (uint256 i = 0; i < dest.length; i++) {
             _call(dest[i], 0, func[i]);
@@ -110,12 +123,12 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, AccessControlEnu
      * @param amount to withdraw
      * @notice ONLY the owner can call this function (it's not using _requireFromEntryPointOrOwner())
      */
-    function withdrawDepositTo(address payable withdrawAddress, uint256 amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function withdrawDepositTo(address payable withdrawAddress, uint256 amount) public onlyOwner {
         entryPoint().withdrawTo(withdrawAddress, amount);
     }
 
     /**
-     * @dev Calls a target contract and reverts if it fails.
+     * @dev Call a target contract and reverts if it fails.
      */
     function _call(
         address _target,
@@ -145,22 +158,5 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, AccessControlEnu
         if (!isValidSigner(signer))
             return SIG_VALIDATION_FAILED;
         return 0;
-    }
-
-    /// @notice Registers a signer in the factory.
-    function _setupRole(bytes32 role, address account) internal virtual override {
-        super._setupRole(role, account);
-    }
-
-    /// @notice Un-registers a signer in the factory.
-    function _revokeRole(bytes32 role, address account) internal virtual override {
-        super._revokeRole(role, account);
-    }
-
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(AccessControlEnumerable, TokenCallbackHandler) returns (bool) {
-        return super.supportsInterface(interfaceId);
     }
 }
