@@ -78,21 +78,16 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, To
     function isValidSigner(address _signer) public view virtual returns (bool valid) {
         if(owner() == _signer)
             return true;
-        /*
-        // If the signer is a session key that is still valid
-        if (sessionKeys[sessionKey].validUntil != 0 ) {
-            // Calculate the time range
-            bool outOfTimeRange = block.timestamp > sessionKeys[sessionKey].validUntil || block.timestamp < sessionKeys[sessionKey].validAfter;
-            require(!outOfTimeRange, "Session key expired");
-            if(sessionKeys[sessionKey].masterSessionKey)
-                return 0;
-
-            address to_address = address(bytes20(userOp.callData[16:36]));
-            console.log(to_address);
-            require(sessionKeys[sessionKey].whitelist[to_address], "Forbidden address");
-            return 0;
-        }*/
         
+        // If the signer is a session key that is still valid
+        if (sessionKeys[_signer].validUntil != 0 ) {
+            // Calculate the time range
+            bool outOfTimeRange = block.timestamp > sessionKeys[_signer].validUntil || block.timestamp < sessionKeys[_signer].validAfter;
+            require(!outOfTimeRange, "Session key expired");
+            if(sessionKeys[_signer].masterSessionKey)
+                return true;
+        }
+        return false;
     }
 
     /// @notice See EIP-1271
