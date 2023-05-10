@@ -4,7 +4,6 @@ import "@nomicfoundation/hardhat-foundry";
 import '@typechain/hardhat'
 import { config as dotEnvConfig } from "dotenv";
 import { resolve } from "path";
-import "./tasks/accounts";
 
 const dotenvConfigPath: string = process.env.DOTENV_CONFIG_PATH || "./.env";
 dotEnvConfig({ path: resolve(__dirname, dotenvConfigPath) });
