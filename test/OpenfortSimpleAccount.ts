@@ -1,4 +1,0 @@
-/**
- * Harhat tests
- * ToDo
- */

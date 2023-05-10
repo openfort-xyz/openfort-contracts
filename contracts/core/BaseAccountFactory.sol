@@ -9,10 +9,12 @@ import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {IBaseAccountFactory} from "../interfaces/IBaseAccountFactory.sol";
 
 /**
- * BaseAccountFactory
- * 
- * 
- */
+  * @title BaseAccountFactory (Non-upgradeable)
+  * @author Eloi<eloi@openfort.xyz>
+  * @notice Abstract contract to create account factories
+  * It inherits from:
+  *  - IBaseAccountFactory
+  */
 abstract contract BaseAccountFactory is IBaseAccountFactory {
     address public immutable accountImplementation;
 
