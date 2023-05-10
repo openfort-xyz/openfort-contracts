@@ -22,10 +22,13 @@ contract StaticAccountTest is Test {
     address private accountAdmin;
     uint256 private accountAdminPKey;
     
-    address payable beneficiary = payable(makeAddr("beneficiary"));
+    address payable private beneficiary = payable(makeAddr("beneficiary"));
 
     event AccountCreated(address indexed account, address indexed accountAdmin);
 
+    /*
+     * Auxiliary function to generate a userOP
+     */
     function _setupUserOp(
         address sender,
         uint256 _signerPKey,
@@ -67,6 +70,10 @@ contract StaticAccountTest is Test {
         ops[0] = op;
     }
 
+    /* 
+     * Auxiliary function to generate a userOP using the execute()
+     * from the account
+     */
     function _setupUserOpExecute(
         address sender,
         uint256 _signerPKey,
@@ -85,6 +92,10 @@ contract StaticAccountTest is Test {
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
 
+    /* 
+     * Auxiliary function to generate a userOP using the executeBatch()
+     * from the account
+     */
     function _setupUserOpExecuteBatch(
         address sender,
         uint256 _signerPKey,
@@ -127,7 +138,9 @@ contract StaticAccountTest is Test {
         testCounter = new TestCounter();
     }
 
-    /// Create an account by directly calling the factory.
+    /*
+     * Create an account by directly calling the factory.
+     */
     function testCreateAccountViaFactory() public {
         // Get the counterfactual address
         address account = staticAccountFactory.getAddress(accountAdmin);
@@ -140,14 +153,15 @@ contract StaticAccountTest is Test {
         staticAccountFactory.createAccount(accountAdmin, bytes(""));
 
         // Make sure the counterfactual address has not been altered
-        account = staticAccountFactory.getAddress(accountAdmin);
+        assertEq(account, staticAccountFactory.getAddress(accountAdmin));
     }
 
-    /// Create an account by directly calling the factory and make it call count() directly.
+    /*
+     * Create an account by directly calling the factory and make it call count() directly.
+     */
     function testCreateAccountTestCounterDirect() public {
         // Create an static account wallet and get its address
-        staticAccountFactory.createAccount(accountAdmin,"");
-        address account = staticAccountFactory.getAddress(accountAdmin);
+        address account = staticAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -160,11 +174,13 @@ contract StaticAccountTest is Test {
         assertEq(testCounter.counters(account), 1);
     }
 
-    /// Create an account by directly calling the factory and make it call count() via EntryPoint.
+    /*
+     * Create an account by directly calling the factory and make it call count()
+     * using the execute() function using the EntryPoint (userOp). Leaveraging ERC-4337.
+     */
     function testCreateAccountTestCounterViaEntrypoint() public {
         // Create an static account wallet and get its address
-        staticAccountFactory.createAccount(accountAdmin,"");
-        address account = staticAccountFactory.getAddress(accountAdmin);
+        address account = staticAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -185,16 +201,18 @@ contract StaticAccountTest is Test {
         assertEq(testCounter.counters(account), 1);
     }
 
-    /// Create an account by directly calling the factory and make it call count() via EntryPoint.
+    /*
+     * Create an account by directly calling the factory and make it call count()
+     * using the executeBatching() function using the EntryPoint (userOp). Leaveraging ERC-4337.
+     */
     function testCreateAccountTestCounterViaEntrypointBatching() public {
         // Create an static account wallet and get its address
-        staticAccountFactory.createAccount(accountAdmin,"");
-        address account = staticAccountFactory.getAddress(accountAdmin);
+        address account = staticAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
-        uint256 count = 1;
+        uint256 count = 3;
         address[] memory targets = new address[](count);
         uint256[] memory values = new uint256[](count);
         bytes[] memory callData = new bytes[](count);
@@ -221,11 +239,12 @@ contract StaticAccountTest is Test {
         assertEq(testCounter.counters(account), 3);
     }
 
-    /// Should fail, sessionKey not registered
+    /*
+     *  Should fail, try to use a sessionKey that is not registered.
+     */
     function testFailCreateAccountTestCounterViaSessionKeyNotregistered() public {
         // Create an static account wallet and get its address
-        staticAccountFactory.createAccount(accountAdmin,"");
-        address account = staticAccountFactory.getAddress(accountAdmin);
+        address account = staticAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -250,11 +269,12 @@ contract StaticAccountTest is Test {
         assertEq(testCounter.counters(account), 1);
     }
 
-    /// Should succeed
+    /*
+     * Use a sessionKey that is registered.
+     */
     function testCreateAccountTestCounterViaSessionKey() public {
         // Create an static account wallet and get its address
-        staticAccountFactory.createAccount(accountAdmin,"");
-        address account = staticAccountFactory.getAddress(accountAdmin);
+        address account = staticAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -282,11 +302,12 @@ contract StaticAccountTest is Test {
         assertEq(testCounter.counters(account), 1);
     }
 
-    /// Should fail
+    /*
+     *  Should fail, try to use a sessionKey that is expired.
+     */
     function testFailCreateAccountTestCounterViaSessionKeyExpired() public {
         // Create an static account wallet and get its address
-        staticAccountFactory.createAccount(accountAdmin,"");
-        address account = staticAccountFactory.getAddress(accountAdmin);
+        address account = staticAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -314,11 +335,12 @@ contract StaticAccountTest is Test {
         assertEq(testCounter.counters(account), 1);
     }
 
-        /// Should fail
+    /*
+     *  Should fail, try to use a sessionKey that is revoked.
+     */
     function testFailCreateAccountTestCounterViaSessionKeyRevoked() public {
         // Create an static account wallet and get its address
-        staticAccountFactory.createAccount(accountAdmin,"");
-        address account = staticAccountFactory.getAddress(accountAdmin);
+        address account = staticAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -345,5 +367,58 @@ contract StaticAccountTest is Test {
 
         // Verifiy that the counter has increased
         assertEq(testCounter.counters(account), 1);
+    }
+
+    /*
+     *  Should fail, try to revoke a sessionKey using a non-privileged user
+     */
+    function testFailRevokeSessionKeyInvalidUser() public {
+        // Create an static account wallet and get its address
+        address account = staticAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        vm.prank(accountAdmin);
+        StaticAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
+        vm.prank(beneficiary);
+        StaticAccount(payable(account)).revokeSessionKey(sessionKey);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+    }
+
+    /*
+     * Test account creation using nonces
+     */
+    function testCreateAccountWithNonce() public {
+        // Create an static account wallet and get its address
+        address account = staticAccountFactory.createAccount(accountAdmin, "");
+        address account2 = staticAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that createAccount() always generate the same address when used with the same admin
+        assertEq(account, account2);
+
+        // Create a new account with accountAdmin using a nonce
+        account2 = staticAccountFactory.createAccountWithNonce(accountAdmin, "", 0);
+
+        // Verifiy that the new account is indeed different now
+        assertNotEq(account, account2);
     }
 }
