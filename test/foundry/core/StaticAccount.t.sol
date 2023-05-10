@@ -85,6 +85,24 @@ contract StaticAccountTest is Test {
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
 
+    function _setupUserOpExecuteBatch(
+        address sender,
+        uint256 _signerPKey,
+        bytes memory _initCode,
+        address[] memory _target,
+        uint256[] memory _value,
+        bytes[] memory _callData
+    ) internal returns (UserOperation[] memory) {
+        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
+            "executeBatch(address[],uint256[],bytes[])",
+            _target,
+            _value,
+            _callData
+        );
+
+        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
+    }
+
     /**
      * @notice Initialize the StaticAccount testing contract.
      * Scenario:
@@ -113,7 +131,6 @@ contract StaticAccountTest is Test {
     function testCreateAccountViaFactory() public {
         // Get the counterfactual address
         address account = staticAccountFactory.getAddress(accountAdmin);
-        console.log(account);
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
@@ -124,7 +141,6 @@ contract StaticAccountTest is Test {
 
         // Make sure the counterfactual address has not been altered
         account = staticAccountFactory.getAddress(accountAdmin);
-        console.log(account);
     }
 
     /// Create an account by directly calling the factory and make it call count() directly.
@@ -162,9 +178,46 @@ contract StaticAccountTest is Test {
             abi.encodeWithSignature("count()")
         );
 
-        EntryPoint(entryPoint).handleOps(userOp, beneficiary);
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
         assertEq(testCounter.counters(account), 1);
+    }
+
+    /// Create an account by directly calling the factory and make it call count() via EntryPoint.
+    function testCreateAccountTestCounterViaEntrypointBatching() public {
+        // Create an static account wallet and get its address
+        staticAccountFactory.createAccount(accountAdmin,"");
+        address account = staticAccountFactory.getAddress(accountAdmin);
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        uint256 count = 1;
+        address[] memory targets = new address[](count);
+        uint256[] memory values = new uint256[](count);
+        bytes[] memory callData = new bytes[](count);
+
+        for (uint256 i = 0; i < count; i += 1) {
+            targets[i] = address(testCounter);
+            values[i] = 0;
+            callData[i] = abi.encodeWithSignature("count()");
+        }
+
+        UserOperation[] memory userOp = _setupUserOpExecuteBatch(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            targets,
+            values,
+            callData
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 3);
     }
 }
