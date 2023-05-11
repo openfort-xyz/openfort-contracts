@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
-interface IBaseAccountFactory {
+interface IBaseOpenfortFactory {
     /// @notice Emitted when a new Account is created.
     event AccountCreated(address indexed account, address indexed accountAdmin);
 

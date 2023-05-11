@@ -6,16 +6,16 @@ import {BaseAccount, UserOperation} from "account-abstraction/core/BaseAccount.s
 
 // Interfaces
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
-import {IBaseAccountFactory} from "../interfaces/IBaseAccountFactory.sol";
+import {IBaseOpenfortFactory} from "../interfaces/IBaseOpenfortFactory.sol";
 
 /**
-  * @title BaseAccountFactory (Non-upgradeable)
+  * @title BaseOpenfortFactory (Non-upgradeable)
   * @author Eloi<eloi@openfort.xyz>
   * @notice Abstract contract to create account factories
   * It inherits from:
-  *  - IBaseAccountFactory
+  *  - IBaseOpenfortFactory
   */
-abstract contract BaseAccountFactory is IBaseAccountFactory {
+abstract contract BaseOpenfortFactory is IBaseOpenfortFactory {
     address public immutable accountImplementation;
 
     constructor(address _accountImpl) {
