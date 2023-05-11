@@ -93,10 +93,16 @@ contract StaticAccountFactoryDeploy is Script, Test {
     function run() public {
         vm.startBroadcast(deployPrivKey);
 
+        // Due to errors with Foundry and create2, let's use hardcoded addresses for testing:
+        // Created with
+        // forge create StaticAccountFactory --mnemonic $MNEMONIC --constructor-args $ENTRY_POINT_ADDRESS --rpc-url $POLYGON_MUMBAI_RPC --verify
         staticAccountFactory = StaticAccountFactory(0x6E767F52d49b0abD686003727b8bc0684011819B);
+        // Created with
+        // forge create TestCounter --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify 
         testCounter = TestCounter(0xBC7c1ce2908792def619514e8B49083D83E5d8B0);
 
-        // Create an static account wallet and get its address
+        // Created with:
+        // $forge create StaticAccount --constructor-args $ENTRY_POINT_ADDRESS 0x6E767F52d49b0abD686003727b8bc0684011819B --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify                
         address account = 0x5617829E7a6c45F508E0Bb4be2A2A54ca08C01BC;
         
         uint256 count = 3;
