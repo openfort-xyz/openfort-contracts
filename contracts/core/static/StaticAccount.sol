@@ -15,7 +15,7 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
   * @author Eloi<eloi@openfort.xyz>
   * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
   * It inherits from:
-  *  - Initializable because StaticAccounts are ment to be created using StaticAccountFactory
+  *  - Initializable because StaticAccounts are meant to be created using StaticAccountFactory
   *  - IERC1271 for Signature Validation
   *  - BaseAccount to comply with ERC-4337 
   *  - Ownable2Step to have permissions
@@ -35,7 +35,7 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, To
      * @param validUntil this sessionKey is valid only after this timestamp.
      * @param masterSessionKey if set to true, the session key does not have any limitation other than the validity time
      * @param canSign if set to true, the session key can sign as the account (future)
-     * @param _whitelist - this session key can only interact with the addresses in the whitelist.
+     * @param whitelist - this session key can only interact with the addresses in the whitelist.
      */
     struct SessionKeyStruct {
         uint48 validAfter;

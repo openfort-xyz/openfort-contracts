@@ -3,7 +3,7 @@ pragma solidity ^0.8.12;
 
 import {BaseAccount} from "account-abstraction/core/BaseAccount.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
-import {BaseAccountFactory} from "../BaseAccountFactory.sol";
+import {BaseOpenfortFactory} from "../BaseOpenfortFactory.sol";
 
 // Smart wallet implementation
 import {StaticAccount} from "./StaticAccount.sol";
@@ -13,10 +13,10 @@ import {StaticAccount} from "./StaticAccount.sol";
   * @author Eloi<eloi@openfort.xyz>
   * @notice Factory to deploy StaticAccounts
   * It inherits from:
-  *  - BaseAccountFactory because it is following the base implementation for factories
+  *  - BaseOpenfortFactory because it is following the base implementation for factories
   */
-contract StaticAccountFactory is BaseAccountFactory {
-    constructor(IEntryPoint _entrypoint) BaseAccountFactory(address(new StaticAccount(_entrypoint, address(this)))) {}
+contract StaticAccountFactory is BaseOpenfortFactory {
+    constructor(IEntryPoint _entrypoint) BaseOpenfortFactory(address(new StaticAccount(_entrypoint, address(this)))) {}
 
     /*
      * @dev Called in `createAccount`. Initializes the account contract created in `createAccount`.
