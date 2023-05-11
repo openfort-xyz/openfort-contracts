@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
 
 import {BaseAccount, UserOperation, IEntryPoint} from "account-abstraction/core/BaseAccount.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
 
 /**
-  * @title StaticOpenfortAccount (Non-upgradeable)
+  * @title BaseUpgradeableOpenfortAccount (Non-upgradeable)
   * @author Eloi<eloi@openfort.xyz>
   * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
   * It inherits from:
@@ -20,8 +20,8 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
   *  - Ownable2Step to have permissions
   *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
   */
-abstract contract BaseOpenfortAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, TokenCallbackHandler {
-    using ECDSA for bytes32;
+abstract contract BaseUpgradeableOpenfortAccount is BaseAccount, Initializable, IERC1271Upgradeable, Ownable2StepUpgradeable, TokenCallbackHandler {
+    using ECDSAUpgradeable for bytes32;
 
     // bytes4(keccak256("isValidSignature(bytes32,bytes)")
     bytes4 internal constant MAGICVALUE = 0x1626ba7e;
