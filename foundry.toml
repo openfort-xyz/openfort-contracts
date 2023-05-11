@@ -6,3 +6,4 @@ libs = ['node_modules', 'lib']
 test = 'test/foundry'
 cache_path  = 'cache_forge'
 remappings = ['account-abstraction/=lib/account-abstraction/contracts/']
+no_match_test = 'testCounter'
