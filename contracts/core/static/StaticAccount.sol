@@ -126,11 +126,15 @@ contract StaticAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, To
     /**
      * Execute a sequence of transactions
      */
-    function executeBatch(address[] calldata dest, bytes[] calldata func) external {
+    function executeBatch(
+        address[] calldata _target,
+        uint256[] calldata _value,
+        bytes[] calldata _calldata
+    ) external virtual {
         _requireFromEntryPointOrOwner();
-        require(dest.length == func.length, "wrong array lengths");
-        for (uint256 i = 0; i < dest.length; i++) {
-            _call(dest[i], 0, func[i]);
+        require(_target.length == _calldata.length && _target.length == _value.length, "Account: wrong array lengths.");
+        for (uint256 i = 0; i < _target.length; i++) {
+            _call(_target[i], _value[i], _calldata[i]);
         }
     }
 
