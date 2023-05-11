@@ -14,13 +14,13 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
   * @author Eloi<eloi@openfort.xyz>
   * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
   * It inherits from:
-  *  - Initializable because StaticOpenfortAccounts are meant to be created using StaticOpenfortAccountFactory
-  *  - IERC1271 for Signature Validation
   *  - BaseAccount to comply with ERC-4337 
-  *  - Ownable2Step to have permissions
+  *  - Initializable because StaticOpenfortAccounts are meant to be created using StaticOpenfortAccountFactory
+  *  - Ownable2StepUpgradeable to have permissions
+  *  - IERC1271Upgradeable for Signature Validation
   *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
   */
-abstract contract BaseUpgradeableOpenfortAccount is BaseAccount, Initializable, IERC1271Upgradeable, Ownable2StepUpgradeable, TokenCallbackHandler {
+abstract contract BaseUpgradeableOpenfortAccount is BaseAccount, Initializable, Ownable2StepUpgradeable, IERC1271Upgradeable, TokenCallbackHandler {
     using ECDSAUpgradeable for bytes32;
 
     // bytes4(keccak256("isValidSignature(bytes32,bytes)")
