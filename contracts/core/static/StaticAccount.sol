@@ -9,14 +9,13 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {BaseAccount, UserOperation} from "account-abstraction/core/BaseAccount.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
-import {StaticAccountFactory} from "./StaticAccountFactory.sol";
 
 /**
   * @title StaticAccount (Non-upgradeable)
   * @author Eloi<eloi@openfort.xyz>
   * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
   * It inherits from:
-  *  - Initializable because StaticAccounts are ment to be cerated using StaticAccountFactory
+  *  - Initializable because StaticAccounts are ment to be created using StaticAccountFactory
   *  - IERC1271 for Signature Validation
   *  - BaseAccount to comply with ERC-4337 
   *  - Ownable2Step to have permissions
