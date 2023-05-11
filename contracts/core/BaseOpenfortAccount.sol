@@ -11,17 +11,17 @@ import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
 
 /**
-  * @title StaticAccount (Non-upgradeable)
+  * @title StaticOpenfortAccount (Non-upgradeable)
   * @author Eloi<eloi@openfort.xyz>
   * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
   * It inherits from:
-  *  - Initializable because StaticAccounts are meant to be created using StaticAccountFactory
+  *  - Initializable because StaticOpenfortAccounts are meant to be created using StaticOpenfortAccountFactory
   *  - IERC1271 for Signature Validation
   *  - BaseAccount to comply with ERC-4337 
   *  - Ownable2Step to have permissions
   *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
   */
-contract StaticAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, TokenCallbackHandler {
+contract BaseOpenfortAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, TokenCallbackHandler {
     using ECDSA for bytes32;
     
     // bytes4(keccak256("isValidSignature(bytes32,bytes)")

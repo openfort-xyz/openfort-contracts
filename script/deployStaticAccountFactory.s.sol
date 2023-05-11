@@ -2,9 +2,9 @@
 pragma solidity ^0.8.12;
 
 import {Script} from "forge-std/Script.sol";
-import {StaticAccountFactory, IEntryPoint} from "../contracts/core/static/StaticAccountFactory.sol";
+import {StaticOpenfortAccountFactory, IEntryPoint} from "../contracts/core/static/StaticOpenfortAccountFactory.sol";
 
-contract StaticAccountFactoryDeploy is Script {
+contract StaticOpenfortAccountFactoryDeploy is Script {
     uint256 deployPrivKey;
     address deployAddress;
     function setUp() public {
@@ -15,12 +15,12 @@ contract StaticAccountFactoryDeploy is Script {
     function run() public {
         vm.startBroadcast(deployPrivKey);
 
-        StaticAccountFactory staticAccountFactory = new StaticAccountFactory(IEntryPoint(address(0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789)));
-        staticAccountFactory.accountImplementation();
+        StaticOpenfortAccountFactory staticOpenfortAccountFactory = new StaticOpenfortAccountFactory(IEntryPoint(address(0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789)));
+        staticOpenfortAccountFactory.accountImplementation();
   
         // The first call should create a new account, while the second will just return the corresponding account address
-        staticAccountFactory.createAccount(deployAddress, bytes(""));
-        staticAccountFactory.createAccount(deployAddress, bytes(""));
+        staticOpenfortAccountFactory.createAccount(deployAddress, bytes(""));
+        staticOpenfortAccountFactory.createAccount(deployAddress, bytes(""));
 
         vm.stopBroadcast();
     }

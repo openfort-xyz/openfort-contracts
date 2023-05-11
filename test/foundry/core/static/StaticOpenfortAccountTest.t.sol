@@ -5,14 +5,14 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation, IEntryPoint} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
-import {StaticAccountFactory} from "contracts/core/static/StaticAccountFactory.sol";
-import {StaticAccount} from "contracts/core/static/StaticAccount.sol";
+import {StaticOpenfortAccountFactory} from "contracts/core/static/StaticOpenfortAccountFactory.sol";
+import {StaticOpenfortAccount} from "contracts/core/static/StaticOpenfortAccount.sol";
 
-contract StaticAccountTest is Test {
+contract StaticOpenfortAccountTest is Test {
     using ECDSA for bytes32;
 
     EntryPoint public entryPoint;
-    StaticAccountFactory public staticAccountFactory;
+    StaticOpenfortAccountFactory public staticOpenfortAccountFactory;
     TestCounter public testCounter;
     
     // Testing addresses
@@ -115,9 +115,9 @@ contract StaticAccountTest is Test {
     }
 
     /**
-     * @notice Initialize the StaticAccount testing contract.
+     * @notice Initialize the StaticOpenfortAccount testing contract.
      * Scenario:
-     * - factoryAdmin is the deployer (and owner) of the staticAccountFactory
+     * - factoryAdmin is the deployer (and owner) of the StaticOpenfortAccountFactory
      * - accountAdmin is the account used to deploy new static accounts
      * - entryPoint is the singleton EntryPoint
      * - testCounter is the counter used to test userOps
@@ -133,7 +133,7 @@ contract StaticAccountTest is Test {
         entryPoint = new EntryPoint();
         // deploy account factory
         vm.prank(factoryAdmin);
-        staticAccountFactory = new StaticAccountFactory(IEntryPoint(payable(address(entryPoint))));
+        staticOpenfortAccountFactory = new StaticOpenfortAccountFactory(IEntryPoint(payable(address(entryPoint))));
 
         testCounter = new TestCounter();
     }
@@ -143,17 +143,17 @@ contract StaticAccountTest is Test {
      */
     function testCreateAccountViaFactory() public {
         // Get the counterfactual address
-        address account = staticAccountFactory.getAddress(accountAdmin);
+        address account = staticOpenfortAccountFactory.getAddress(accountAdmin);
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
         emit AccountCreated(account, accountAdmin);
 
         // Deploy a static account to the counterfactual address
-        staticAccountFactory.createAccount(accountAdmin, bytes(""));
+        staticOpenfortAccountFactory.createAccount(accountAdmin, bytes(""));
 
         // Make sure the counterfactual address has not been altered
-        assertEq(account, staticAccountFactory.getAddress(accountAdmin));
+        assertEq(account, staticOpenfortAccountFactory.getAddress(accountAdmin));
     }
 
     /*
@@ -161,14 +161,14 @@ contract StaticAccountTest is Test {
      */
     function testCreateAccountTestCounterDirect() public {
         // Create an static account wallet and get its address
-        address account = staticAccountFactory.createAccount(accountAdmin, "");
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         // Make the admin of the static account wallet (deployer) call "count"
         vm.prank(accountAdmin);
-        StaticAccount(payable(account)).execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
+        StaticOpenfortAccount(payable(account)).execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
 
         // Verifiy that the counter has increased
         assertEq(testCounter.counters(account), 1);
@@ -180,7 +180,7 @@ contract StaticAccountTest is Test {
      */
     function testCreateAccountTestCounterViaEntrypoint() public {
         // Create an static account wallet and get its address
-        address account = staticAccountFactory.createAccount(accountAdmin, "");
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -207,7 +207,7 @@ contract StaticAccountTest is Test {
      */
     function testCreateAccountTestCounterViaEntrypointBatching() public {
         // Create an static account wallet and get its address
-        address account = staticAccountFactory.createAccount(accountAdmin, "");
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -244,7 +244,7 @@ contract StaticAccountTest is Test {
      */
     function testFailCreateAccountTestCounterViaSessionKeyNotregistered() public {
         // Create an static account wallet and get its address
-        address account = staticAccountFactory.createAccount(accountAdmin, "");
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -274,7 +274,7 @@ contract StaticAccountTest is Test {
      */
     function testCreateAccountTestCounterViaSessionKey() public {
         // Create an static account wallet and get its address
-        address account = staticAccountFactory.createAccount(accountAdmin, "");
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -284,7 +284,7 @@ contract StaticAccountTest is Test {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
         vm.prank(accountAdmin);
-        StaticAccount(payable(account)).registerSessionKey(sessionKey , 0, 2**48 - 1);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey , 0, 2**48 - 1);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
@@ -307,7 +307,7 @@ contract StaticAccountTest is Test {
      */
     function testFailCreateAccountTestCounterViaSessionKeyExpired() public {
         // Create an static account wallet and get its address
-        address account = staticAccountFactory.createAccount(accountAdmin, "");
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -317,7 +317,7 @@ contract StaticAccountTest is Test {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
         vm.prank(accountAdmin);
-        StaticAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
@@ -340,7 +340,7 @@ contract StaticAccountTest is Test {
      */
     function testFailCreateAccountTestCounterViaSessionKeyRevoked() public {
         // Create an static account wallet and get its address
-        address account = staticAccountFactory.createAccount(accountAdmin, "");
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -350,8 +350,8 @@ contract StaticAccountTest is Test {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
         vm.prank(accountAdmin);
-        StaticAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
-        StaticAccount(payable(account)).revokeSessionKey(sessionKey);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
+        StaticOpenfortAccount(payable(account)).revokeSessionKey(sessionKey);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
@@ -374,7 +374,7 @@ contract StaticAccountTest is Test {
      */
     function testFailRevokeSessionKeyInvalidUser() public {
         // Create an static account wallet and get its address
-        address account = staticAccountFactory.createAccount(accountAdmin, "");
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
@@ -384,9 +384,9 @@ contract StaticAccountTest is Test {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
         vm.prank(accountAdmin);
-        StaticAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
         vm.prank(beneficiary);
-        StaticAccount(payable(account)).revokeSessionKey(sessionKey);
+        StaticOpenfortAccount(payable(account)).revokeSessionKey(sessionKey);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
@@ -409,14 +409,14 @@ contract StaticAccountTest is Test {
      */
     function testCreateAccountWithNonce() public {
         // Create an static account wallet and get its address
-        address account = staticAccountFactory.createAccount(accountAdmin, "");
-        address account2 = staticAccountFactory.createAccount(accountAdmin, "");
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+        address account2 = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
         // Verifiy that createAccount() always generate the same address when used with the same admin
         assertEq(account, account2);
 
         // Create a new account with accountAdmin using a nonce
-        account2 = staticAccountFactory.createAccountWithNonce(accountAdmin, "", 0);
+        account2 = staticOpenfortAccountFactory.createAccountWithNonce(accountAdmin, "", 0);
 
         // Verifiy that the new account is indeed different now
         assertNotEq(account, account2);
