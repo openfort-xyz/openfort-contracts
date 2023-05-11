@@ -21,10 +21,7 @@ contract StaticAccountFactoryDeploy is Script, Test {
     function setUp() public {
         deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
         deployAddress = vm.addr(deployPrivKey);
-
         entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
-        staticAccountFactory = StaticAccountFactory(0x928495bddb41FB3eFdee06dABd6840184f6aBf21);
-        testCounter = new TestCounter();
     }
 
     /*
@@ -96,11 +93,11 @@ contract StaticAccountFactoryDeploy is Script, Test {
     function run() public {
         vm.startBroadcast(deployPrivKey);
 
-        // Create an static account wallet and get its address
-        address account = staticAccountFactory.getAddress(deployAddress);
+        staticAccountFactory = StaticAccountFactory(0x6E767F52d49b0abD686003727b8bc0684011819B);
+        testCounter = TestCounter(0xBC7c1ce2908792def619514e8B49083D83E5d8B0);
 
-        // Verifiy that the counter is stil set to 0
-        // assertEq(testCounter.counters(account), 0);
+        // Create an static account wallet and get its address
+        address account = 0x5617829E7a6c45F508E0Bb4be2A2A54ca08C01BC;
         
         uint256 count = 3;
         address[] memory targets = new address[](count);
@@ -124,9 +121,6 @@ contract StaticAccountFactoryDeploy is Script, Test {
 
         entryPoint.depositTo{value: 10000000000000000}(account);
         entryPoint.handleOps(userOp, payable(deployAddress));
-
-        // Verifiy that the counter has increased
-        // assertEq(testCounter.counters(account), 3);
 
         vm.stopBroadcast();
     }
