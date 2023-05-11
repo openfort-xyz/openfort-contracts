@@ -2,10 +2,9 @@
 pragma solidity ^0.8.12;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {BaseAccount, UserOperation} from "account-abstraction/core/BaseAccount.sol";
+import {BaseAccount, UserOperation, IEntryPoint} from "account-abstraction/core/BaseAccount.sol";
 
 // Interfaces
-import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {IBaseOpenfortFactory} from "../interfaces/IBaseOpenfortFactory.sol";
 
 /**
