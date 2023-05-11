@@ -21,9 +21,9 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
   *  - Ownable2Step to have permissions
   *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
   */
-contract BaseOpenfortAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, TokenCallbackHandler {
+abstract contract BaseOpenfortAccount is Initializable, IERC1271, BaseAccount, Ownable2Step, TokenCallbackHandler {
     using ECDSA for bytes32;
-    
+
     // bytes4(keccak256("isValidSignature(bytes32,bytes)")
     bytes4 internal constant MAGICVALUE = 0x1626ba7e;
 
