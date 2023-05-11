@@ -6,17 +6,17 @@ import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {BaseOpenfortFactory} from "../BaseOpenfortFactory.sol";
 
 // Smart wallet implementation
-import {StaticAccount} from "./StaticAccount.sol";
+import {StaticOpenfortAccount} from "./StaticOpenfortAccount.sol";
 
 /**
-  * @title StaticAccountFactory (Non-upgradeable)
+  * @title StaticOpenfortAccountFactory (Non-upgradeable)
   * @author Eloi<eloi@openfort.xyz>
-  * @notice Factory to deploy StaticAccounts
+  * @notice Factory to deploy StaticOpenfortAccounts
   * It inherits from:
   *  - BaseOpenfortFactory because it is following the base implementation for factories
   */
-contract StaticAccountFactory is BaseOpenfortFactory {
-    constructor(IEntryPoint _entrypoint) BaseOpenfortFactory(address(new StaticAccount(_entrypoint, address(this)))) {}
+contract StaticOpenfortAccountFactory is BaseOpenfortFactory {
+    constructor(IEntryPoint _entrypoint) BaseOpenfortFactory(address(new StaticOpenfortAccount(_entrypoint, address(this)))) {}
 
     /*
      * @dev Called in `createAccount`. Initializes the account contract created in `createAccount`.
@@ -26,6 +26,6 @@ contract StaticAccountFactory is BaseOpenfortFactory {
         address _admin,
         bytes calldata _data
     ) internal override {
-        StaticAccount(payable(_account)).initialize(_admin, _data);
+        StaticOpenfortAccount(payable(_account)).initialize(_admin, _data);
     }
 }

@@ -6,13 +6,13 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {EntryPoint, UserOperation, IEntryPoint} from "account-abstraction/core/EntryPoint.sol";
-import {StaticAccountFactory} from "../contracts/core/static/StaticAccountFactory.sol";
+import {StaticOpenfortAccountFactory} from "../contracts/core/static/StaticOpenfortAccountFactory.sol";
 
-contract StaticAccountFactoryDeploy is Script, Test {
+contract StaticOpenfortAccountFactoryDeploy is Script, Test {
     using ECDSA for bytes32;
 
     EntryPoint public entryPoint;
-    StaticAccountFactory public staticAccountFactory;
+    StaticOpenfortAccountFactory public staticOpenfortAccountFactory;
     TestCounter public testCounter;
 
     uint256 deployPrivKey;
@@ -95,14 +95,14 @@ contract StaticAccountFactoryDeploy is Script, Test {
 
         // Due to errors with Foundry and create2, let's use hardcoded addresses for testing:
         // Created with
-        // forge create StaticAccountFactory --mnemonic $MNEMONIC --constructor-args $ENTRY_POINT_ADDRESS --rpc-url $POLYGON_MUMBAI_RPC --verify
-        staticAccountFactory = StaticAccountFactory(0x6E767F52d49b0abD686003727b8bc0684011819B);
+        // forge create StaticOpenfortAccountFactory --mnemonic $MNEMONIC --constructor-args $ENTRY_POINT_ADDRESS --rpc-url $POLYGON_MUMBAI_RPC --verify
+        staticOpenfortAccountFactory = StaticOpenfortAccountFactory(0x6E767F52d49b0abD686003727b8bc0684011819B);
         // Created with
         // forge create TestCounter --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify 
         testCounter = TestCounter(0xBC7c1ce2908792def619514e8B49083D83E5d8B0);
 
         // Created with:
-        // $forge create StaticAccount --constructor-args $ENTRY_POINT_ADDRESS 0x6E767F52d49b0abD686003727b8bc0684011819B --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify                
+        // $forge create StaticOpenfortAccount --constructor-args $ENTRY_POINT_ADDRESS 0x6E767F52d49b0abD686003727b8bc0684011819B --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify                
         address account = 0x5617829E7a6c45F508E0Bb4be2A2A54ca08C01BC;
         
         uint256 count = 3;
