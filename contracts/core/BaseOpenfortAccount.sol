@@ -113,6 +113,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         if(funcSelector == EXECUTE_SELECTOR) {
             address toContract;
             (toContract, , ) = abi.decode(callData[4:], (address,uint256,bytes));
+            require(toContract != address(this), "Only masterSessionKey can reenter");
             require(sessionKeys[_sessionKey].whitelist[toContract], "Contract's not in the sessionKey's whitelist");
             return true;
         }
@@ -120,8 +121,10 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
             address[] memory toContract;
             (toContract, , ) = abi.decode(callData[4:], (address[],uint256[],bytes[]));
             uint256 lengthBatch = toContract.length;
-            for(uint256 i = 0; i < lengthBatch; i++)
+            for(uint256 i = 0; i < lengthBatch; i++) { 
+                require(toContract[i] != address(this), "Only masterSessionKey can reenter");
                 require(sessionKeys[_sessionKey].whitelist[toContract[i]], "One contract's not in the sessionKey's whitelist");
+            }
             return true;
         }
 
