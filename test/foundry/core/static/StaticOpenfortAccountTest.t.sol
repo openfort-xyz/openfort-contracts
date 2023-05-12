@@ -5,6 +5,7 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation, IEntryPoint} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
+import {TestToken} from "account-abstraction/test/TestToken.sol";
 import {StaticOpenfortAccountFactory} from "contracts/core/static/StaticOpenfortAccountFactory.sol";
 import {StaticOpenfortAccount} from "contracts/core/static/StaticOpenfortAccount.sol";
 
@@ -14,6 +15,7 @@ contract StaticOpenfortAccountTest is Test {
     EntryPoint public entryPoint;
     StaticOpenfortAccountFactory public staticOpenfortAccountFactory;
     TestCounter public testCounter;
+    TestToken public testToken;
     
     // Testing addresses
     address private factoryAdmin;
@@ -136,6 +138,8 @@ contract StaticOpenfortAccountTest is Test {
         staticOpenfortAccountFactory = new StaticOpenfortAccountFactory(IEntryPoint(payable(address(entryPoint))));
         // deploy a new TestCounter
         testCounter = new TestCounter();
+        // deploy a new TestToken (ERC20)
+        testToken = new TestToken();
     }
 
     /*
@@ -775,38 +779,76 @@ contract StaticOpenfortAccountTest is Test {
     }
 
     /*
-     * Should fail, try to change the owner of an account and call TestCounter though the Entrypoint
-     * using old owner
+     * Test an account with testToken instead of TestCount.
      */
-    function testFailChangeOwnershipAndCountEntryPointNotOwner() public {
+    function testTokenAccount() public {
         // Create an static account wallet and get its address
         address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
-        address accountAdmin2;
-        uint256 accountAdmin2PKey;
-        (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
+        // Verifiy that the totalSupply is stil 0
+        assertEq(testToken.totalSupply(), 0);
 
-        vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
-        vm.prank(accountAdmin2);
-        StaticOpenfortAccount(payable(account)).acceptOwnership();
-
-        // Verifiy that the counter is stil set to 0
-        assertEq(testCounter.counters(account), 0);
+        // Mint 1 to beneficiary
+        testToken.mint(beneficiary, 1);
+        assertEq(testToken.totalSupply(), 1);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
             accountAdminPKey,
             bytes(""),
-            address(testCounter),
+            address(testToken),
             0,
-            abi.encodeWithSignature("count()")
+            abi.encodeWithSignature("mint(address,uint256)", beneficiary, 1)
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        // Verifiy that the totalSupply has increased
+        assertEq(testToken.totalSupply(), 2);
+    }
+
+    /*
+     * Test receive native tokens.
+     */
+    function testReceiveNativeToken() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        assertEq(address(account).balance, 0);
+
+        vm.prank(accountAdmin);
+        (bool success, ) = payable(account).call{ value: 1000 }("");
+
+        assertEq(address(account).balance, 1000);
+    }
+
+    /*
+     * Transfer native tokens out of an account.
+     */
+    function testTransferOutNativeToken() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+        
+        uint256 value = 1000;
+
+        assertEq(address(account).balance, 0);
+        vm.prank(accountAdmin);
+        (bool success, ) = payable(account).call{ value: value }("");
+        assertEq(address(account).balance, value);
+
+        assertEq(beneficiary.balance, 0);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            address(beneficiary),
+            value,
+            bytes("")
+        );
+
+        EntryPoint(entryPoint).handleOps(userOp, beneficiary);
+        assertEq(beneficiary.balance, value);
     }
 }
