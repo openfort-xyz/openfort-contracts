@@ -711,4 +711,102 @@ contract StaticOpenfortAccountTest is Test {
         // Verifiy that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
+
+    /*
+     * Change the owner of an account and call TestCounter directly
+     */
+    function testChangeOwnershipAndCountDirect() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        address accountAdmin2;
+        uint256 accountAdmin2PKey;
+        (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
+
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
+        vm.prank(accountAdmin2);
+        StaticOpenfortAccount(payable(account)).acceptOwnership();
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        // Make the admin of the static account wallet (deployer) call "count"
+        vm.prank(accountAdmin2);
+        StaticOpenfortAccount(payable(account)).execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+    }
+
+    /*
+     * Change the owner of an account and call TestCounter though the Entrypoint
+     */
+    function testChangeOwnershipAndCountEntryPoint() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        address accountAdmin2;
+        uint256 accountAdmin2PKey;
+        (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
+
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
+        vm.prank(accountAdmin2);
+        StaticOpenfortAccount(payable(account)).acceptOwnership();
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            accountAdmin2PKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+    }
+
+    /*
+     * Should fail, try to change the owner of an account and call TestCounter though the Entrypoint
+     * using old owner
+     */
+    function testFailChangeOwnershipAndCountEntryPointNotOwner() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        address accountAdmin2;
+        uint256 accountAdmin2PKey;
+        (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
+
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
+        vm.prank(accountAdmin2);
+        StaticOpenfortAccount(payable(account)).acceptOwnership();
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+    }
 }
