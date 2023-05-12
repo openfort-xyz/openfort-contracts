@@ -94,7 +94,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      */
     function isValidSessionKey(address _sessionKey, bytes calldata callData) public virtual returns (bool valid) {
         // If the signer is a session key that is still valid
-        require(sessionKeys[_sessionKey].validUntil != 0, "Session key revoked");
+        require(sessionKeys[_sessionKey].validUntil != 0, "Not owner or session key revoked");
         
         // Calculate the time range
         bool outOfTimeRange = block.timestamp > sessionKeys[_sessionKey].validUntil || block.timestamp < sessionKeys[_sessionKey].validAfter;
