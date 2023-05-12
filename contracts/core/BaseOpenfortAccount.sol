@@ -37,12 +37,14 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * @param validAfter this sessionKey is valid only after this timestamp.
      * @param validUntil this sessionKey is valid only after this timestamp.
      * @param masterSessionKey if set to true, the session key does not have any limitation other than the validity time
+     * @param limit limit of uses remaining
      * @param canSign if set to true, the session key can sign as the account (future)
      * @param whitelist - this session key can only interact with the addresses in the whitelist.
      */
     struct SessionKeyStruct {
         uint48 validAfter;
         uint48 validUntil;
+        uint48 limit;
         bool masterSessionKey;
         mapping(address => bool) whitelist;
     }
@@ -89,7 +91,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
     /*
      * @notice Return whether a sessionKey is valid.
      */
-    function isValidSessionKey(address _sessionKey, bytes calldata callData) public view virtual returns (bool valid) {
+    function isValidSessionKey(address _sessionKey, bytes calldata callData) public virtual returns (bool valid) {
         // If the signer is a session key that is still valid
         require(sessionKeys[_sessionKey].validUntil != 0, "Session key revoked");
         
@@ -103,6 +105,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
 
         // If it is not a masterSessionKey, let's check for whitelisting
 
+        require(sessionKeys[_sessionKey].limit > 0, "Limit of transactions per sessionKey reached");
+
         // Let's first get the selector of the function that the caller is using
         bytes4 funcSelector =
             callData[0] |
@@ -115,6 +119,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
             (toContract, , ) = abi.decode(callData[4:], (address,uint256,bytes));
             require(toContract != address(this), "Only masterSessionKey can reenter");
             require(sessionKeys[_sessionKey].whitelist[toContract], "Contract's not in the sessionKey's whitelist");
+            sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - 1;
             return true;
         }
         else if(funcSelector == EXECUTEBATCH_SELECTOR) {
@@ -125,6 +130,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
                 require(toContract[i] != address(this), "Only masterSessionKey can reenter");
                 require(sessionKeys[_sessionKey].whitelist[toContract[i]], "One contract's not in the sessionKey's whitelist");
             }
+            sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - uint48(lengthBatch);
+
             return true;
         }
 
@@ -246,11 +253,13 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * @param _key session key to register
      * @param _validAfter - this session key is valid only after this timestamp.
      * @param _validUntil - this session key is valid only up to this timestamp.
+     * @param _limit - this session key is valid only up to this timestamp.
      * @param _whitelist - this session key can only interact with the addresses in the _whitelist.
      */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, address[] calldata _whitelist) external onlyOwner {
+    function registerSessionKey(address _key, uint48 _validAfter, uint48 _limit, uint48 _validUntil, address[] calldata _whitelist) external onlyOwner {
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
+        sessionKeys[_key].limit = _limit;
         sessionKeys[_key].masterSessionKey = false;
 
         uint whitelistLen = _whitelist.length;
