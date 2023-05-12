@@ -113,17 +113,15 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         if(funcSelector == EXECUTE_SELECTOR) {
             address toContract;
             (toContract, , ) = abi.decode(callData[4:], (address,uint256,bytes));
-            return sessionKeys[_sessionKey].whitelist[toContract];
+            require(sessionKeys[_sessionKey].whitelist[toContract], "Contract's not in the sessionKey's whitelist");
+            return true;
         }
-
-        if(funcSelector == EXECUTEBATCH_SELECTOR) {
+        else if(funcSelector == EXECUTEBATCH_SELECTOR) {
             address[] memory toContract;
             (toContract, , ) = abi.decode(callData[4:], (address[],uint256[],bytes[]));
             uint256 lengthBatch = toContract.length;
-            for(uint256 i = 0; i < lengthBatch; i += 1) {
-                if(!sessionKeys[_sessionKey].whitelist[toContract[i]])
-                    return false;
-            }
+            for(uint256 i = 0; i < lengthBatch; i++)
+                require(sessionKeys[_sessionKey].whitelist[toContract[i]], "One contract's not in the sessionKey's whitelist");
             return true;
         }
 
@@ -164,7 +162,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
     ) external virtual {
         _requireFromEntryPointOrOwner();
         require(_target.length == _calldata.length && _target.length == _value.length, "Account: wrong array lengths.");
-        for (uint256 i = 0; i < _target.length; i++) {
+        for(uint256 i = 0; i < _target.length; i++) {
             _call(_target[i], _value[i], _calldata[i]);
         }
     }
