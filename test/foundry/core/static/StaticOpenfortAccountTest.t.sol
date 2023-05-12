@@ -157,9 +157,27 @@ contract StaticOpenfortAccountTest is Test {
     }
 
     /*
-     * Create an account by directly calling the factory and make it call count() directly.
+     * Test account creation using nonces using the factory.
      */
-    function testCreateAccountTestCounterDirect() public {
+    function testCreateAccountViaFactoryWithNonce() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+        address account2 = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that createAccount() always generate the same address when used with the same admin
+        assertEq(account, account2);
+
+        // Create a new account with accountAdmin using a nonce
+        account2 = staticOpenfortAccountFactory.createAccountWithNonce(accountAdmin, "", 0);
+
+        // Verifiy that the new account is indeed different now
+        assertNotEq(account, account2);
+    }
+
+    /*
+     * Create an account using the factory and make it call count() directly.
+     */
+    function testTestCounterDirect() public {
         // Create an static account wallet and get its address
         address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
@@ -178,7 +196,7 @@ contract StaticOpenfortAccountTest is Test {
      * Create an account by directly calling the factory and make it call count()
      * using the execute() function using the EntryPoint (userOp). Leaveraging ERC-4337.
      */
-    function testCreateAccountTestCounterViaEntrypoint() public {
+    function testTestCounterViaEntrypoint() public {
         // Create an static account wallet and get its address
         address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
@@ -205,7 +223,7 @@ contract StaticOpenfortAccountTest is Test {
      * Create an account by directly calling the factory and make it call count()
      * using the executeBatching() function using the EntryPoint (userOp). Leaveraging ERC-4337.
      */
-    function testCreateAccountTestCounterViaEntrypointBatching() public {
+    function testTestCounterViaEntrypointBatching() public {
         // Create an static account wallet and get its address
         address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
@@ -242,7 +260,7 @@ contract StaticOpenfortAccountTest is Test {
     /*
      *  Should fail, try to use a sessionKey that is not registered.
      */
-    function testFailCreateAccountTestCounterViaSessionKeyNotregistered() public {
+    function testFailTestCounterViaSessionKeyNotregistered() public {
         // Create an static account wallet and get its address
         address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
@@ -272,7 +290,7 @@ contract StaticOpenfortAccountTest is Test {
     /*
      * Use a sessionKey that is registered.
      */
-    function testCreateAccountTestCounterViaSessionKey() public {
+    function testTestCounterViaSessionKey() public {
         // Create an static account wallet and get its address
         address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
@@ -305,7 +323,7 @@ contract StaticOpenfortAccountTest is Test {
     /*
      *  Should fail, try to use a sessionKey that is expired.
      */
-    function testFailCreateAccountTestCounterViaSessionKeyExpired() public {
+    function testFailTestCounterViaSessionKeyExpired() public {
         // Create an static account wallet and get its address
         address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
@@ -338,7 +356,7 @@ contract StaticOpenfortAccountTest is Test {
     /*
      *  Should fail, try to use a sessionKey that is revoked.
      */
-    function testFailCreateAccountTestCounterViaSessionKeyRevoked() public {
+    function testFailTestCounterViaSessionKeyRevoked() public {
         // Create an static account wallet and get its address
         address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
 
@@ -402,23 +420,5 @@ contract StaticOpenfortAccountTest is Test {
 
         // Verifiy that the counter has increased
         assertEq(testCounter.counters(account), 1);
-    }
-
-    /*
-     * Test account creation using nonces
-     */
-    function testCreateAccountWithNonce() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
-        address account2 = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
-
-        // Verifiy that createAccount() always generate the same address when used with the same admin
-        assertEq(account, account2);
-
-        // Create a new account with accountAdmin using a nonce
-        account2 = staticOpenfortAccountFactory.createAccountWithNonce(accountAdmin, "", 0);
-
-        // Verifiy that the new account is indeed different now
-        assertNotEq(account, account2);
     }
 }
