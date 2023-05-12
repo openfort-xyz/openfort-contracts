@@ -134,7 +134,7 @@ contract StaticOpenfortAccountTest is Test {
         // deploy account factory
         vm.prank(factoryAdmin);
         staticOpenfortAccountFactory = new StaticOpenfortAccountFactory(IEntryPoint(payable(address(entryPoint))));
-
+        // deploy a new TestCounter
         testCounter = new TestCounter();
     }
 
@@ -405,6 +405,41 @@ contract StaticOpenfortAccountTest is Test {
         StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
         vm.prank(beneficiary);
         StaticOpenfortAccount(payable(account)).revokeSessionKey(sessionKey);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+    }
+
+    /*
+     * Use a sessionKey with whitelisting to call Execute().
+     */
+    function testTestCounterViaSessionKeyWhitelisting() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = address(testCounter);
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,

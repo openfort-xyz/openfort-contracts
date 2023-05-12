@@ -27,8 +27,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
 
     // bytes4(keccak256("isValidSignature(bytes32,bytes)")
     bytes4 internal constant MAGICVALUE = 0x1626ba7e;
-    bytes4 internal constant EXECUTE_SIGNATURE = 0xb61d27f6;
-    bytes4 internal constant EXECUTEBATCH_SIGNATURE = 0x47e1da2a;
+    bytes4 internal constant EXECUTE_SELECTOR = 0xb61d27f6;
+    bytes4 internal constant EXECUTEBATCH_SELECTOR = 0x47e1da2a;
 
     IEntryPoint private immutable entrypointContract;
     address public immutable factory;
@@ -92,26 +92,31 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
     function isValidSessionKey(address _sessionKey, bytes calldata callData) public view virtual returns (bool valid) {
         // If the signer is a session key that is still valid
         require(sessionKeys[_sessionKey].validUntil != 0, "Session key revoked");
-
+        
         // Calculate the time range
         bool outOfTimeRange = block.timestamp > sessionKeys[_sessionKey].validUntil || block.timestamp < sessionKeys[_sessionKey].validAfter;
         require(!outOfTimeRange, "Session key expired");
-
+        
         // Check if it is a masterSessionKey
         if(sessionKeys[_sessionKey].masterSessionKey)
             return true;
 
-        bytes4 funcSignature = abi.decode(callData, (bytes4));
+        // If it is not a masterSessionKey, let's check for whitelisting
 
-        if(funcSignature == EXECUTE_SIGNATURE) {
-            address payable toContract;
+        // Let's first get the selector of the function that the caller is using
+        bytes4 funcSelector =
+            callData[0] |
+            (bytes4(callData[1]) >> 8) |
+            (bytes4(callData[2]) >> 16) |
+            (bytes4(callData[3]) >> 24);
+
+        if(funcSelector == EXECUTE_SELECTOR) {
+            address toContract;
             (toContract, , ) = abi.decode(callData[4:], (address,uint256,bytes));
-            if(!sessionKeys[_sessionKey].whitelist[toContract])
-                return false;
-            return true;
+            return sessionKeys[_sessionKey].whitelist[toContract];
         }
 
-        if(funcSignature == EXECUTEBATCH_SIGNATURE) {
+        if(funcSelector == EXECUTEBATCH_SELECTOR) {
             address[] memory toContract;
             (toContract, , ) = abi.decode(callData[4:], (address[],uint256[],bytes[]));
             uint256 lengthBatch = toContract.length;
@@ -125,8 +130,10 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         return false;
     }
 
-    /// @notice See EIP-1271
-    /// ToDo; only the owner can sign
+    /*
+     * @notice See EIP-1271
+     * @ToDo only the owner can sign
+     */
     function isValidSignature(bytes32 _hash, bytes memory _signature)
         public
         view
