@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
-import {console} from "lib/forge-std/src/Test.sol";
-
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -27,7 +25,9 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
 
     // bytes4(keccak256("isValidSignature(bytes32,bytes)")
     bytes4 internal constant MAGICVALUE = 0x1626ba7e;
+    // bytes4(keccak256("execute(address,uint256,bytes)")
     bytes4 internal constant EXECUTE_SELECTOR = 0xb61d27f6;
+    // bytes4(keccak256("executeBatch(address[],uint256[],bytes[])")
     bytes4 internal constant EXECUTEBATCH_SELECTOR = 0x47e1da2a;
 
     IEntryPoint private immutable entrypointContract;
