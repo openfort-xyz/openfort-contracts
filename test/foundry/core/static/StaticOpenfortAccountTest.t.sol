@@ -439,7 +439,7 @@ contract StaticOpenfortAccountTest is Test {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(testCounter);
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, whitelist);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
@@ -474,7 +474,7 @@ contract StaticOpenfortAccountTest is Test {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(testCounter);
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, whitelist);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 1, whitelist);
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
@@ -520,7 +520,7 @@ contract StaticOpenfortAccountTest is Test {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(account);
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, whitelist);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
@@ -555,7 +555,7 @@ contract StaticOpenfortAccountTest is Test {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(account);
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, whitelist);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 1, whitelist);
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
