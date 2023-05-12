@@ -100,8 +100,6 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         bool outOfTimeRange = block.timestamp > sessionKeys[_sessionKey].validUntil || block.timestamp < sessionKeys[_sessionKey].validAfter;
         require(!outOfTimeRange, "Session key expired");
         
-        require(sessionKeys[_sessionKey].limit > 0, "Limit of transactions per sessionKey reached");
-
         // Let's first get the selector of the function that the caller is using
         bytes4 funcSelector =
             callData[0] |
@@ -110,7 +108,10 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
             (bytes4(callData[3]) >> 24);
 
         if(funcSelector == EXECUTE_SELECTOR) {
-            sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - 1;
+            require(sessionKeys[_sessionKey].limit > 0, "Limit of transactions per sessionKey reached");
+            unchecked {
+                sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - 1;
+            }
             
             // Check if it is a masterSessionKey
             if(sessionKeys[_sessionKey].masterSessionKey)
@@ -127,7 +128,10 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
             address[] memory toContract;
             (toContract, , ) = abi.decode(callData[4:], (address[],uint256[],bytes[]));
             uint256 lengthBatch = toContract.length;
-            sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - uint48(lengthBatch);
+            require(sessionKeys[_sessionKey].limit >= uint48(lengthBatch), "Limit of transactions per sessionKey reached");
+            unchecked {
+                sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - uint48(lengthBatch);
+            }
 
             // Check if it is a masterSessionKey
             if(sessionKeys[_sessionKey].masterSessionKey)
