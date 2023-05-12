@@ -243,7 +243,6 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         return SIG_VALIDATION_FAILED;
     }
 
-
     /**
      * Register a master session key to the account
      * @param _key session key to register
@@ -289,6 +288,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         sessionKeys[_key].masterSessionKey = false;
 
         uint whitelistLen = _whitelist.length;
+        require(whitelistLen <= 10, "Whitelist too big");
         for (uint256 i = 0; i < whitelistLen; i++) {
             sessionKeys[_key].whitelist[_whitelist[i]] = true;
         }
