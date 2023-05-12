@@ -140,6 +140,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
             return true;
         }
 
+        // If a session key is used for other functions other than execute() or executeBatch(), deny
         return false;
     }
 
