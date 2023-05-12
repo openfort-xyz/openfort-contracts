@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
+import {console} from "lib/forge-std/src/Test.sol";
+
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -25,6 +27,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
 
     // bytes4(keccak256("isValidSignature(bytes32,bytes)")
     bytes4 internal constant MAGICVALUE = 0x1626ba7e;
+    bytes4 internal constant EXECUTE_SIGNATURE = 0xb61d27f6;
+    bytes4 internal constant EXECUTEBATCH_SIGNATURE = 0x47e1da2a;
 
     IEntryPoint private immutable entrypointContract;
     address public immutable factory;
@@ -85,21 +89,48 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
     /*
      * @notice Return whether a signer is authorized.
      */
-    function isValidSigner(address _signer) public view virtual returns (bool valid) {
-        if(owner() == _signer)
-            return true;
-        
+    function isValidSessionKey(address _sessionKey, bytes calldata callData) public view virtual returns (bool valid) {
         // If the signer is a session key that is still valid
-        if (sessionKeys[_signer].validUntil != 0 ) {
-            // Calculate the time range
-            bool outOfTimeRange = block.timestamp > sessionKeys[_signer].validUntil || block.timestamp < sessionKeys[_signer].validAfter;
-            require(!outOfTimeRange, "Session key expired");
+        require(sessionKeys[_sessionKey].validUntil != 0, "Session key revoked");
+
+        // Calculate the time range
+        bool outOfTimeRange = block.timestamp > sessionKeys[_sessionKey].validUntil || block.timestamp < sessionKeys[_sessionKey].validAfter;
+        require(!outOfTimeRange, "Session key expired");
+
+        // Check if it is a masterSessionKey
+        if(sessionKeys[_sessionKey].masterSessionKey)
+            return true;
+
+        bytes4 funcSignature = abi.decode(callData, (bytes4));
+
+        if(funcSignature == EXECUTE_SIGNATURE) {
+            address payable toContract;
+            uint256 toValue;
+            bytes memory toCalldata;
+            (toContract, toValue, toCalldata) = abi.decode(callData[4:], (address,uint256,bytes));
+            if(!sessionKeys[_sessionKey].whitelist[toContract])
+                return false;
             return true;
         }
+
+        if(funcSignature == EXECUTEBATCH_SIGNATURE) {
+            address[] memory toContract;
+            uint256[] memory toValue;
+            bytes[] memory toCalldata;
+            (toContract, toValue, toCalldata) = abi.decode(callData[4:], (address[],uint256[],bytes[]));
+            uint256 lengthBatch = toContract.length;
+            for(uint256 i = 0; i < lengthBatch; i += 1) {
+                if(!sessionKeys[_sessionKey].whitelist[toContract[i]])
+                    return false;
+            }
+            return true;
+        }
+
         return false;
     }
 
     /// @notice See EIP-1271
+    /// ToDo; only the owner can sign
     function isValidSignature(bytes32 _hash, bytes memory _signature)
         public
         view
@@ -108,9 +139,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         returns (bytes4 magicValue)
     {
         address signer = _hash.recover(_signature);
-        if (isValidSigner(signer)) {
+        if(owner() == signer)
             magicValue = MAGICVALUE;
-        }
     }
 
     /**
@@ -181,15 +211,14 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         bytes32 hash = userOpHash.toEthSignedMessageHash();
         address signer = hash.recover(userOp.signature);
 
-        // Check if the signer or session key is valid
-        if (!isValidSigner(signer))
-            return SIG_VALIDATION_FAILED;
-        
-        // Check if it is a masterSessionKey
-        if(sessionKeys[signer].masterSessionKey)
+        if(owner() == signer)
             return 0;
 
-        return 0;
+        // Check if the signer or session key is valid
+        if (isValidSessionKey(signer, userOp.callData))
+            return 0;
+
+        return SIG_VALIDATION_FAILED;
     }
 
     /**
