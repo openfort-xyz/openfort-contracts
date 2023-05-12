@@ -94,8 +94,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
             // Calculate the time range
             bool outOfTimeRange = block.timestamp > sessionKeys[_signer].validUntil || block.timestamp < sessionKeys[_signer].validAfter;
             require(!outOfTimeRange, "Session key expired");
-            if(sessionKeys[_signer].masterSessionKey)
-                return true;
+            return true;
         }
         return false;
     }
@@ -182,8 +181,14 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         bytes32 hash = userOpHash.toEthSignedMessageHash();
         address signer = hash.recover(userOp.signature);
 
+        // Check if the signer or session key is valid
         if (!isValidSigner(signer))
             return SIG_VALIDATION_FAILED;
+        
+        // Check if it is a masterSessionKey
+        if(sessionKeys[signer].masterSessionKey)
+            return 0;
+
         return 0;
     }
 
