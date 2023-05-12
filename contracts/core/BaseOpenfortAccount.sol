@@ -231,8 +231,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * @notice using this function will automatically set the sessionkey as a
      * master session key because no further restricion was set.
      */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) external {
-        _requireFromEntryPointOrOwner();
+    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) external onlyOwner {
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
         sessionKeys[_key].masterSessionKey = true;
@@ -246,8 +245,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * @param _validUntil - this session key is valid only up to this timestamp.
      * @param _whitelist - this session key can only interact with the addresses in the _whitelist.
      */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, address[] calldata _whitelist) external {
-        _requireFromEntryPointOrOwner();
+    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, address[] calldata _whitelist) external onlyOwner {
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
         sessionKeys[_key].masterSessionKey = false;
@@ -264,8 +262,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * Revoke a session key from the account
      * @param _key session key to revoke
      */
-    function revokeSessionKey(address _key) external {
-        _requireFromEntryPointOrOwner();
+    function revokeSessionKey(address _key) external onlyOwner {
         if(sessionKeys[_key].validUntil != 0) {
             sessionKeys[_key].validUntil = 0;
             emit SessionKeyRevoked(_key);
