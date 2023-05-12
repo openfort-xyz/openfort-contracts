@@ -87,7 +87,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
     }
 
     /*
-     * @notice Return whether a signer is authorized.
+     * @notice Return whether a sessionKey is valid.
      */
     function isValidSessionKey(address _sessionKey, bytes calldata callData) public view virtual returns (bool valid) {
         // If the signer is a session key that is still valid
@@ -207,10 +207,11 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         bytes32 hash = userOpHash.toEthSignedMessageHash();
         address signer = hash.recover(userOp.signature);
 
+        // If the userOp was signed by the owner, allow straightaway
         if(owner() == signer)
             return 0;
 
-        // Check if the signer or session key is valid
+        // Check if the session key is valid according to the data in the userOp
         if (isValidSessionKey(signer, userOp.callData))
             return 0;
 
