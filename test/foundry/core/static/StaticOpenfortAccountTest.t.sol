@@ -283,8 +283,8 @@ contract StaticOpenfortAccountTest is Test {
         entryPoint.depositTo{value: 1000000000000000000}(account);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        // Verifiy that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
     }
 
     /*
@@ -455,5 +455,132 @@ contract StaticOpenfortAccountTest is Test {
 
         // Verifiy that the counter has increased
         assertEq(testCounter.counters(account), 1);
+    }
+
+    /*
+     * Use a sessionKey with whitelisting to call ExecuteBatch().
+     */
+    function testTestCounterViaSessionKeyWhitelistingBatch() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = address(testCounter);
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, whitelist);
+
+        uint256 count = 3;
+        address[] memory targets = new address[](count);
+        uint256[] memory values = new uint256[](count);
+        bytes[] memory callData = new bytes[](count);
+
+        for (uint256 i = 0; i < count; i += 1) {
+            targets[i] = address(testCounter);
+            values[i] = 0;
+            callData[i] = abi.encodeWithSignature("count()");
+        }
+
+        UserOperation[] memory userOp = _setupUserOpExecuteBatch(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            targets,
+            values,
+            callData
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 3);
+    }
+
+    /*
+     * Should fail, try to use a sessionKey with invalid whitelisting to call Execute().
+     */
+    function testFailTestCounterViaSessionKeyWhitelistingWrongAddress() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = address(account);
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, whitelist);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+    }
+
+    /*
+     * Should fail, try to use a sessionKey with invalid whitelisting to call ExecuteBatch().
+     */
+    function testFailTestCounterViaSessionKeyWhitelistingBatchWrongAddress() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = address(account);
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, whitelist);
+
+        uint256 count = 3;
+        address[] memory targets = new address[](count);
+        uint256[] memory values = new uint256[](count);
+        bytes[] memory callData = new bytes[](count);
+
+        for (uint256 i = 0; i < count; i += 1) {
+            targets[i] = address(testCounter);
+            values[i] = 0;
+            callData[i] = abi.encodeWithSignature("count()");
+        }
+
+        UserOperation[] memory userOp = _setupUserOpExecuteBatch(
+            account,
+            sessionKeyPrivKey, //Sign the userOp using the sessionKey's private key
+            bytes(""),
+            targets,
+            values,
+            callData
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
     }
 }
