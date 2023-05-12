@@ -334,8 +334,9 @@ contract StaticOpenfortAccountTest is Test {
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
+        vm.warp(100);
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 99);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
@@ -349,8 +350,8 @@ contract StaticOpenfortAccountTest is Test {
         entryPoint.depositTo{value: 1000000000000000000}(account);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        // Verifiy that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
     }
 
     /*
@@ -385,6 +386,99 @@ contract StaticOpenfortAccountTest is Test {
 
         // Verifiy that the counter has increased
         assertEq(testCounter.counters(account), 1);
+    }
+
+    /*
+     *  Should fail, try to use a sessionKey that reached its limit.
+     */
+    function testFailTestCounterViaSessionKeyReachLimit() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        // We are now in block 100, but our session key is valid until block 150
+        vm.warp(100);
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 150, 1);
+    
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has only increased by one
+        assertEq(testCounter.counters(account), 1);
+    }
+
+    /*
+     *  Should fail, try to use a sessionKey that reached its limit.
+     */
+    function testFailTestCounterViaSessionKeyReachLimitBatching() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        // We are now in block 100, but our session key is valid until block 150
+        vm.warp(100);
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 150, 2);
+
+        uint256 count = 3;
+        address[] memory targets = new address[](count);
+        uint256[] memory values = new uint256[](count);
+        bytes[] memory callData = new bytes[](count);
+
+        for (uint256 i = 0; i < count; i += 1) {
+            targets[i] = address(testCounter);
+            values[i] = 0;
+            callData[i] = abi.encodeWithSignature("count()");
+        }
+
+        UserOperation[] memory userOp = _setupUserOpExecuteBatch(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            targets,
+            values,
+            callData
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
     }
 
     /*
@@ -474,7 +568,7 @@ contract StaticOpenfortAccountTest is Test {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(testCounter);
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 1, whitelist);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 3, whitelist);
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
@@ -489,7 +583,7 @@ contract StaticOpenfortAccountTest is Test {
 
         UserOperation[] memory userOp = _setupUserOpExecuteBatch(
             account,
-            accountAdminPKey,
+            sessionKeyPrivKey,
             bytes(""),
             targets,
             values,
