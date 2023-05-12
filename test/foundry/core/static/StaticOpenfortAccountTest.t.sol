@@ -552,6 +552,40 @@ contract StaticOpenfortAccountTest is Test {
     }
 
     /*
+     * Should fail, try to register a sessionKey with a large whitelist.
+     */
+    function testFailTestCounterViaSessionKeyWhitelistingTooBig() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        address[] memory whitelist = new address[](11);
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 1, whitelist);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
+    }
+
+    /*
      * Use a sessionKey with whitelisting to call ExecuteBatch().
      */
     function testTestCounterViaSessionKeyWhitelistingBatch() public {
