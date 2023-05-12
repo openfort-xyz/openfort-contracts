@@ -105,9 +105,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
 
         if(funcSignature == EXECUTE_SIGNATURE) {
             address payable toContract;
-            uint256 toValue;
-            bytes memory toCalldata;
-            (toContract, toValue, toCalldata) = abi.decode(callData[4:], (address,uint256,bytes));
+            (toContract, , ) = abi.decode(callData[4:], (address,uint256,bytes));
             if(!sessionKeys[_sessionKey].whitelist[toContract])
                 return false;
             return true;
@@ -115,9 +113,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
 
         if(funcSignature == EXECUTEBATCH_SIGNATURE) {
             address[] memory toContract;
-            uint256[] memory toValue;
-            bytes[] memory toCalldata;
-            (toContract, toValue, toCalldata) = abi.decode(callData[4:], (address[],uint256[],bytes[]));
+            (toContract, , ) = abi.decode(callData[4:], (address[],uint256[],bytes[]));
             uint256 lengthBatch = toContract.length;
             for(uint256 i = 0; i < lengthBatch; i += 1) {
                 if(!sessionKeys[_sessionKey].whitelist[toContract[i]])
