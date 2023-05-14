@@ -37,8 +37,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
     /** Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
      * @param validAfter this sessionKey is valid only after this timestamp.
      * @param validUntil this sessionKey is valid only after this timestamp.
-     * @param masterSessionKey if set to true, the session key does not have any limitation other than the validity time
      * @param limit limit of uses remaining
+     * @param masterSessionKey if set to true, the session key does not have any limitation other than the validity time
      * @param canSign if set to true, the session key can sign as the account (future)
      * @param whitelist - this session key can only interact with the addresses in the whitelist.
      */
