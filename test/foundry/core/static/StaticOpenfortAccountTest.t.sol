@@ -717,7 +717,15 @@ contract StaticOpenfortAccountTest is Test {
     }
 
     /*
-     * Change the owner of an account and call TestCounter directly
+     * Change the owner of an account and call TestCounter directly.
+     * Important use-case:
+     * 1- accountAdmin is Openfort's master wallet and is managing the account of the user.
+     * 2- The user claims the ownership of the account to Openfort so Openfort calls
+     * transferOwnership() to the account.
+     * 3- The user has to "officially" claim the ownership of the account by directly
+     * interacting with the smart contract using the acceptOwnership() function.
+     * 4- From now on, the user is the owner of the account and can register and revoke session keys themselves.
+     * 5- Test that the new owner can directly interact with the account and make it call the testCounter contract.
      */
     function testChangeOwnershipAndCountDirect() public {
         // Create an static account wallet and get its address
@@ -819,7 +827,7 @@ contract StaticOpenfortAccountTest is Test {
 
         vm.prank(accountAdmin);
         (bool success, ) = payable(account).call{ value: 1000 }("");
-
+        assert(success);
         assertEq(address(account).balance, 1000);
     }
 
@@ -836,7 +844,7 @@ contract StaticOpenfortAccountTest is Test {
         vm.prank(accountAdmin);
         (bool success, ) = payable(account).call{ value: value }("");
         assertEq(address(account).balance, value);
-
+        assert(success);
         assertEq(beneficiary.balance, 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -851,4 +859,33 @@ contract StaticOpenfortAccountTest is Test {
         EntryPoint(entryPoint).handleOps(userOp, beneficiary);
         assertEq(beneficiary.balance, value);
     }
+
+    /*
+     * Basic test of simulateValidation() to check that it always reverts.
+     */
+    function testSimulateValidation() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        // Expect the simulateValidation() to always revert
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+
+        // Verifiy that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
+    
+    }   
 }

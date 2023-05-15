@@ -96,14 +96,14 @@ contract StaticOpenfortAccountFactoryDeploy is Script, Test {
         // Due to errors with Foundry and create2, let's use hardcoded addresses for testing:
         // Created with
         // forge create StaticOpenfortAccountFactory --mnemonic $MNEMONIC --constructor-args $ENTRY_POINT_ADDRESS --rpc-url $POLYGON_MUMBAI_RPC --verify
-        staticOpenfortAccountFactory = StaticOpenfortAccountFactory(0x6E767F52d49b0abD686003727b8bc0684011819B);
+        staticOpenfortAccountFactory = StaticOpenfortAccountFactory(0xfaE7940051e23EE8B7E267E7f3d207069E250842);
         // Created with
         // forge create TestCounter --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify 
-        testCounter = TestCounter(0xBC7c1ce2908792def619514e8B49083D83E5d8B0);
+        testCounter = TestCounter(0x1A09053F78695ad7372D0539E5246d025b254A4c);
 
         // Created with:
         // $forge create StaticOpenfortAccount --constructor-args $ENTRY_POINT_ADDRESS 0x6E767F52d49b0abD686003727b8bc0684011819B --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify                
-        address account = 0x5617829E7a6c45F508E0Bb4be2A2A54ca08C01BC;
+        address account = 0x330a919e0605E91D62f8136D9Ee8a9a0b8ff92CF;
         
         uint256 count = 3;
         address[] memory targets = new address[](count);
