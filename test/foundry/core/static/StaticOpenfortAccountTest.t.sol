@@ -717,7 +717,15 @@ contract StaticOpenfortAccountTest is Test {
     }
 
     /*
-     * Change the owner of an account and call TestCounter directly
+     * Change the owner of an account and call TestCounter directly.
+     * Important use-case:
+     * 1- accountAdmin is Openfort's master wallet and is managing the account of the user.
+     * 2- The user claims the ownership of the account to Openfort so Openfort calls
+     * transferOwnership() to the account.
+     * 3- The user has to "officially" claim the ownership of the account by directly
+     * interacting with the smart contract using the acceptOwnership() function.
+     * 4- From now on, the user is the owner of the account and can register and revoke session keys themselves.
+     * 5- Test that the new owner can directly interact with the account and make it call the testCounter contract.
      */
     function testChangeOwnershipAndCountDirect() public {
         // Create an static account wallet and get its address
