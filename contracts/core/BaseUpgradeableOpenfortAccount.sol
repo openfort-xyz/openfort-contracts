@@ -193,7 +193,7 @@ abstract contract BaseUpgradeableOpenfortAccount is BaseAccount, Initializable, 
      * @param _validAfter - this session key is valid only after this timestamp.
      * @param _validUntil - this session key is valid only up to this timestamp.
      * @notice using this function will automatically set the sessionkey as a
-     * master session key because no further restricion was set.
+     * master session key because no further restriction was set.
      */
     function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) external {
         _requireFromEntryPointOrOwner();
