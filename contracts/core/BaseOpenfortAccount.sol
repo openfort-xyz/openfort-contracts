@@ -261,9 +261,9 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * @param _key session key to register
      * @param _validAfter - this session key is valid only after this timestamp.
      * @param _validUntil - this session key is valid only up to this timestamp.
-     * @param _limit - this session key is valid only up to this timestamp.
+     * @param _limit - limit of uses remaining.
      * @notice using this function will automatically set the sessionkey as a
-     * master session key because no further restricion was set.
+     * master session key because no further restriction was set.
      */
     function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, uint48 _limit) public onlyOwner {
         sessionKeys[_key].validAfter = _validAfter;
@@ -289,7 +289,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * @param _key session key to register
      * @param _validAfter - this session key is valid only after this timestamp.
      * @param _validUntil - this session key is valid only up to this timestamp.
-     * @param _limit - this session key is valid only up to this timestamp.
+     * @param _limit - limit of uses remaining.
      * @param _whitelist - this session key can only interact with the addresses in the _whitelist.
      */
     function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, uint48 _limit, address[] calldata _whitelist) public onlyOwner {
