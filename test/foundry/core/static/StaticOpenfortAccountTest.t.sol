@@ -827,7 +827,7 @@ contract StaticOpenfortAccountTest is Test {
 
         vm.prank(accountAdmin);
         (bool success, ) = payable(account).call{ value: 1000 }("");
-
+        assert(success);
         assertEq(address(account).balance, 1000);
     }
 
@@ -844,7 +844,7 @@ contract StaticOpenfortAccountTest is Test {
         vm.prank(accountAdmin);
         (bool success, ) = payable(account).call{ value: value }("");
         assertEq(address(account).balance, value);
-
+        assert(success);
         assertEq(beneficiary.balance, 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -859,4 +859,33 @@ contract StaticOpenfortAccountTest is Test {
         EntryPoint(entryPoint).handleOps(userOp, beneficiary);
         assertEq(beneficiary.balance, value);
     }
+
+    /*
+     * Basic test of simulateValidation() to check that it always reverts.
+     */
+    function testSimulateValidation() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        // Expect the simulateValidation() to always revert
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+
+        // Verifiy that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
+    
+    }   
 }
