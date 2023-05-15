@@ -3,10 +3,12 @@ pragma solidity ^0.8.12;
 
 import {Script} from "forge-std/Script.sol";
 import {StaticOpenfortAccountFactory, IEntryPoint} from "../contracts/core/static/StaticOpenfortAccountFactory.sol";
+import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 
 contract StaticOpenfortAccountFactoryDeploy is Script {
     uint256 deployPrivKey;
     address deployAddress;
+
     function setUp() public {
         deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
         deployAddress = vm.addr(deployPrivKey);
@@ -21,6 +23,9 @@ contract StaticOpenfortAccountFactoryDeploy is Script {
         // The first call should create a new account, while the second will just return the corresponding account address
         staticOpenfortAccountFactory.createAccount(deployAddress, bytes(""));
         staticOpenfortAccountFactory.createAccount(deployAddress, bytes(""));
+
+        // Deploy a TestCount
+        TestCounter testCounter = new TestCounter();
 
         vm.stopBroadcast();
     }
