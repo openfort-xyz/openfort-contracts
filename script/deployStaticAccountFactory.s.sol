@@ -26,6 +26,7 @@ contract StaticOpenfortAccountFactoryDeploy is Script {
 
         // Deploy a TestCount
         TestCounter testCounter = new TestCounter();
+        testCounter.count();
 
         vm.stopBroadcast();
     }
