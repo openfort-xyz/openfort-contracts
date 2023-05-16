@@ -260,7 +260,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * master session key because no further restricion was set.
      * @notice default limit set to 100.
      */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) public onlyOwner {
+    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) public {
+        _requireFromEntryPointOrOwner();
         registerSessionKey(_key, _validAfter, _validUntil, DEFAULT_LIMIT);
     }
 
@@ -273,7 +274,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * @notice using this function will automatically set the sessionkey as a
      * master session key because no further restriction was set.
      */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, uint48 _limit) public onlyOwner {
+    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, uint48 _limit) public {
+        _requireFromEntryPointOrOwner();
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
         sessionKeys[_key].limit = _limit;
@@ -288,7 +290,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * @param _validUntil - this session key is valid only up to this timestamp.
      * @param _whitelist - this session key can only interact with the addresses in the _whitelist.
      */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, address[] calldata _whitelist) public onlyOwner {
+    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, address[] calldata _whitelist) public {
+        _requireFromEntryPointOrOwner();
         registerSessionKey(_key, _validAfter, _validUntil, DEFAULT_LIMIT, _whitelist);
     }
 
@@ -300,7 +303,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * @param _limit - limit of uses remaining.
      * @param _whitelist - this session key can only interact with the addresses in the _whitelist.
      */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, uint48 _limit, address[] calldata _whitelist) public onlyOwner {
+    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, uint48 _limit, address[] calldata _whitelist) public {
+        _requireFromEntryPointOrOwner();
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
         sessionKeys[_key].limit = _limit;
@@ -319,7 +323,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * Revoke a session key from the account
      * @param _key session key to revoke
      */
-    function revokeSessionKey(address _key) external onlyOwner {
+    function revokeSessionKey(address _key) external {
+        _requireFromEntryPointOrOwner();
         if(sessionKeys[_key].validUntil != 0) {
             sessionKeys[_key].validUntil = 0;
             emit SessionKeyRevoked(_key);
