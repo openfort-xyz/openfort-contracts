@@ -19,3 +19,10 @@ forge install
 forge build
 forge test
 ```
+
+$ forge create --rpc-url https://mumbai.rpc.thirdweb.com \
+    --constructor-args 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 \
+    --private-key 0x... \
+    --etherscan-api-key API_KEY \
+    --verify \
+    src/core/static/StaticOpenfortAccountFactory.sol:StaticOpenfortAccountFactory
