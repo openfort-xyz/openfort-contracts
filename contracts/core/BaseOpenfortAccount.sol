@@ -40,6 +40,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
      * @param limit limit of uses remaining
      * @param masterSessionKey if set to true, the session key does not have any limitation other than the validity time
      * @param canSign if set to true, the session key can sign as the account (future)
+     * @param whitelising if set to true, the session key has to follow whitelisting rules
      * @param whitelist - this session key can only interact with the addresses in the whitelist.
      */
     struct SessionKeyStruct {
@@ -47,6 +48,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         uint48 validUntil;
         uint48 limit;
         bool masterSessionKey;
+        bool whitelising;
         mapping(address => bool) whitelist;
     }
     mapping(address => SessionKeyStruct) public sessionKeys;
@@ -102,12 +104,12 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
     function isValidSessionKey(address _sessionKey, bytes calldata callData) public virtual returns (bool valid) {
         // If the signer is a session key that is still valid
         if(sessionKeys[_sessionKey].validUntil == 0)
-            return false; // "Not owner or session key revoked"
-        
+            return false; // Not owner or session key revoked
+
         // Calculate the time range
         bool outOfTimeRange = block.timestamp > sessionKeys[_sessionKey].validUntil || block.timestamp < sessionKeys[_sessionKey].validAfter;
         if(outOfTimeRange)
-            return false; // "Session key expired"
+            return false; // Session key expired
         
         // Let's first get the selector of the function that the caller is using
         bytes4 funcSelector =
@@ -118,30 +120,33 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
 
         if(funcSelector == EXECUTE_SELECTOR) {
             if(sessionKeys[_sessionKey].limit == 0)
-                return false; // "Limit of transactions per sessionKey reached");
+                return false; // Limit of transactions per sessionKey reached
             unchecked {
                 sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - 1;
             }
-            
+
             // Check if it is a masterSessionKey
             if(sessionKeys[_sessionKey].masterSessionKey)
                 return true;
-            
-            // If it is not a masterSessionKey, let's check for whitelisting
+
+            // If it is not a masterSessionKey, let's check for whitelisting and reentrancy
             address toContract;
             (toContract, , ) = abi.decode(callData[4:], (address,uint256,bytes));
             if(toContract == address(this))
-                return false; // "Only masterSessionKey can reenter"
-            if(!sessionKeys[_sessionKey].whitelist[toContract])
-                return false; // "Contract's not in the sessionKey's whitelist"
-            return true;
+                return false; // Only masterSessionKey can reenter
+
+            // If there is no whitelist or there is, but the target is whitelisted, return true
+            if(!sessionKeys[_sessionKey].whitelising || sessionKeys[_sessionKey].whitelist[toContract])
+                return true;
+            
+            return false; // All other cases, deny
         }
         else if(funcSelector == EXECUTEBATCH_SELECTOR) {
             address[] memory toContract;
             (toContract, , ) = abi.decode(callData[4:], (address[],uint256[],bytes[]));
             uint256 lengthBatch = toContract.length;
             if(sessionKeys[_sessionKey].limit < uint48(lengthBatch))
-                return false; // "Limit of transactions per sessionKey reached"
+                return false; // Limit of transactions per sessionKey reached
             unchecked {
                 sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - uint48(lengthBatch);
             }
@@ -152,9 +157,9 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
 
             for(uint256 i = 0; i < lengthBatch; i++) {
                 if(toContract[i] == address(this))
-                    return false; // "Only masterSessionKey can reenter"
-                if(!sessionKeys[_sessionKey].whitelist[toContract[i]])
-                    return false; // "One contract's not in the sessionKey's whitelist");
+                    return false; // Only masterSessionKey can reenter
+                if(sessionKeys[_sessionKey].whitelising && !sessionKeys[_sessionKey].whitelist[toContract[i]])
+                    return false; // One contract's not in the sessionKey's whitelist (if any)
             }
             return true;
         }
@@ -270,6 +275,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
     function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) public {
         _requireFromEntryPointOrOwnerorSelf();
         registerSessionKey(_key, _validAfter, _validUntil, DEFAULT_LIMIT);
+        sessionKeys[_key].masterSessionKey = true;
     }
 
     /**
@@ -286,7 +292,8 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
         sessionKeys[_key].limit = _limit;
-        sessionKeys[_key].masterSessionKey = true;
+        sessionKeys[_key].masterSessionKey = false;
+        sessionKeys[_key].whitelising = false;
         emit SessionKeyRegistered(_key);
     }
 
@@ -316,6 +323,7 @@ abstract contract BaseOpenfortAccount is BaseAccount, Initializable, Ownable2Ste
         sessionKeys[_key].validUntil = _validUntil;
         sessionKeys[_key].limit = _limit;
         sessionKeys[_key].masterSessionKey = false;
+        sessionKeys[_key].whitelising = true;
 
         uint whitelistLen = _whitelist.length;
         require(whitelistLen <= 10, "Whitelist too big");
