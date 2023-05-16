@@ -434,10 +434,12 @@ contract StaticOpenfortAccountTest is Test {
         // Verifiy that the counter has increased
         assertEq(testCounter.counters(account), 1);
 
-        // Verify that the registered key is not a MasterKey
+        // Verify that the registered key is not a MasterKey nor has whitelisting
         bool isMasterKey;
-        (, , , isMasterKey, ) = StaticOpenfortAccount(payable(account)).sessionKeys(sessionKey);
+        bool isWhitelisted;
+        (, , , isMasterKey, isWhitelisted) = StaticOpenfortAccount(payable(account)).sessionKeys(sessionKey);
         assert(!isMasterKey);
+        assert(!isWhitelisted);
 
         address sessionKeyAttack;
         uint256 sessionKeyPrivKeyAttack;
@@ -699,6 +701,13 @@ contract StaticOpenfortAccountTest is Test {
         whitelist[0] = address(testCounter);
         vm.prank(accountAdmin);
         StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 3, whitelist);
+
+        // Verify that the registered key is not a MasterKey but has whitelisting
+        bool isMasterKey;
+        bool isWhitelisted;
+        (, , , isMasterKey, isWhitelisted) = StaticOpenfortAccount(payable(account)).sessionKeys(sessionKey);
+        assert(!isMasterKey);
+        assert(isWhitelisted);
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
