@@ -325,8 +325,8 @@ contract StaticOpenfortAccountTest is Test {
     }
 
     /*
-     * Create an account by directly calling the factory and make it register a sessionKey
-     * via userOp calling the execute() function using the EntryPoint (userOp). Leaveraging ERC-4337.
+     * Register a sessionKey via userOp calling the execute() function
+     * using the EntryPoint (userOp). Leaveraging ERC-4337.
      */
     function testRegisterSessionKeyViaEntrypoint() public {
         // Create an static account wallet and get its address
