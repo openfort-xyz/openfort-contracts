@@ -325,6 +325,52 @@ contract StaticOpenfortAccountTest is Test {
     }
 
     /*
+     * Create an account by directly calling the factory and make it register a sessionKey
+     * via userOp calling the execute() function using the EntryPoint (userOp). Leaveraging ERC-4337.
+     */
+    function testRegisterSessionKeyViaEntrypoint() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            account,
+            0,
+            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48)", sessionKey, 0,2**48 - 1)
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 0);
+
+        userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+    }
+
+    /*
      *  Should fail, try to use a sessionKey that is expired.
      */
     function testFailTestCounterViaSessionKeyExpired() public {
