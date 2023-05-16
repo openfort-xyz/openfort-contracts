@@ -16,14 +16,14 @@ contract StaticOpenfortAccountTest is Test {
     StaticOpenfortAccountFactory public staticOpenfortAccountFactory;
     TestCounter public testCounter;
     TestToken public testToken;
-    
+
     // Testing addresses
     address private factoryAdmin;
     uint256 private factoryAdminPKey;
 
     address private accountAdmin;
     uint256 private accountAdminPKey;
-    
+
     address payable private beneficiary = payable(makeAddr("beneficiary"));
 
     event AccountCreated(address indexed account, address indexed accountAdmin);
@@ -84,12 +84,8 @@ contract StaticOpenfortAccountTest is Test {
         uint256 _value,
         bytes memory _callData
     ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
-            "execute(address,uint256,bytes)",
-            _target,
-            _value,
-            _callData
-        );
+        bytes memory callDataForEntrypoint =
+            abi.encodeWithSignature("execute(address,uint256,bytes)", _target, _value, _callData);
 
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
@@ -106,12 +102,8 @@ contract StaticOpenfortAccountTest is Test {
         uint256[] memory _value,
         bytes[] memory _callData
     ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
-            "executeBatch(address[],uint256[],bytes[])",
-            _target,
-            _value,
-            _callData
-        );
+        bytes memory callDataForEntrypoint =
+            abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
 
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
@@ -208,12 +200,7 @@ contract StaticOpenfortAccountTest is Test {
         assertEq(testCounter.counters(account), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            accountAdminPKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -245,14 +232,8 @@ contract StaticOpenfortAccountTest is Test {
             callData[i] = abi.encodeWithSignature("count()");
         }
 
-        UserOperation[] memory userOp = _setupUserOpExecuteBatch(
-            account,
-            accountAdminPKey,
-            bytes(""),
-            targets,
-            values,
-            callData
-        );
+        UserOperation[] memory userOp =
+            _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
         entryPoint.handleOps(userOp, beneficiary);
@@ -276,12 +257,7 @@ contract StaticOpenfortAccountTest is Test {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -306,15 +282,10 @@ contract StaticOpenfortAccountTest is Test {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey , 0, 2**48 - 1);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -326,7 +297,7 @@ contract StaticOpenfortAccountTest is Test {
 
     /*
      * Register a sessionKey via userOp calling the execute() function
-     * using the EntryPoint (userOp). Leaveraging ERC-4337.
+     * using the EntryPoint (userOp). Then use the sessionKey to count
      */
     function testRegisterSessionKeyViaEntrypoint() public {
         // Create an static account wallet and get its address
@@ -345,22 +316,17 @@ contract StaticOpenfortAccountTest is Test {
             bytes(""),
             account,
             0,
-            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48)", sessionKey, 0,2**48 - 1)
+            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48)", sessionKey, 0, 2 ** 48 - 1)
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verifiy that the counter has not increased
         assertEq(testCounter.counters(account), 0);
 
         userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -368,6 +334,127 @@ contract StaticOpenfortAccountTest is Test {
 
         // Verifiy that the counter has increased
         assertEq(testCounter.counters(account), 1);
+    }
+
+    /*
+     * Register a master sessionKey via userOp calling the execute() function
+     * using the EntryPoint (userOp). Then use that sessionKey to register a second one
+     */
+    function testRegisterSessionKeyViaEntrypoint2ndKey() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            account,
+            0,
+            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48)", sessionKey, 0, 2 ** 48 - 1)
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
+
+        userOp = _setupUserOpExecute(
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+
+        address sessionKeyAttack;
+        uint256 sessionKeyPrivKeyAttack;
+        (sessionKeyAttack, sessionKeyPrivKeyAttack) = makeAddrAndKey("sessionKeyAttack");
+
+        userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            account,
+            0,
+            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48)", sessionKeyAttack, 0, 2 ** 48 - 1)
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+    }
+
+    /*
+     * Register a limited sessionKey via userOp calling the execute() function
+     * using the EntryPoint (userOp). Then use that sessionKey to register a second one
+     */
+    function testFailAttackRegisterSessionKeyViaEntrypoint2ndKey() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            account,
+            0,
+            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48,uint48)", sessionKey, 0, 2 ** 48 - 1, 10)
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
+
+        userOp = _setupUserOpExecute(
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+
+        // Verify that the registered key is not a MasterKey
+        bool isMasterKey;
+        (, , , isMasterKey, ) = StaticOpenfortAccount(payable(account)).sessionKeys(sessionKey);
+        assert(!isMasterKey);
+
+        address sessionKeyAttack;
+        uint256 sessionKeyPrivKeyAttack;
+        (sessionKeyAttack, sessionKeyPrivKeyAttack) = makeAddrAndKey("sessionKeyAttack");
+
+        userOp = _setupUserOpExecute(
+            account,
+            sessionKeyPrivKey,
+            bytes(""),
+            account,
+            0,
+            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48)", sessionKeyAttack, 0, 2 ** 48 - 1)
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
     }
 
     /*
@@ -389,12 +476,7 @@ contract StaticOpenfortAccountTest is Test {
         StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 99);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -423,12 +505,7 @@ contract StaticOpenfortAccountTest is Test {
         StaticOpenfortAccount(payable(account)).revokeSessionKey(sessionKey);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -456,26 +533,16 @@ contract StaticOpenfortAccountTest is Test {
         vm.warp(100);
         vm.prank(accountAdmin);
         StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 150, 1);
-    
+
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
         entryPoint.handleOps(userOp, beneficiary);
 
         userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -515,14 +582,8 @@ contract StaticOpenfortAccountTest is Test {
             callData[i] = abi.encodeWithSignature("count()");
         }
 
-        UserOperation[] memory userOp = _setupUserOpExecuteBatch(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            targets,
-            values,
-            callData
-        );
+        UserOperation[] memory userOp =
+            _setupUserOpExecuteBatch(account, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
         entryPoint.handleOps(userOp, beneficiary);
@@ -551,12 +612,7 @@ contract StaticOpenfortAccountTest is Test {
         StaticOpenfortAccount(payable(account)).revokeSessionKey(sessionKey);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -583,15 +639,10 @@ contract StaticOpenfortAccountTest is Test {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(testCounter);
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 1, whitelist);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -617,15 +668,10 @@ contract StaticOpenfortAccountTest is Test {
 
         address[] memory whitelist = new address[](11);
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 1, whitelist);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -652,7 +698,7 @@ contract StaticOpenfortAccountTest is Test {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(testCounter);
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 3, whitelist);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 3, whitelist);
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
@@ -665,14 +711,8 @@ contract StaticOpenfortAccountTest is Test {
             callData[i] = abi.encodeWithSignature("count()");
         }
 
-        UserOperation[] memory userOp = _setupUserOpExecuteBatch(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            targets,
-            values,
-            callData
-        );
+        UserOperation[] memory userOp =
+            _setupUserOpExecuteBatch(account, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
         entryPoint.handleOps(userOp, beneficiary);
@@ -698,15 +738,10 @@ contract StaticOpenfortAccountTest is Test {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(account);
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 1, whitelist);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -733,7 +768,7 @@ contract StaticOpenfortAccountTest is Test {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(account);
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2**48 - 1, 1, whitelist);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
@@ -817,12 +852,7 @@ contract StaticOpenfortAccountTest is Test {
         assertEq(testCounter.counters(account), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            accountAdmin2PKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, accountAdmin2PKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -872,7 +902,7 @@ contract StaticOpenfortAccountTest is Test {
         assertEq(address(account).balance, 0);
 
         vm.prank(accountAdmin);
-        (bool success, ) = payable(account).call{ value: 1000 }("");
+        (bool success,) = payable(account).call{value: 1000}("");
         assert(success);
         assertEq(address(account).balance, 1000);
     }
@@ -883,24 +913,18 @@ contract StaticOpenfortAccountTest is Test {
     function testTransferOutNativeToken() public {
         // Create an static account wallet and get its address
         address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
-        
+
         uint256 value = 1000;
 
         assertEq(address(account).balance, 0);
         vm.prank(accountAdmin);
-        (bool success, ) = payable(account).call{ value: value }("");
+        (bool success,) = payable(account).call{value: value}("");
         assertEq(address(account).balance, value);
         assert(success);
         assertEq(beneficiary.balance, 0);
 
-        UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            accountAdminPKey,
-            bytes(""),
-            address(beneficiary),
-            value,
-            bytes("")
-        );
+        UserOperation[] memory userOp =
+            _setupUserOpExecute(account, accountAdminPKey, bytes(""), address(beneficiary), value, bytes(""));
 
         EntryPoint(entryPoint).handleOps(userOp, beneficiary);
         assertEq(beneficiary.balance, value);
@@ -917,12 +941,7 @@ contract StaticOpenfortAccountTest is Test {
         assertEq(testCounter.counters(account), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            accountAdminPKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -932,6 +951,5 @@ contract StaticOpenfortAccountTest is Test {
 
         // Verifiy that the counter has not increased
         assertEq(testCounter.counters(account), 0);
-    
-    }   
+    }
 }
