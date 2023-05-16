@@ -12,6 +12,8 @@ import {StaticOpenfortAccount} from "contracts/core/static/StaticOpenfortAccount
 contract StaticOpenfortAccountTest is Test {
     using ECDSA for bytes32;
 
+    uint256 mumbaiFork;
+
     EntryPoint public entryPoint;
     StaticOpenfortAccountFactory public staticOpenfortAccountFactory;
     TestCounter public testCounter;
@@ -117,6 +119,8 @@ contract StaticOpenfortAccountTest is Test {
      * - testCounter is the counter used to test userOps
      */
     function setUp() public {
+        mumbaiFork = vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
+        vm.selectFork(mumbaiFork);
         // Setup and fund signers
         (factoryAdmin, factoryAdminPKey) = makeAddrAndKey("factoryAdmin");
         vm.deal(factoryAdmin, 100 ether);
@@ -124,7 +128,7 @@ contract StaticOpenfortAccountTest is Test {
         vm.deal(accountAdmin, 100 ether);
 
         // deploy entryPoint
-        entryPoint = new EntryPoint();
+        entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
         // deploy account factory
         vm.prank(factoryAdmin);
         staticOpenfortAccountFactory = new StaticOpenfortAccountFactory(IEntryPoint(payable(address(entryPoint))));
