@@ -39,8 +39,9 @@ contract OpenfortPaymasterTest is Test {
         address sender,
         uint256 _signerPKey,
         bytes memory _initCode,
-        bytes memory _callDataForEntrypoint
-    ) internal returns (UserOperation[] memory ops) {
+        bytes memory _callDataForEntrypoint,
+        bytes memory paymasterAndData
+    ) internal view returns (UserOperation[] memory ops) {
         uint256 nonce = entryPoint.getNonce(sender, 0);
 
         // Get user op fields
@@ -54,10 +55,10 @@ contract OpenfortPaymasterTest is Test {
             preVerificationGas: 500_000,
             maxFeePerGas: 0,
             maxPriorityFeePerGas: 0,
-            paymasterAndData: bytes(""),
+            paymasterAndData: paymasterAndData,
             signature: bytes("")
         });
-
+        
         // Sign UserOp
         bytes32 opHash = EntryPoint(entryPoint).getUserOpHash(op);
         bytes32 msgHash = ECDSA.toEthSignedMessageHash(opHash);
@@ -65,9 +66,10 @@ contract OpenfortPaymasterTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(_signerPKey, msgHash);
         bytes memory userOpSignature = abi.encodePacked(r, s, v);
 
-        address recoveredSigner = ECDSA.recover(msgHash, v, r, s);
-        address expectedSigner = vm.addr(_signerPKey);
-        assertEq(recoveredSigner, expectedSigner);
+        // Verifications below commented to avoid "Stack too deep" error
+        // address recoveredSigner = ECDSA.recover(msgHash, v, r, s);
+        // address expectedSigner = vm.addr(_signerPKey);
+        // assertEq(recoveredSigner, expectedSigner);
 
         op.signature = userOpSignature;
 
@@ -86,12 +88,13 @@ contract OpenfortPaymasterTest is Test {
         bytes memory _initCode,
         address _target,
         uint256 _value,
-        bytes memory _callData
-    ) internal returns (UserOperation[] memory) {
+        bytes memory _callData,
+        bytes memory paymasterAndData
+    ) internal view returns (UserOperation[] memory) {
         bytes memory callDataForEntrypoint =
             abi.encodeWithSignature("execute(address,uint256,bytes)", _target, _value, _callData);
 
-        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
+        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint, paymasterAndData);
     }
 
     /* 
@@ -104,12 +107,13 @@ contract OpenfortPaymasterTest is Test {
         bytes memory _initCode,
         address[] memory _target,
         uint256[] memory _value,
-        bytes[] memory _callData
-    ) internal returns (UserOperation[] memory) {
+        bytes[] memory _callData,
+        bytes memory paymasterAndData
+    ) internal view returns (UserOperation[] memory) {
         bytes memory callDataForEntrypoint =
             abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
 
-        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
+        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint, paymasterAndData);
     }
 
     /**
@@ -157,6 +161,42 @@ contract OpenfortPaymasterTest is Test {
      * 
      */
     function testParsePaymasterData() public {
+        uint48 validUntil = 2 ** 48 - 1;
+        uint48 validAfter = 0;
+        address erc20Token = address(0x0);
+        uint256 exchangeRate = 1000;
+        bytes memory signature;
+
+        bytes32 hash = keccak256(
+                abi.encodePacked(
+                    validUntil, validAfter, erc20Token, exchangeRate));
+        { // Using scoping to avoid the "Stack too deep" error
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(factoryAdminPKey, hash);
+            signature = abi.encodePacked(r, s, v);
+        }
+        bytes memory dataEncoded = abi.encode(validUntil, validAfter, erc20Token, exchangeRate); // Looking at the source code, I've found this part was not Packed (filled with 0s)
+
+        bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, signature); // This part was packed (filled with 0s)
+
+        uint48 returnedValidUntil;
+        uint48 returnedValidAfter;
+        address returnedVErc20Token;
+        uint256 returnedVExchangeRate;
+        bytes memory returnedSignature;
+
+        (returnedValidUntil, returnedValidAfter, returnedVErc20Token, returnedVExchangeRate, returnedSignature) = openfortPaymaster.parsePaymasterAndData(paymasterAndData);
+        assertEq(validUntil, returnedValidUntil);
+        assertEq(validAfter, returnedValidAfter);
+        assertEq(erc20Token, returnedVErc20Token);
+        assertEq(exchangeRate, returnedVExchangeRate);
+        assertEq(signature, returnedSignature);
+    }
+
+    /*
+     * Test parsePaymasterAndData
+     * 
+     */
+    function testParsePaymasterDataERC20() public {
         uint48 validUntil = 2 ** 48 - 1;
         uint48 validAfter = 0;
         address erc20Token = address(testToken);
@@ -210,11 +250,28 @@ contract OpenfortPaymasterTest is Test {
         entryPoint.depositTo{ value: 1 }(address(openfortPaymaster));
     }
 
-    function testDepositAndReadBalance() public {
+    /*
+     * Test sending a userOp with an invalid paymasterAndData (valid paymaster, but invalid sig)
+     * Should fail
+     */
+    function testFailPaymasterUserOpWrongSig() public {
         // Create an static account wallet and get its address
         address account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
-        // openfortPaymaster.addDepositFor(address(testToken), account, 100);
-        // uint depositInfo = openfortPaymaster.depositInfo(address(testToken), account);
-        // assertEq(depositInfo, 100);
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), "0x1234"); // This part was packed (filled with 0s)
+
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()"), paymasterAndData
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
     }
 }
