@@ -24,9 +24,9 @@ contract OpenfortPaymaster is BasePaymaster {
 
     mapping(address => uint256 ) public senderNonce;
 
-    uint256 private constant VALID_PND_OFFSET = 20;
+    uint256 private constant VALID_PND_OFFSET = 20; // length of an address
 
-    uint256 private constant SIGNATURE_OFFSET = 148;
+    uint256 private constant SIGNATURE_OFFSET = 148; // 48+48+20+32 = 148
 
     uint256 public constant POST_OP_GAS = 35000;
 
