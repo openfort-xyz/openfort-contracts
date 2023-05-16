@@ -26,7 +26,7 @@ contract StaticOpenfortAccountFactoryDeploy is Script {
         uint256 _signerPKey,
         bytes memory _initCode,
         bytes memory _callDataForEntrypoint
-    ) internal returns (UserOperation[] memory ops) {
+    ) internal view returns (UserOperation[] memory ops) {
         uint256 nonce = entryPoint.getNonce(sender, 0);
 
         // Get user op fields
@@ -73,7 +73,7 @@ contract StaticOpenfortAccountFactoryDeploy is Script {
         address _target,
         uint256 _value,
         bytes memory _callData
-    ) internal returns (UserOperation[] memory) {
+    ) internal view returns (UserOperation[] memory) {
         bytes memory callDataForEntrypoint = abi.encodeWithSignature(
             "execute(address,uint256,bytes)",
             _target,
@@ -95,7 +95,7 @@ contract StaticOpenfortAccountFactoryDeploy is Script {
         address[] memory _target,
         uint256[] memory _value,
         bytes[] memory _callData
-    ) internal returns (UserOperation[] memory) {
+    ) internal view returns (UserOperation[] memory) {
         bytes memory callDataForEntrypoint = abi.encodeWithSignature(
             "executeBatch(address[],uint256[],bytes[])",
             _target,
