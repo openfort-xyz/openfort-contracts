@@ -709,14 +709,91 @@ contract OpenfortPaymasterTest is Test {
 
         entryPoint.handleOps(userOps, beneficiary);
 
-        // Verify that the paymaster has less deposit now
+        // Verify that the paymaster has the same deposit
         assert(paymasterDepositBefore == openfortPaymaster.getDeposit());
         // Verify that the balance of the smart account has not decreased
         assertEq(testToken.balanceOf(account), 100);
         // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
 
-        // If this fails, it could mean:
+        // If this fails, it would mean:
+        // 1- That the paymaster has spent some of its deposit
+        // 2- That the smart account could not perform the desired actions, but still has all testTokens
+        // An attacker could DoS the paymaster to drain its deposit
+    }
+
+    /*
+     * Test sending a userOp with an valid paymasterAndData (valid paymaster, valid sig)
+     * Using ERC20. Should work.
+     */
+    function testPaymasterUserOpERC20ValidSigSmallApprove() public {
+        assertEq(testToken.balanceOf(account), 0);
+        testToken.mint(account, 100_000);
+        assertEq(testToken.balanceOf(account), 100_000);
+
+        bytes memory dataEncoded = mockedPaymasterDataERC20();
+
+        bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, MOCKSIG, "1", MOCKSIG);
+
+        // Create a userOp to let the paymaster use our testTokens
+        UserOperation[] memory userOps = _setupUserOpExecute(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            address(testToken),
+            0,
+            abi.encodeWithSignature("approve(address,uint256)", address(openfortPaymaster), 1),
+            paymasterAndData
+        );
+
+        // Simulating that the Paymaster gets the userOp and signs it
+        bytes32 hash;
+        {
+            hash = ECDSA.toEthSignedMessageHash(
+                openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, address(testToken), EXCHANGERATE)
+            );
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(paymasterAdminPKey, hash);
+            bytes memory signature = abi.encodePacked(r, s, v);
+            bytes memory paymasterAndDataSigned = abi.encodePacked(address(openfortPaymaster), dataEncoded, signature); // This part was packed (not filled with 0s)
+            assertEq(openfortPaymaster.owner(), ECDSA.recover(hash, signature));
+            userOps[0].paymasterAndData = paymasterAndDataSigned;
+        }
+
+        // Back to the user. Sign the userOp
+        bytes memory userOpSignature;
+        bytes32 hash2;
+        {
+            bytes32 opHash = EntryPoint(entryPoint).getUserOpHash(userOps[0]);
+            bytes32 msgHash = ECDSA.toEthSignedMessageHash(opHash);
+
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, msgHash);
+            userOpSignature = abi.encodePacked(r, s, v);
+
+            // Verifications below commented to avoid "Stack too deep" error
+            assertEq(ECDSA.recover(msgHash, v, r, s), vm.addr(accountAdminPKey));
+            // Should return account admin
+            hash2 = ECDSA.toEthSignedMessageHash(
+                openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, address(testToken), EXCHANGERATE)
+            );
+        }
+
+        // The hash of the userOp should not have changed after the inclusion of the sig
+        assertEq(hash, hash2);
+        userOps[0].signature = userOpSignature;
+
+        // Get the paymaster deposit before handling the userOp
+        uint256 paymasterDepositBefore = openfortPaymaster.getDeposit();
+
+        entryPoint.handleOps(userOps, beneficiary);
+
+        // Verify that the paymaster has the same deposit
+        assert(paymasterDepositBefore == openfortPaymaster.getDeposit());
+        // Verify that the balance of the smart account has not decreased
+        assertEq(testToken.balanceOf(account), 100_000);
+        // Verify that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
+
+        // If this fails, it would mean:
         // 1- That the paymaster has spent some of its deposit
         // 2- That the smart account could not perform the desired actions, but still has all testTokens
         // An attacker could DoS the paymaster to drain its deposit
