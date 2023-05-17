@@ -175,6 +175,42 @@ contract StaticOpenfortAccountTest is Test {
     }
 
     /*
+     * Create an account calling the factory via EntryPoint.
+     * Use initCode
+     */
+    function testCreateAccountViaEntryPoint() public {
+        // Get the counterfactual address
+        address account = staticOpenfortAccountFactory.getAddress(accountAdmin);
+
+        // Make sure the smart account does not have any code yet
+        assertEq(account.code.length, 0);
+
+        bytes memory initCallData = abi.encodeWithSignature("createAccount(address,bytes)", accountAdmin, bytes(""));
+        bytes memory initCode = abi.encodePacked(abi.encodePacked(address(staticOpenfortAccountFactory)), initCallData);
+
+        UserOperation[] memory userOpCreateAccount = _setupUserOpExecute(
+            account,
+            accountAdminPKey,
+            initCode,
+            address(0),
+            0,
+            bytes("")
+        );
+
+        // Expect that we will see an event containing the account and admin
+        vm.expectEmit(true, true, false, true);
+        emit AccountCreated(account, accountAdmin);
+
+        entryPoint.handleOps(userOpCreateAccount, beneficiary);
+        
+        // Make sure the smart account does have some code now
+        assert(account.code.length > 0);
+
+        // Make sure the counterfactual address has not been altered
+        assertEq(account, staticOpenfortAccountFactory.getAddress(accountAdmin));
+    }
+
+    /*
      * Create an account using the factory and make it call count() directly.
      */
     function testTestCounterDirect() public {
