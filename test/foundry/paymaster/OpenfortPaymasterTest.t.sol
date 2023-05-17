@@ -30,12 +30,10 @@ contract OpenfortPaymasterTest is Test {
 
     address payable private beneficiary = payable(makeAddr("beneficiary"));
 
-    event AccountCreated(address indexed account, address indexed accountAdmin);
-
     uint48 internal constant VALIDUNTIL = 2 ** 48 - 1;
     uint48 internal constant VALIDAFTER = 0;
     uint256 internal constant EXCHANGERATE = 10_000_000;
-    uint256 internal MOCKSIG = 2 ** 256 - 1;
+    uint256 internal constant MOCKSIG = 2 ** 256 - 1;
 
     /*
      * Auxiliary function to generate a userOP
@@ -177,15 +175,19 @@ contract OpenfortPaymasterTest is Test {
     }
 
     /*
-     * Test parsePaymasterAndData
+     * Test parsePaymasterAndData() when using the native token
      * 
      */
     function testParsePaymasterDataNative() public {
+        // Encode the paymaster data
         bytes memory dataEncoded = mockedPaymasterDataNative();
+        
+        // Get the related paymaster data signature
         bytes32 hash = keccak256(dataEncoded);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(factoryAdminPKey, hash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
+        // Create the paymasterAndData info
         bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, signature); // This part was packed (not filled with 0s)
 
         (
@@ -203,15 +205,19 @@ contract OpenfortPaymasterTest is Test {
     }
 
     /*
-     * Test parsePaymasterAndData with an ERC20
+     * Test parsePaymasterAndData() with an ERC20
      * 
      */
     function testParsePaymasterDataERC20() public {
+        // Encode the paymaster data
         bytes memory dataEncoded = mockedPaymasterDataERC20();
+
+        // Get the related paymaster data signature
         bytes32 hash = keccak256(dataEncoded);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(factoryAdminPKey, hash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
+        // Create the paymasterAndData info
         bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, signature); // This part was packed (not filled with 0s)
 
         (
@@ -243,11 +249,19 @@ contract OpenfortPaymasterTest is Test {
     }
 
     /*
-     * Deposit 1 ETH to the EntryPoint on Paymaster's behalf
+     * Deposit 2 ETH to the EntryPoint on Paymaster's behalf
      * 
      */
     function testEntryPointDepositToPaymaster() public {
-        entryPoint.depositTo{value: 1}(address(openfortPaymaster));
+        assert(entryPoint.balanceOf(address(openfortPaymaster)) == 50 ether);
+
+        // Directly deposit 1 ETH to EntryPoint on behalf of paymaster
+        entryPoint.depositTo{value: 1 ether}(address(openfortPaymaster));
+        assert(entryPoint.balanceOf(address(openfortPaymaster)) == 51 ether);
+        
+        // Paymaster deposits 1 ETH to EntryPoint
+        openfortPaymaster.deposit{value: 1 ether}();
+        assert(openfortPaymaster.getDeposit() == 52 ether);
     }
 
     /*
@@ -263,7 +277,7 @@ contract OpenfortPaymasterTest is Test {
 
         bytes memory dataEncoded = mockedPaymasterDataERC20();
 
-        bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded , "0x1234"); // This part was packed (not filled with 0s)
+        bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, "0x1234"); // This part was packed (not filled with 0s)
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
@@ -343,7 +357,9 @@ contract OpenfortPaymasterTest is Test {
         bytes32 hash;
         {
             // Simulating that the Paymaster gets the userOp and signs it
-            hash = ECDSA.toEthSignedMessageHash(openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, address(0), EXCHANGERATE));
+            hash = ECDSA.toEthSignedMessageHash(
+                openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, address(0), EXCHANGERATE)
+            );
             (uint8 v, bytes32 r, bytes32 s) = vm.sign(factoryAdminPKey, hash);
             bytes memory signature = abi.encodePacked(r, s, v);
             bytes memory paymasterAndDataSigned = abi.encodePacked(address(openfortPaymaster), dataEncoded, signature); // This part was packed (not filled with 0s)
@@ -365,16 +381,18 @@ contract OpenfortPaymasterTest is Test {
             assertEq(ECDSA.recover(msgHash, v, r, s), vm.addr(accountAdminPKey));
             // Should return account admin
             console.log(ECDSA.recover(msgHash, userOpSignature));
-            hash2 = ECDSA.toEthSignedMessageHash(openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, address(0), EXCHANGERATE));
+            hash2 = ECDSA.toEthSignedMessageHash(
+                openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, address(0), EXCHANGERATE)
+            );
         }
-        
+
         // The hash of the userOp should not have changed after the inclusion of the sig
         assertEq(hash, hash2);
         userOps[0].signature = userOpSignature;
 
         // Get the paymaster deposit before handling the userOp
-        uint paymasterDepositBefore = openfortPaymaster.getDeposit();
-    
+        uint256 paymasterDepositBefore = openfortPaymaster.getDeposit();
+
         entryPoint.handleOps(userOps, beneficiary);
         // entryPoint.simulateValidation(userOp);
 
@@ -416,7 +434,9 @@ contract OpenfortPaymasterTest is Test {
         bytes32 hash;
         {
             // Simulating that the Paymaster gets the userOp and signs it
-            hash = ECDSA.toEthSignedMessageHash(openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, address(testToken), EXCHANGERATE));
+            hash = ECDSA.toEthSignedMessageHash(
+                openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, address(testToken), EXCHANGERATE)
+            );
             (uint8 v, bytes32 r, bytes32 s) = vm.sign(factoryAdminPKey, hash);
             bytes memory signature = abi.encodePacked(r, s, v);
             bytes memory paymasterAndDataSigned = abi.encodePacked(address(openfortPaymaster), dataEncoded, signature); // This part was packed (not filled with 0s)
@@ -438,16 +458,18 @@ contract OpenfortPaymasterTest is Test {
             assertEq(ECDSA.recover(msgHash, v, r, s), vm.addr(accountAdminPKey));
             // Should return account admin
             console.log(ECDSA.recover(msgHash, userOpSignature));
-            hash2 = ECDSA.toEthSignedMessageHash(openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, address(testToken), EXCHANGERATE));
+            hash2 = ECDSA.toEthSignedMessageHash(
+                openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, address(testToken), EXCHANGERATE)
+            );
         }
-        
+
         // The hash of the userOp should not have changed after the inclusion of the sig
         assertEq(hash, hash2);
         userOps[0].signature = userOpSignature;
 
         // Get the paymaster deposit before handling the userOp
-        uint paymasterDepositBefore = openfortPaymaster.getDeposit();
-    
+        uint256 paymasterDepositBefore = openfortPaymaster.getDeposit();
+
         entryPoint.handleOps(userOps, beneficiary);
         // entryPoint.simulateValidation(userOp);
         console.log(testToken.balanceOf(account));
