@@ -960,7 +960,7 @@ contract StaticOpenfortAccountTest is Test {
         entryPoint.depositTo{value: 1000000000000000000}(account);
         // Expect the simulateValidation() to always revert
         vm.expectRevert();
-        entryPoint.simulateValidation(userOp[0]);
+        EntryPoint(entryPoint).handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
         assertEq(testCounter.counters(account), 0);
