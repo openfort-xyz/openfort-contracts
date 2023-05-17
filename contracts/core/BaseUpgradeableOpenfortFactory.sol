@@ -15,8 +15,8 @@ import {IBaseOpenfortFactory} from "../interfaces/IBaseOpenfortFactory.sol";
  *  - IBaseOpenfortFactory
  */
 abstract contract BaseUpgradeableOpenfortFactory is IBaseOpenfortFactory {
-    address private entrypointContract;
-    address public accountImplementation;
+    address public immutable entrypointContract;
+    address public immutable accountImplementation;
 
     constructor(address _accountImpl, address _entrypoint) {
         require(_accountImpl != address(0), "_accountImpl cannot be 0");
