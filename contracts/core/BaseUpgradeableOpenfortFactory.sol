@@ -8,16 +8,20 @@ import {BaseAccount, UserOperation, IEntryPoint} from "account-abstraction/core/
 import {IBaseOpenfortFactory} from "../interfaces/IBaseOpenfortFactory.sol";
 
 /**
- * @title BaseOpenfortFactory (Non-upgradeable)
+ * @title BaseUpgradeableOpenfortFactory (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
  * @notice Abstract contract to create account factories
  * It inherits from:
  *  - IBaseOpenfortFactory
  */
-abstract contract BaseOpenfortFactory is IBaseOpenfortFactory {
-    address public immutable accountImplementation;
+abstract contract BaseUpgradeableOpenfortFactory is IBaseOpenfortFactory {
+    address private entrypointContract;
+    address public accountImplementation;
 
-    constructor(address _accountImpl) {
+    constructor(address _accountImpl, address _entrypoint) {
+        require(_accountImpl != address(0), "_accountImpl cannot be 0");
+        require(_entrypoint != address(0), "_entrypoint cannot be 0");
+        entrypointContract = _entrypoint;
         accountImplementation = _accountImpl;
     }
 
@@ -35,7 +39,7 @@ abstract contract BaseOpenfortFactory is IBaseOpenfortFactory {
 
         account = Clones.cloneDeterministic(impl, salt);
 
-        _initializeAccount(account, _admin, _data);
+        _initializeAccount(account, _admin, entrypointContract, _data);
 
         emit AccountCreated(account, _admin);
 
@@ -61,7 +65,7 @@ abstract contract BaseOpenfortFactory is IBaseOpenfortFactory {
 
         account = Clones.cloneDeterministic(impl, salt);
 
-        _initializeAccount(account, _admin, _data);
+        _initializeAccount(account, _admin, entrypointContract, _data);
 
         emit AccountCreated(account, _admin);
 
@@ -88,5 +92,7 @@ abstract contract BaseOpenfortFactory is IBaseOpenfortFactory {
      * @dev Called in `createAccount`.
      * Initializes the account contract created in `createAccount`.
      */
-    function _initializeAccount(address _account, address _admin, bytes calldata _data) internal virtual;
+    function _initializeAccount(address _account, address _admin, address _entrypointContract, bytes calldata _data)
+        internal
+        virtual;
 }

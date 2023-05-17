@@ -9,7 +9,9 @@ interface IBaseOpenfortFactory {
     function createAccount(address _admin, bytes calldata _data) external returns (address account);
 
     /// @notice Deploys a new Account for admin.
-    function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce) external returns (address account);
+    function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce)
+        external
+        returns (address account);
 
     /// @notice Returns the address of the Account implementation.
     function accountImplementation() external view returns (address);

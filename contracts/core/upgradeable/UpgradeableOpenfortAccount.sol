@@ -6,14 +6,16 @@ import {BaseUpgradeableOpenfortAccount, IEntryPoint} from "../BaseUpgradeableOpe
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 /**
-  * @title UpgradeableOpenfortAccount
-  * @author Eloi<eloi@openfort.xyz>
-  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
-  * It inherits from:
-  *  - BaseUpgradeableOpenfortAccount
-  */
+ * @title UpgradeableOpenfortAccount
+ * @author Eloi<eloi@openfort.xyz>
+ * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
+ * It inherits from:
+ *  - BaseUpgradeableOpenfortAccount
+ */
 contract UpgradeableOpenfortAccount is BaseUpgradeableOpenfortAccount, UUPSUpgradeable {
-    constructor(IEntryPoint _entrypoint, address _factory) BaseUpgradeableOpenfortAccount(_entrypoint,  _factory){}
-    
+    constructor() {
+        _disableInitializers();
+    }
+
     function _authorizeUpgrade(address) internal override onlyOwner {}
 }
