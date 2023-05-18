@@ -482,7 +482,7 @@ contract OpenfortPaymasterTest is Test {
         address[] memory targets = new address[](count);
         uint256[] memory values = new uint256[](count);
         bytes[] memory callData = new bytes[](count);
-        
+
         targets[0] = address(testToken);
         values[0] = 0;
         callData[0] = abi.encodeWithSignature("approve(address,uint256)", address(openfortPaymaster), 2 ** 256 - 1);
@@ -490,17 +490,10 @@ contract OpenfortPaymasterTest is Test {
         targets[1] = address(testCounter);
         values[1] = 0;
         callData[1] = abi.encodeWithSignature("count()");
-    
+
         // Create a userOp to let the paymaster use our testTokens
-        UserOperation[] memory userOps = _setupUserOpExecuteBatch(
-            account,
-            accountAdminPKey,
-            bytes(""),
-            targets,
-            values,
-            callData,
-            paymasterAndData
-        );
+        UserOperation[] memory userOps =
+            _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
 
         // Simulating that the Paymaster gets the userOp and signs it
         bytes32 hash;
@@ -562,7 +555,7 @@ contract OpenfortPaymasterTest is Test {
         address[] memory targets = new address[](count);
         uint256[] memory values = new uint256[](count);
         bytes[] memory callData = new bytes[](count);
-        
+
         targets[0] = address(testToken);
         values[0] = 0;
         callData[0] = abi.encodeWithSignature("approve(address,uint256)", address(openfortPaymaster), 2 ** 256 - 1);
@@ -570,17 +563,10 @@ contract OpenfortPaymasterTest is Test {
         targets[1] = address(testCounter);
         values[1] = 0;
         callData[1] = abi.encodeWithSignature("count()");
-    
+
         // Create a userOp to let the paymaster use our testTokens
-        UserOperation[] memory userOps = _setupUserOpExecuteBatch(
-            account,
-            accountAdminPKey,
-            bytes(""),
-            targets,
-            values,
-            callData,
-            paymasterAndData
-        );
+        UserOperation[] memory userOps =
+            _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
 
         bytes32 hash;
         {
@@ -649,7 +635,7 @@ contract OpenfortPaymasterTest is Test {
         address[] memory targets = new address[](count);
         uint256[] memory values = new uint256[](count);
         bytes[] memory callData = new bytes[](count);
-        
+
         targets[0] = address(testToken);
         values[0] = 0;
         callData[0] = abi.encodeWithSignature("approve(address,uint256)", address(openfortPaymaster), 2 ** 256 - 1);
@@ -657,17 +643,10 @@ contract OpenfortPaymasterTest is Test {
         targets[1] = address(testCounter);
         values[1] = 0;
         callData[1] = abi.encodeWithSignature("count()");
-    
+
         // Create a userOp to let the paymaster use our testTokens
-        UserOperation[] memory userOps = _setupUserOpExecuteBatch(
-            account,
-            accountAdminPKey,
-            bytes(""),
-            targets,
-            values,
-            callData,
-            paymasterAndData
-        );
+        UserOperation[] memory userOps =
+            _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
 
         // Simulating that the Paymaster gets the userOp and signs it
         bytes32 hash;

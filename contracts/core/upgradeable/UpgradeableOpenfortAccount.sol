@@ -3,7 +3,7 @@ pragma solidity ^0.8.12;
 
 // Base account contract to inherit from
 import {BaseUpgradeableOpenfortAccount, IEntryPoint} from "../BaseUpgradeableOpenfortAccount.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
  * @title UpgradeableOpenfortAccount
@@ -13,10 +13,6 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeab
  *  - BaseUpgradeableOpenfortAccount
  */
 contract UpgradeableOpenfortAccount is BaseUpgradeableOpenfortAccount, UUPSUpgradeable {
-    constructor() {
-        entrypointContract = address(0);
-        _disableInitializers();
-    }
 
     /*
      * @notice Initializes the smart contract wallet.
