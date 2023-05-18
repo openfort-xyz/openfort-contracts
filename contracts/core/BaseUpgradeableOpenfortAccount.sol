@@ -37,7 +37,7 @@ abstract contract BaseUpgradeableOpenfortAccount is
     bytes4 internal constant EXECUTEBATCH_SELECTOR = 0x47e1da2a;
     uint48 internal constant DEFAULT_LIMIT = 100;
 
-    address private entrypointContract;
+    address internal entrypointContract;
 
     /**
      * Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
@@ -62,7 +62,6 @@ abstract contract BaseUpgradeableOpenfortAccount is
 
     event SessionKeyRegistered(address indexed key);
     event SessionKeyRevoked(address indexed key);
-    event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
 
     // solhint-disable-next-line no-empty-blocks
     receive() external payable virtual {}
@@ -74,20 +73,13 @@ abstract contract BaseUpgradeableOpenfortAccount is
     /*
      * @notice Initializes the smart contract wallet.
      */
-    function initialize(address _defaultAdmin, address _entrypoint, bytes calldata) public virtual initializer {
-        require(_defaultAdmin != address(0), "_defaultAdmin cannot be 0");
-        require(_entrypoint != address(0), "_entrypoint cannot be 0");
-        _transferOwnership(_defaultAdmin);
-        entrypointContract = _entrypoint;
-    }
-
+    function initialize(address _defaultAdmin, address _entrypoint, bytes calldata) public virtual;
+    
     /**
-     * Update the EntryPoint address
+     * @inheritdoc BaseAccount
      */
-    function updateEntryPoint(address _newEntrypoint) external onlyOwner {
-        require(_newEntrypoint != address(0), "_newEntrypoint cannot be 0");
-        emit EntryPointUpdated(entrypointContract, _newEntrypoint);
-        entrypointContract = _newEntrypoint;
+    function entryPoint() public view override returns (IEntryPoint) {
+        return IEntryPoint(entrypointContract);
     }
 
     /**
@@ -108,17 +100,10 @@ abstract contract BaseUpgradeableOpenfortAccount is
     }
 
     /**
-     * @inheritdoc BaseAccount
-     */
-    function entryPoint() public view override returns (IEntryPoint) {
-        return IEntryPoint(entrypointContract);
-    }
-
-    /**
      * Check current account deposit in the entryPoint
      */
     function getDeposit() public view returns (uint256) {
-        return IEntryPoint(entrypointContract).balanceOf(address(this));
+        return entryPoint().balanceOf(address(this));
     }
 
     /*
@@ -241,7 +226,7 @@ abstract contract BaseUpgradeableOpenfortAccount is
      * Deposit more funds for this account in the entryPoint
      */
     function addDeposit() public payable {
-        IEntryPoint(entrypointContract).depositTo{value: msg.value}(address(this));
+        entryPoint().depositTo{value: msg.value}(address(this));
     }
 
     /**
@@ -251,7 +236,7 @@ abstract contract BaseUpgradeableOpenfortAccount is
      * @notice ONLY the owner can call this function (it's not using _requireFromEntryPointOrOwner())
      */
     function withdrawDepositTo(address payable withdrawAddress, uint256 amount) public onlyOwner {
-        IEntryPoint(entrypointContract).withdrawTo(withdrawAddress, amount);
+        entryPoint().withdrawTo(withdrawAddress, amount);
     }
 
     /**

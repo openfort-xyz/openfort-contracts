@@ -2,20 +2,20 @@
 pragma solidity ^0.8.12;
 
 // Base account contract to inherit from
-import {BaseUpgradeableOpenfortAccount, IEntryPoint} from "../BaseUpgradeableOpenfortAccount.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {BaseUpgradeableOpenfortAccount} from "../BaseUpgradeableOpenfortAccount.sol";
 
 /**
- * @title UpgradeableOpenfortAccount
+ * @title NewStaticOpenfortAccount (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseUpgradeableOpenfortAccount
  */
-contract UpgradeableOpenfortAccount is BaseUpgradeableOpenfortAccount, UUPSUpgradeable {
-    constructor() {
-        entrypointContract = address(0);
-        _disableInitializers();
+contract NewStaticOpenfortAccount is BaseUpgradeableOpenfortAccount {
+    event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
+
+    constructor(address _entrypoint) {
+        entrypointContract = _entrypoint;
     }
 
     /*
@@ -28,5 +28,12 @@ contract UpgradeableOpenfortAccount is BaseUpgradeableOpenfortAccount, UUPSUpgra
         entrypointContract = _entrypoint;
     }
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+    /**
+     * Update the EntryPoint address
+     */
+    function updateEntryPoint(address _newEntrypoint) external onlyOwner {
+        require(_newEntrypoint != address(0), "_newEntrypoint cannot be 0");
+        emit EntryPointUpdated(entrypointContract, _newEntrypoint);
+        entrypointContract = _newEntrypoint;
+    }
 }
