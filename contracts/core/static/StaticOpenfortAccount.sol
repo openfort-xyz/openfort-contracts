@@ -10,12 +10,15 @@ import {BaseUpgradeableOpenfortAccount} from "../BaseUpgradeableOpenfortAccount.
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseUpgradeableOpenfortAccount
+ *  - The EntryPoint can be updated via updateEntryPoint()
  */
 contract StaticOpenfortAccount is BaseUpgradeableOpenfortAccount {
     event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
 
     constructor(address _entrypoint) {
+        require(_entrypoint != address(0), "_entrypoint cannot be 0");
         entrypointContract = _entrypoint;
+        _disableInitializers();
     }
 
     /*
