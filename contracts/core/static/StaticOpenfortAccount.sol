@@ -15,12 +15,6 @@ import {BaseUpgradeableOpenfortAccount} from "../BaseUpgradeableOpenfortAccount.
 contract StaticOpenfortAccount is BaseUpgradeableOpenfortAccount {
     event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
 
-    constructor(address _entrypoint) {
-        require(_entrypoint != address(0), "_entrypoint cannot be 0");
-        entrypointContract = _entrypoint;
-        _disableInitializers();
-    }
-
     /*
      * @notice Initializes the smart contract wallet.
      */
