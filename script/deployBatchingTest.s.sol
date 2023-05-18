@@ -6,13 +6,13 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {EntryPoint, UserOperation, IEntryPoint} from "account-abstraction/core/EntryPoint.sol";
-import {StaticOpenfortAccountFactory} from "../contracts/core/static/StaticOpenfortAccountFactory.sol";
+import {StaticOpenfortFactory} from "../contracts/core/static/StaticOpenfortFactory.sol";
 
-contract StaticOpenfortAccountFactoryDeploy is Script, Test {
+contract StaticOpenfortFactoryDeploy is Script, Test {
     using ECDSA for bytes32;
 
     EntryPoint public entryPoint;
-    StaticOpenfortAccountFactory public staticOpenfortAccountFactory;
+    StaticOpenfortFactory public staticOpenfortFactory;
     TestCounter public testCounter;
 
     uint256 deployPrivKey;
@@ -95,8 +95,8 @@ contract StaticOpenfortAccountFactoryDeploy is Script, Test {
 
         // Due to errors with Foundry and create2, let's use hardcoded addresses for testing:
         // Created with
-        // forge create StaticOpenfortAccountFactory --mnemonic $MNEMONIC --constructor-args $ENTRY_POINT_ADDRESS --rpc-url $POLYGON_MUMBAI_RPC --verify
-        staticOpenfortAccountFactory = StaticOpenfortAccountFactory(0xfaE7940051e23EE8B7E267E7f3d207069E250842);
+        // forge create StaticOpenfortFactory --mnemonic $MNEMONIC --constructor-args $ENTRY_POINT_ADDRESS --rpc-url $POLYGON_MUMBAI_RPC --verify
+        staticOpenfortFactory = StaticOpenfortFactory(0xfaE7940051e23EE8B7E267E7f3d207069E250842);
         // Created with
         // forge create TestCounter --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify 
         testCounter = TestCounter(0x1A09053F78695ad7372D0539E5246d025b254A4c);

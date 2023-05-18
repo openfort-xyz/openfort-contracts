@@ -6,7 +6,7 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation, IEntryPoint} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
-import {StaticOpenfortAccountFactory} from "contracts/core/static/StaticOpenfortAccountFactory.sol";
+import {StaticOpenfortFactory} from "contracts/core/static/StaticOpenfortFactory.sol";
 import {StaticOpenfortAccount} from "contracts/core/static/StaticOpenfortAccount.sol";
 import {OpenfortPaymaster} from "contracts/paymaster/OpenfortPaymaster.sol";
 
@@ -16,7 +16,7 @@ contract OpenfortPaymasterTest is Test {
     uint256 public mumbaiFork;
 
     EntryPoint public entryPoint;
-    StaticOpenfortAccountFactory public staticOpenfortAccountFactory;
+    StaticOpenfortFactory public staticOpenfortFactory;
     OpenfortPaymaster public openfortPaymaster;
     TestCounter public testCounter;
     TestToken public testToken;
@@ -135,7 +135,7 @@ contract OpenfortPaymasterTest is Test {
     /**
      * @notice Initialize the StaticOpenfortAccount testing contract.
      * Scenario:
-     * - factoryAdmin is the deployer (and owner) of the StaticOpenfortAccountFactory
+     * - factoryAdmin is the deployer (and owner) of the StaticOpenfortFactory
      * - paymasterAdmin is the deployer (and owner) of the OpenfortPaymaster
      * - accountAdmin is the account used to deploy new static accounts
      * - entryPoint is the singleton EntryPoint
@@ -165,7 +165,7 @@ contract OpenfortPaymasterTest is Test {
 
         // deploy account factory
         vm.prank(factoryAdmin);
-        staticOpenfortAccountFactory = new StaticOpenfortAccountFactory(IEntryPoint(payable(address(entryPoint))));
+        staticOpenfortFactory = new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20) and mint 100
@@ -173,7 +173,7 @@ contract OpenfortPaymasterTest is Test {
         testToken.mint(address(this), 100);
 
         // Create an static account wallet and get its address
-        account = staticOpenfortAccountFactory.createAccount(accountAdmin, "");
+        account = staticOpenfortFactory.createAccount(accountAdmin, "");
     }
 
     /*
