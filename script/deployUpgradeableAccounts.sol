@@ -2,10 +2,10 @@
 pragma solidity ^0.8.12;
 
 import {Script} from "forge-std/Script.sol";
-import {StaticOpenfortFactory} from "../contracts/core/static/StaticOpenfortFactory.sol";
+import {UpgradeableOpenfortFactory} from "../contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 
-contract StaticOpenfortFactoryDeploy is Script {
+contract UpgradeableOpenfortDeploy is Script {
     uint256 deployPrivKey;
     address deployAddress;
 
@@ -17,16 +17,12 @@ contract StaticOpenfortFactoryDeploy is Script {
     function run() public {
         vm.startBroadcast(deployPrivKey);
 
-        StaticOpenfortFactory staticOpenfortFactory = new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
-        staticOpenfortFactory.accountImplementation();
+        UpgradeableOpenfortFactory upgradeableOpenfortFactory = new UpgradeableOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
+        upgradeableOpenfortFactory.accountImplementation();
   
         // The first call should create a new account, while the second will just return the corresponding account address
-        staticOpenfortFactory.createAccount(deployAddress, bytes(""));
-        staticOpenfortFactory.createAccount(deployAddress, bytes(""));
-
-        // Deploy a TestCount
-        TestCounter testCounter = new TestCounter();
-        testCounter.count();
+        upgradeableOpenfortFactory.createAccount(deployAddress, bytes(""));
+        upgradeableOpenfortFactory.createAccount(deployAddress, bytes(""));
 
         vm.stopBroadcast();
     }
