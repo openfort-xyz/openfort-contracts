@@ -2,7 +2,7 @@
 pragma solidity ^0.8.12;
 
 // Base account contract to inherit from
-import {BaseUpgradeableOpenfortAccount} from "../BaseUpgradeableOpenfortAccount.sol";
+import {BaseOpenfortAccount} from "../BaseOpenfortAccount.sol";
 
 /**
  * @title StaticOpenfortAccount (Non-upgradeable)
@@ -12,7 +12,7 @@ import {BaseUpgradeableOpenfortAccount} from "../BaseUpgradeableOpenfortAccount.
  *  - BaseUpgradeableOpenfortAccount
  *  - The EntryPoint can be updated via updateEntryPoint()
  */
-contract StaticOpenfortAccount is BaseUpgradeableOpenfortAccount {
+contract StaticOpenfortAccount is BaseOpenfortAccount {
     event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
 
     /*
