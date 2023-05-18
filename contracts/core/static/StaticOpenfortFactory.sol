@@ -14,12 +14,17 @@ import {StaticOpenfortAccount} from "./StaticOpenfortAccount.sol";
  *  - BaseOpenfortFactory because it is following the base implementation for factories
  */
 contract StaticOpenfortFactory is BaseUpgradeableOpenfortFactory {
-    constructor(address _entrypoint) BaseUpgradeableOpenfortFactory(address(new StaticOpenfortAccount(_entrypoint)), _entrypoint) {}
+    constructor(address _entrypoint)
+        BaseUpgradeableOpenfortFactory(address(new StaticOpenfortAccount(_entrypoint)), _entrypoint)
+    {}
 
     /*
      * @dev Called in `createAccount`. Initializes the account contract created in `createAccount`.
      */
-    function _initializeAccount(address _account, address _admin, address _entrypointContract, bytes calldata _data) internal override {
+    function _initializeAccount(address _account, address _admin, address _entrypointContract, bytes calldata _data)
+        internal
+        override
+    {
         StaticOpenfortAccount(payable(_account)).initialize(_admin, _entrypointContract, _data);
     }
 }
