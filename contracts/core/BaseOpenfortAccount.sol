@@ -15,7 +15,7 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseAccount to comply with ERC-4337
- *  - Initializable because StaticOpenfortAccounts are meant to be created using StaticOpenfortAccountFactory
+ *  - Initializable because StaticOpenfortAccounts are meant to be created using StaticOpenfortFactory
  *  - Ownable2Step to have permissions
  *  - IERC1271 for Signature Validation
  *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
