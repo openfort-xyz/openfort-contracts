@@ -3,18 +3,19 @@ pragma solidity ^0.8.12;
 
 import {Script} from "forge-std/Script.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {StaticOpenfortAccountFactory, StaticOpenfortAccount, IEntryPoint} from "../contracts/core/static/StaticOpenfortAccountFactory.sol";
+import {StaticOpenfortFactory, StaticOpenfortAccount} from "../contracts/core/static/StaticOpenfortFactory.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
+import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {UserOperation} from "account-abstraction/interfaces/UserOperation.sol";
 
 
-contract StaticOpenfortAccountFactoryDeploy is Script {
+contract StaticOpenfortFactoryDeploy is Script {
     using ECDSA for bytes32;
 
     uint256 deployPrivKey;
     address deployAddress;
     IEntryPoint entryPoint;
-    StaticOpenfortAccountFactory staticOpenfortAccountFactory;
+    StaticOpenfortFactory staticOpenfortFactory;
     StaticOpenfortAccount staticOpenfortAccount;
     TestCounter testCounter;
 
@@ -45,7 +46,7 @@ contract StaticOpenfortAccountFactoryDeploy is Script {
         });
 
         // Sign UserOp
-        bytes32 opHash = IEntryPoint(entryPoint).getUserOpHash(op);
+        bytes32 opHash = entryPoint.getUserOpHash(op);
         bytes32 msgHash = ECDSA.toEthSignedMessageHash(opHash);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(_signerPKey, msgHash);
@@ -110,7 +111,7 @@ contract StaticOpenfortAccountFactoryDeploy is Script {
         deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
         deployAddress = vm.addr(deployPrivKey);
         entryPoint = IEntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
-        staticOpenfortAccountFactory = StaticOpenfortAccountFactory(0xfaE7940051e23EE8B7E267E7f3d207069E250842);
+        staticOpenfortFactory = StaticOpenfortFactory(0xfaE7940051e23EE8B7E267E7f3d207069E250842);
         staticOpenfortAccount = StaticOpenfortAccount(payable(0x330a919e0605E91D62f8136D9Ee8a9a0b8ff92CF));
         testCounter = TestCounter(0x1A09053F78695ad7372D0539E5246d025b254A4c);
     }

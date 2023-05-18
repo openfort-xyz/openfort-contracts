@@ -15,7 +15,7 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseAccount to comply with ERC-4337
- *  - Initializable because StaticOpenfortAccounts are meant to be created using StaticOpenfortAccountFactory
+ *  - Initializable because StaticOpenfortAccounts are meant to be created using StaticOpenfortFactory
  *  - Ownable2StepUpgradeable to have permissions
  *  - IERC1271Upgradeable for Signature Validation
  *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
@@ -60,6 +60,7 @@ abstract contract BaseUpgradeableOpenfortAccount is
 
     mapping(address => SessionKeyStruct) public sessionKeys;
 
+    event AccountCreated(address indexed creator);
     event SessionKeyRegistered(address indexed key);
     event SessionKeyRevoked(address indexed key);
 
@@ -67,6 +68,7 @@ abstract contract BaseUpgradeableOpenfortAccount is
     receive() external payable virtual {}
 
     constructor() {
+        emit AccountCreated(msg.sender);
         _disableInitializers();
     }
 
