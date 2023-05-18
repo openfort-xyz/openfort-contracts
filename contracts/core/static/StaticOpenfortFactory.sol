@@ -15,7 +15,7 @@ import {StaticOpenfortAccount} from "./StaticOpenfortAccount.sol";
  */
 contract StaticOpenfortFactory is BaseUpgradeableOpenfortFactory {
     constructor(address _entrypoint)
-        BaseUpgradeableOpenfortFactory(address(new StaticOpenfortAccount(_entrypoint)), _entrypoint)
+        BaseUpgradeableOpenfortFactory(address(new StaticOpenfortAccount()), _entrypoint)
     {}
 
     /*

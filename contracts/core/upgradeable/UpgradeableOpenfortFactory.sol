@@ -14,7 +14,7 @@ import {UpgradeableOpenfortAccount} from "./UpgradeableOpenfortAccount.sol";
  *  - BaseUpgradeableOpenfortFactory because it is following the base implementation for factories
  */
 contract UpgradeableOpenfortFactory is BaseUpgradeableOpenfortFactory {
-    constructor(address _accountImpl, address _entrypoint) BaseUpgradeableOpenfortFactory(_accountImpl, _entrypoint) {}
+    constructor(address _entrypoint) BaseUpgradeableOpenfortFactory(address(new UpgradeableOpenfortAccount()), _entrypoint) {}
 
     /*
      * @dev Called in `createAccount`. Initializes the account contract created in `createAccount`.
