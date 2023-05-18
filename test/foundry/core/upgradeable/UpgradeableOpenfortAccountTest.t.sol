@@ -997,4 +997,20 @@ contract UpgradeableOpenfortAccountTest is Test {
         // Verifiy that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
+
+    /*
+     * Create an account and upgrade its implementation
+     */
+    function testUpgradeAccount() public {
+        // Create an static account wallet and get its address
+        address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
+
+        UpgradeableOpenfortAccount newAccountImplementation = new UpgradeableOpenfortAccount();
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        UpgradeableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
+
+        vm.prank(accountAdmin);
+        UpgradeableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
+    }
 }
