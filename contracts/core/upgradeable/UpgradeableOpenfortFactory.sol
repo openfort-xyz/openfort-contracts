@@ -7,13 +7,13 @@ import {BaseUpgradeableOpenfortFactory} from "../BaseUpgradeableOpenfortFactory.
 import {UpgradeableOpenfortAccount} from "./UpgradeableOpenfortAccount.sol";
 
 /**
- * @title UpgradeableOpenfortAccountFactory (Non-upgradeable)
+ * @title UpgradeableOpenfortFactory (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
  * @notice Factory to deploy UpgradeableOpenfortAccounts
  * It inherits from:
  *  - BaseUpgradeableOpenfortFactory because it is following the base implementation for factories
  */
-contract UpgradeableOpenfortAccountFactory is BaseUpgradeableOpenfortFactory {
+contract UpgradeableOpenfortFactory is BaseUpgradeableOpenfortFactory {
     constructor(address _accountImpl, address _entrypoint) BaseUpgradeableOpenfortFactory(_accountImpl, _entrypoint) {}
 
     /*
