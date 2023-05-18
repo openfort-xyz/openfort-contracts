@@ -76,7 +76,7 @@ abstract contract BaseUpgradeableOpenfortAccount is
      * @notice Initializes the smart contract wallet.
      */
     function initialize(address _defaultAdmin, address _entrypoint, bytes calldata) public virtual;
-    
+
     /**
      * @inheritdoc BaseAccount
      */
