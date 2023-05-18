@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {BaseAccount, UserOperation, IEntryPoint} from "account-abstraction/core/BaseAccount.sol";
+import {ClonesUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 
 // Interfaces
 import {IBaseOpenfortFactory} from "../interfaces/IBaseOpenfortFactory.sol";
@@ -31,13 +30,13 @@ abstract contract BaseUpgradeableOpenfortFactory is IBaseOpenfortFactory {
     function createAccount(address _admin, bytes calldata _data) external virtual override returns (address) {
         address impl = accountImplementation;
         bytes32 salt = keccak256(abi.encode(_admin));
-        address account = Clones.predictDeterministicAddress(impl, salt);
+        address account = ClonesUpgradeable.predictDeterministicAddress(impl, salt);
 
         if (account.code.length > 0) {
             return account;
         }
 
-        account = Clones.cloneDeterministic(impl, salt);
+        account = ClonesUpgradeable.cloneDeterministic(impl, salt);
 
         _initializeAccount(account, _admin, entrypointContract, _data);
 
@@ -57,13 +56,13 @@ abstract contract BaseUpgradeableOpenfortFactory is IBaseOpenfortFactory {
     {
         address impl = accountImplementation;
         bytes32 salt = keccak256(abi.encode(_admin, nonce));
-        address account = Clones.predictDeterministicAddress(impl, salt);
+        address account = ClonesUpgradeable.predictDeterministicAddress(impl, salt);
 
         if (account.code.length > 0) {
             return account;
         }
 
-        account = Clones.cloneDeterministic(impl, salt);
+        account = ClonesUpgradeable.cloneDeterministic(impl, salt);
 
         _initializeAccount(account, _admin, entrypointContract, _data);
 
@@ -77,7 +76,7 @@ abstract contract BaseUpgradeableOpenfortFactory is IBaseOpenfortFactory {
      */
     function getAddress(address _adminSigner) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_adminSigner));
-        return Clones.predictDeterministicAddress(accountImplementation, salt);
+        return ClonesUpgradeable.predictDeterministicAddress(accountImplementation, salt);
     }
 
     /*
@@ -85,7 +84,7 @@ abstract contract BaseUpgradeableOpenfortFactory is IBaseOpenfortFactory {
      */
     function getAddressWithNonce(address _adminSigner, uint256 nonce) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_adminSigner, nonce));
-        return Clones.predictDeterministicAddress(accountImplementation, salt);
+        return ClonesUpgradeable.predictDeterministicAddress(accountImplementation, salt);
     }
 
     /*
