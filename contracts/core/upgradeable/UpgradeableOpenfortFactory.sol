@@ -31,15 +31,19 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
     function createAccount(address _admin, bytes calldata _data) external returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin));
         address account = getAddress(_admin);
-        
+
         if (account.code.length > 0) {
             return account;
         }
 
-        UpgradeableOpenfortAccount newUpgradeableOpenfortAccount = UpgradeableOpenfortAccount(payable(new ERC1967Proxy{salt : bytes32(salt)}(
+        UpgradeableOpenfortAccount newUpgradeableOpenfortAccount = UpgradeableOpenfortAccount(
+            payable(
+                new ERC1967Proxy{salt : bytes32(salt)}(
                 address(accountImplementation),
                 abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
-            )));
+                )
+            )
+        );
 
         emit AccountCreated(account, _admin);
 
@@ -49,18 +53,22 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @notice Deploy a new Account for _admin.
      */
-    function createAccountWithNonce(address _admin, bytes calldata _data,uint256 nonce) external returns (address) {
+    function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce) external returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin, nonce));
         address account = getAddressWithNonce(_admin, nonce);
-        
+
         if (account.code.length > 0) {
             return account;
         }
 
-        UpgradeableOpenfortAccount newUpgradeableOpenfortAccount = UpgradeableOpenfortAccount(payable(new ERC1967Proxy{salt : bytes32(salt)}(
+        UpgradeableOpenfortAccount newUpgradeableOpenfortAccount = UpgradeableOpenfortAccount(
+            payable(
+                new ERC1967Proxy{salt : bytes32(salt)}(
                 address(accountImplementation),
                 abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
-            )));
+                )
+            )
+        );
 
         emit AccountCreated(account, _admin);
 
@@ -72,13 +80,18 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
      */
     function getAddress(address _admin) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin));
-        return Create2.computeAddress(bytes32(salt), keccak256(abi.encodePacked(
-                type(ERC1967Proxy).creationCode,
-                abi.encode(
-                    address(accountImplementation),
-                    abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
+        return Create2.computeAddress(
+            bytes32(salt),
+            keccak256(
+                abi.encodePacked(
+                    type(ERC1967Proxy).creationCode,
+                    abi.encode(
+                        address(accountImplementation),
+                        abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
+                    )
                 )
-            )));
+            )
+        );
     }
 
     /*
@@ -86,12 +99,17 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
      */
     function getAddressWithNonce(address _admin, uint256 nonce) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin, nonce));
-        return Create2.computeAddress(bytes32(salt), keccak256(abi.encodePacked(
-                type(ERC1967Proxy).creationCode,
-                abi.encode(
-                    address(accountImplementation),
-                    abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
+        return Create2.computeAddress(
+            bytes32(salt),
+            keccak256(
+                abi.encodePacked(
+                    type(ERC1967Proxy).creationCode,
+                    abi.encode(
+                        address(accountImplementation),
+                        abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
+                    )
                 )
-            )));
+            )
+        );
     }
 }
