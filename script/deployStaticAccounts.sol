@@ -22,7 +22,7 @@ contract StaticOpenfortDeploy is Script {
   
         // The first call should create a new account, while the second will just return the corresponding account address
         staticOpenfortFactory.createAccount(deployAddress, bytes(""));
-        staticOpenfortFactory.createAccount(deployAddress, bytes(""));
+        // staticOpenfortFactory.createAccount(deployAddress, bytes(""));
 
         vm.stopBroadcast();
     }
