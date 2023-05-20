@@ -90,7 +90,9 @@ contract StaticOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @dev Called in `createAccount`. Initializes the account contract created in `createAccount`.
      */
-    function _initializeAccount(address _account, address _admin, address _entrypointContract, bytes calldata _data) internal {
+    function _initializeAccount(address _account, address _admin, address _entrypointContract, bytes calldata _data)
+        internal
+    {
         StaticOpenfortAccount(payable(_account)).initialize(_admin, _entrypointContract, _data);
     }
 }
