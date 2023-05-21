@@ -80,12 +80,8 @@ contract StaticOpenfortFactoryDeploy is Script, Test {
         uint256[] memory _value,
         bytes[] memory _callData
     ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
-            "executeBatch(address[],uint256[],bytes[])",
-            _target,
-            _value,
-            _callData
-        );
+        bytes memory callDataForEntrypoint =
+            abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
 
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
@@ -98,13 +94,13 @@ contract StaticOpenfortFactoryDeploy is Script, Test {
         // forge create StaticOpenfortFactory --mnemonic $MNEMONIC --constructor-args $ENTRY_POINT_ADDRESS --rpc-url $POLYGON_MUMBAI_RPC --verify
         staticOpenfortFactory = StaticOpenfortFactory(0xfaE7940051e23EE8B7E267E7f3d207069E250842);
         // Created with
-        // forge create TestCounter --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify 
+        // forge create TestCounter --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify
         testCounter = TestCounter(0x1A09053F78695ad7372D0539E5246d025b254A4c);
 
         // Created with:
-        // $forge create StaticOpenfortAccount --constructor-args $ENTRY_POINT_ADDRESS 0x6E767F52d49b0abD686003727b8bc0684011819B --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify                
+        // $forge create StaticOpenfortAccount --constructor-args $ENTRY_POINT_ADDRESS 0x6E767F52d49b0abD686003727b8bc0684011819B --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify
         address account = 0x330a919e0605E91D62f8136D9Ee8a9a0b8ff92CF;
-        
+
         uint256 count = 3;
         address[] memory targets = new address[](count);
         uint256[] memory values = new uint256[](count);
@@ -116,14 +112,8 @@ contract StaticOpenfortFactoryDeploy is Script, Test {
             callData[i] = abi.encodeWithSignature("count()");
         }
 
-        UserOperation[] memory userOp = _setupUserOpExecuteBatch(
-            account,
-            deployPrivKey,
-            bytes(""),
-            targets,
-            values,
-            callData
-        );
+        UserOperation[] memory userOp =
+            _setupUserOpExecuteBatch(account, deployPrivKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 10000000000000000}(account);
         entryPoint.handleOps(userOp, payable(deployAddress));

@@ -17,9 +17,10 @@ contract StaticOpenfortDeploy is Script {
     function run() public {
         vm.startBroadcast(deployPrivKey);
 
-        StaticOpenfortFactory staticOpenfortFactory = new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
+        StaticOpenfortFactory staticOpenfortFactory =
+            new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
         staticOpenfortFactory.accountImplementation();
-  
+
         // The first call should create a new account, while the second will just return the corresponding account address
         staticOpenfortFactory.createAccount(deployAddress, bytes(""));
         // staticOpenfortFactory.createAccount(deployAddress, bytes(""));
