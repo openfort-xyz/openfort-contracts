@@ -8,7 +8,6 @@ import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {UserOperation} from "account-abstraction/interfaces/UserOperation.sol";
 
-
 contract StaticOpenfortFactoryDeploy is Script {
     using ECDSA for bytes32;
 
@@ -75,12 +74,8 @@ contract StaticOpenfortFactoryDeploy is Script {
         uint256 _value,
         bytes memory _callData
     ) internal view returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
-            "execute(address,uint256,bytes)",
-            _target,
-            _value,
-            _callData
-        );
+        bytes memory callDataForEntrypoint =
+            abi.encodeWithSignature("execute(address,uint256,bytes)", _target, _value, _callData);
 
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
@@ -97,12 +92,8 @@ contract StaticOpenfortFactoryDeploy is Script {
         uint256[] memory _value,
         bytes[] memory _callData
     ) internal view returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
-            "executeBatch(address[],uint256[],bytes[])",
-            _target,
-            _value,
-            _callData
-        );
+        bytes memory callDataForEntrypoint =
+            abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
 
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
