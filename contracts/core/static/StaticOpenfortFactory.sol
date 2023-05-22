@@ -27,7 +27,7 @@ contract StaticOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @notice Deploy a new Account for _admin.
      */
-    function createAccount(address _admin, bytes calldata _data) external virtual override returns (address) {
+    function createAccount(address _admin, bytes calldata _data) external returns (address) {
         address impl = address(accountImplementation);
         bytes32 salt = keccak256(abi.encode(_admin));
         address account = Clones.predictDeterministicAddress(impl, salt);
@@ -48,12 +48,7 @@ contract StaticOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @notice Deploy a new Account for _admin and a given nonce.
      */
-    function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce)
-        external
-        virtual
-        override
-        returns (address)
-    {
+    function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce) external returns (address) {
         address impl = address(accountImplementation);
         bytes32 salt = keccak256(abi.encode(_admin, nonce));
         address account = Clones.predictDeterministicAddress(impl, salt);
