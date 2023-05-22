@@ -11,14 +11,41 @@ forge build
 forge test
 ```
 
-Deployment of one static factory and account:
+
+## Use different built-in scripts
+
+Before executing any of the scripts below, make sure you've properly configured your `.env` file.
+
+
+### Check paymaster's deposit on different chains:
 
 ```
-forge script script/deployStaticAccounts.sol --fork-url $POLYGON_MUMBAI_RPC -vvvvv --verify --broadcast
+forge script CheckPaymasterDeposit
 ```
 
-Deployment of one upgradeable factory and account:
+### Deploy one static factory and one account:
+
+Simulation:
 
 ```
-forge script script/deployUpgradeableAccounts.sol.sol --fork-url $POLYGON_MUMBAI_RPC -vvvvv --verify --broadcast
+forge script StaticOpenfortDeploy --fork-url $<rpc_network>
+```
+
+Actual deployment:
+
+```
+forge script StaticOpenfortDeploy --fork-url $<rpc_network> --verify --broadcast
+```
+
+### Deploy one upgradeable factory and one account:
+
+Simulation:
+
+```
+forge script UpgradeableOpenfortDeploy --fork-url $<rpc_network>
+```
+
+Actual deployment:
+```
+forge script UpgradeableOpenfortDeploy --fork-url $<rpc_network> --verify --broadcast
 ```
