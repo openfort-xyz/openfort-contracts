@@ -46,6 +46,14 @@ contract OpenfortPaymaster is BasePaymaster {
         }
     }
 
+    /**
+     * Return the hash we're going to sign off-chain (and validate on-chain).
+     * This method is called by the off-chain service, to sign the request.
+     * It is called on-chain from the validatePaymasterUserOp, to validate the signature.
+     * note that this signature covers all fields of the UserOperation, except the "paymasterAndData",
+     * which will carry the signature itself.
+     * ERC-20 address and exchange rate added to support paying in ERC-20s
+     */
     function getHash(
         UserOperation calldata userOp,
         uint48 validUntil,
@@ -67,6 +75,13 @@ contract OpenfortPaymaster is BasePaymaster {
         );
     }
 
+    /**
+     * Verify our external signer signed this request.
+     * The "paymasterAndData" is expected to be the paymaster and a signature over the entire request params
+     * paymasterAndData[:20]: address(this)
+     * paymasterAndData[20:148]: abi.encode(validUntil, validAfter, erc20Token, exchangeRate) // 48+48+20+32
+     * paymasterAndData[SIGNATURE_OFFSET:]: signature
+     */
     function _validatePaymasterUserOp(UserOperation calldata userOp, bytes32, /*userOpHash*/ uint256 requiredPreFund)
         internal
         override
@@ -89,13 +104,19 @@ contract OpenfortPaymaster is BasePaymaster {
                 abi.encode(userOp.sender, erc20Token, exchangeRate, userOp.maxFeePerGas, userOp.maxPriorityFeePerGas);
         }
 
+        //don't revert on signature failure: return SIG_VALIDATION_FAILED
         if (owner() != ECDSA.recover(hash, signature)) {
             return (context, Helpers._packValidationData(true, validUntil, validAfter));
         }
 
+        // If the parsePaymasterAndData was signed by the owner of the Paymaster
+        // return the context (empty if native token) and validity (validUntil, validAfter).
         return (context, Helpers._packValidationData(false, validUntil, validAfter));
     }
 
+    /*
+     * If the everythig worked fine, transfer the right amount of tokens from the sender (SCW) to the owner of the Paymaster
+     */
     function _postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) internal override {
         (address sender, IERC20 token, uint256 exchangeRate, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas) =
             abi.decode(context, (address, IERC20, uint256, uint256, uint256));
@@ -115,6 +136,13 @@ contract OpenfortPaymaster is BasePaymaster {
         }
     }
 
+    /**
+     * Parse paymasterAndData.
+     * The "paymasterAndData" is expected to be the paymaster and a signature over the entire request params
+     * paymasterAndData[:20]: address(this)
+     * paymasterAndData[20:SIGNATURE_OFFSET]: (validUntil, validAfter, erc20Token, exchangeRate) // 48+48+20+32
+     * paymasterAndData[SIGNATURE_OFFSET:]: signature
+     */
     function parsePaymasterAndData(bytes calldata paymasterAndData)
         public
         pure
