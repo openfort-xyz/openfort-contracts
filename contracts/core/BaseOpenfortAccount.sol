@@ -8,6 +8,7 @@ import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interface
 
 import {BaseAccount, UserOperation, IEntryPoint} from "account-abstraction/core/BaseAccount.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
+import "account-abstraction/core/Helpers.sol" as Helpers;
 
 /**
  * @title BaseUpgradeableOpenfortAccount (Non-upgradeable)
@@ -272,7 +273,7 @@ abstract contract BaseOpenfortAccount is
 
         // Check if the session key is valid according to the data in the userOp
         if (isValidSessionKey(signer, userOp.callData)) {
-            return 0;
+            return Helpers._packValidationData(false, sessionKeys[signer].validUntil, sessionKeys[signer].validAfter);
         }
 
         return SIG_VALIDATION_FAILED;
