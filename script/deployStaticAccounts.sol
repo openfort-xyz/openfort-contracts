@@ -7,16 +7,14 @@ import {StaticOpenfortFactory} from "../contracts/core/static/StaticOpenfortFact
 
 contract StaticOpenfortDeploy is Script {
     uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
-    address internal deployAddress = makeAddr(vm.envString("MNEMONIC"));
+    address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
-
-    function setUp() public {}
 
     function run() public {
         vm.startBroadcast(deployPrivKey);
 
         StaticOpenfortFactory staticOpenfortFactory = new StaticOpenfortFactory(address(entryPoint));
-        staticOpenfortFactory.accountImplementation();
+        // staticOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
         address account2 = staticOpenfortFactory.createAccount(deployAddress, bytes(""));
