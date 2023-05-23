@@ -620,7 +620,7 @@ contract OpenfortPaymasterTest is Test {
      * ExecBatch. Using ERC20. Should work.
      * Test showing that failing to repay in ERC20 still spends some of Paymaster's deposit (DoS)
      */
-    function testPaymasterUserOpERC20ValidSigExecBatchInsufficientERC20() public {
+    function testFailPaymasterUserOpERC20ValidSigExecBatchInsufficientERC20() public {
         assertEq(testToken.balanceOf(account), 0);
         testToken.mint(account, 100);
         assertEq(testToken.balanceOf(account), 100);
@@ -705,7 +705,7 @@ contract OpenfortPaymasterTest is Test {
      * Test sending a userOp with an valid paymasterAndData (valid paymaster, valid sig)
      * Using ERC20. Should work.
      */
-    function testPaymasterUserOpERC20ValidSigSmallApprove() public {
+    function testFailPaymasterUserOpERC20ValidSigSmallApprove() public {
         assertEq(testToken.balanceOf(account), 0);
         testToken.mint(account, 100_000);
         assertEq(testToken.balanceOf(account), 100_000);
