@@ -22,12 +22,18 @@ contract CheckPaymasterDeposit is Script {
         vm.selectFork(fork_id);
         vm.startBroadcast(deployPrivKey);
         console.log("\tPaymaster at address %s", address(openfortPaymaster));
+        uint256 paymasterDeposit = openfortPaymaster.getDeposit();
         console.log(
             "\tDeposit on chain ID %s is: %s wei (%s ETH)\n",
             block.chainid,
-            openfortPaymaster.getDeposit(),
-            openfortPaymaster.getDeposit() / 10 ** 18
+            paymasterDeposit,
+            paymasterDeposit / 10 ** 18
         );
+
+        if (paymasterDeposit < 2 ether) {
+            console.log("ALERT: deposit too low on chain ID %s!\n", block.chainid);
+        }
+
         vm.stopBroadcast();
     }
 
