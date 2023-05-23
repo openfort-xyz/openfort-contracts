@@ -1,28 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.12;
 
-import {Script} from "forge-std/Script.sol";
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {Script, console} from "forge-std/Script.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
-import {EntryPoint, UserOperation, IEntryPoint} from "account-abstraction/core/EntryPoint.sol";
+import {UserOperation, EntryPoint} from "account-abstraction/core/EntryPoint.sol";
 import {StaticOpenfortFactory} from "../contracts/core/static/StaticOpenfortFactory.sol";
 
-contract StaticOpenfortFactoryDeploy is Script, Test {
+contract DeployBatching is Script {
     using ECDSA for bytes32;
 
-    EntryPoint public entryPoint;
     StaticOpenfortFactory public staticOpenfortFactory;
     TestCounter public testCounter;
 
-    uint256 deployPrivKey;
-    address deployAddress;
+    uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
+    address internal deployAddress = vm.addr(deployPrivKey);
+    EntryPoint internal entryPoint = EntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
 
-    function setUp() public {
-        deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
-        deployAddress = vm.addr(deployPrivKey);
-        entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
-    }
+    function setUp() public {}
 
     /*
      * Auxiliary function to generate a userOP
@@ -59,7 +54,7 @@ contract StaticOpenfortFactoryDeploy is Script, Test {
 
         address recoveredSigner = ECDSA.recover(msgHash, v, r, s);
         address expectedSigner = vm.addr(_signerPKey);
-        assertEq(recoveredSigner, expectedSigner);
+        assert(recoveredSigner == expectedSigner);
 
         op.signature = userOpSignature;
 
@@ -92,14 +87,14 @@ contract StaticOpenfortFactoryDeploy is Script, Test {
         // Due to errors with Foundry and create2, let's use hardcoded addresses for testing:
         // Created with
         // forge create StaticOpenfortFactory --mnemonic $MNEMONIC --constructor-args $ENTRY_POINT_ADDRESS --rpc-url $POLYGON_MUMBAI_RPC --verify
-        staticOpenfortFactory = StaticOpenfortFactory(0xfaE7940051e23EE8B7E267E7f3d207069E250842);
+        staticOpenfortFactory = StaticOpenfortFactory(0xe9B5fb44f377Ce5a03427d5Be7D9d073bf8FE1f0);
         // Created with
         // forge create TestCounter --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify
         testCounter = TestCounter(0x1A09053F78695ad7372D0539E5246d025b254A4c);
 
         // Created with:
         // $forge create StaticOpenfortAccount --constructor-args $ENTRY_POINT_ADDRESS 0x6E767F52d49b0abD686003727b8bc0684011819B --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify
-        address account = 0x330a919e0605E91D62f8136D9Ee8a9a0b8ff92CF;
+        address account = staticOpenfortFactory.createAccount(deployAddress, "");
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
@@ -117,6 +112,8 @@ contract StaticOpenfortFactoryDeploy is Script, Test {
 
         entryPoint.depositTo{value: 10000000000000000}(account);
         entryPoint.handleOps(userOp, payable(deployAddress));
+
+        console.log(testCounter.counters(account));
 
         vm.stopBroadcast();
     }
