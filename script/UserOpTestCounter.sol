@@ -1,22 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.12;
 
-import {Script} from "forge-std/Script.sol";
+import {Script, console} from "forge-std/Script.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {StaticOpenfortFactory, StaticOpenfortAccount} from "../contracts/core/static/StaticOpenfortFactory.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
-import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
-import {UserOperation} from "account-abstraction/interfaces/UserOperation.sol";
+import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
+import {UserOperation, UserOperationLib} from "account-abstraction/interfaces/UserOperation.sol";
 
-contract StaticOpenfortFactoryDeploy is Script {
+contract UserOpTestCounter is Script {
     using ECDSA for bytes32;
+    using UserOperationLib for UserOperation;
 
-    uint256 deployPrivKey;
-    address deployAddress;
-    IEntryPoint entryPoint;
+    uint256 public mumbaiFork = vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
+
+    uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
+    address internal deployAddress = vm.addr(deployPrivKey);
+    EntryPoint internal entryPoint = EntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
+
     StaticOpenfortFactory staticOpenfortFactory;
     StaticOpenfortAccount staticOpenfortAccount;
     TestCounter testCounter;
+
+    function calcPreVerificationGas(UserOperation calldata userOp) public {
+        console.logBytes(userOp.pack());
+    }
 
     /*
      * Auxiliary function to generate a userOP
@@ -99,35 +107,33 @@ contract StaticOpenfortFactoryDeploy is Script {
     }
 
     function setUp() public {
-        deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
-        deployAddress = vm.addr(deployPrivKey);
-        entryPoint = IEntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
-        staticOpenfortFactory = StaticOpenfortFactory(0xfaE7940051e23EE8B7E267E7f3d207069E250842);
-        staticOpenfortAccount = StaticOpenfortAccount(payable(0x330a919e0605E91D62f8136D9Ee8a9a0b8ff92CF));
-        testCounter = TestCounter(0x1A09053F78695ad7372D0539E5246d025b254A4c);
+        vm.selectFork(mumbaiFork);
+
+        // Due to errors with Foundry and create2, let's use hardcoded addresses for testing:
+        staticOpenfortFactory = StaticOpenfortFactory(0xe9B5fb44f377Ce5a03427d5Be7D9d073bf8FE1f0);
+        testCounter = new TestCounter();
     }
 
     function run() public {
         vm.startBroadcast(deployPrivKey);
 
+        // Verifiy that the counter is still set to 0
+        assert(testCounter.counters(deployAddress) == 0);
         // Count using deployPrivKey
         testCounter.count();
+        assert(testCounter.counters(deployAddress) == 1);
+
+        address account = staticOpenfortFactory.createAccount(deployAddress, "");
 
         // Count using userOp
         UserOperation[] memory userOp = _setupUserOpExecute(
-            address(staticOpenfortAccount),
-            deployPrivKey,
-            bytes(""),
-            address(testCounter),
-            0,
-            abi.encodeWithSignature("count()")
+            account, deployPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 100000000000000000}(address(staticOpenfortAccount));
-        entryPoint.handleOps(userOp, payable(deployAddress));
+        this.calcPreVerificationGas(userOp[0]);
 
-        // Verifiy that the counter has increased
-        //assertEq(testCounter.counters(deployAddress), 1);
+        entryPoint.depositTo{value: 10000000000000000}(account);
+        entryPoint.handleOps(userOp, payable(deployAddress));
 
         vm.stopBroadcast();
     }
