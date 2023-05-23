@@ -26,8 +26,9 @@ contract OpenfortPaymaster is BasePaymaster {
 
     uint256 private constant VALID_PND_OFFSET = 20; // length of an address
     uint256 private constant SIGNATURE_OFFSET = 148; // 48+48+20+32 = 148
-
     uint256 public constant POST_OP_GAS = 35000;
+
+    event GasPaidInERC20(address ERC20, uint256 actualGasCost, uint256 actualTokensSent);
 
     constructor(IEntryPoint _entryPoint, address _owner) BasePaymaster(_entryPoint) {
         _transferOwnership(_owner);
@@ -133,6 +134,7 @@ contract OpenfortPaymaster is BasePaymaster {
         uint256 actualTokenCost = ((actualGasCost + (POST_OP_GAS * opGasPrice)) * exchangeRate) / 1e18;
         if (mode != PostOpMode.postOpReverted) {
             token.safeTransferFrom(sender, owner(), actualTokenCost);
+            emit GasPaidInERC20(address(token), actualGasCost, actualTokenCost);
         }
     }
 
