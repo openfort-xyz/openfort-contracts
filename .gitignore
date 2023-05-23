@@ -19,5 +19,8 @@ types/
 cache_forge/
 broadcast/
 
+# Deployment log files
+*-deploymentAllChains.log
+
 /.DS_Store
 .DS_Store
