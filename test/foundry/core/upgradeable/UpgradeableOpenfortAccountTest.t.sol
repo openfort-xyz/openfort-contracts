@@ -240,6 +240,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -272,6 +274,8 @@ contract UpgradeableOpenfortAccountTest is Test {
             _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -297,6 +301,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -325,6 +331,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -356,6 +364,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -366,6 +376,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -397,6 +409,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -407,6 +421,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -426,6 +442,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
     }
 
@@ -454,6 +472,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -464,6 +484,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -490,13 +512,15 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
     }
 
     /*
      *  Should fail, try to use a sessionKey that is expired.
      */
-    function testFailTestCounterViaSessionKeyExpired() public {
+    function testTestCounterViaSessionKeyExpired() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -516,6 +540,9 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        vm.expectRevert();
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -545,6 +572,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -575,6 +604,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         userOp = _setupUserOpExecute(
@@ -582,6 +613,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has only increased by one
@@ -622,6 +655,8 @@ contract UpgradeableOpenfortAccountTest is Test {
             _setupUserOpExecuteBatch(account, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -652,6 +687,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -682,6 +719,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -711,6 +750,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -758,6 +799,8 @@ contract UpgradeableOpenfortAccountTest is Test {
             _setupUserOpExecuteBatch(account, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -788,6 +831,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -834,6 +879,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -901,6 +948,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -931,6 +980,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the totalSupply has increased

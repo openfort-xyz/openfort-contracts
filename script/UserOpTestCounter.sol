@@ -22,8 +22,15 @@ contract UserOpTestCounter is Script {
     StaticOpenfortAccount staticOpenfortAccount;
     TestCounter testCounter;
 
-    function calcPreVerificationGas(UserOperation calldata userOp) public {
-        console.logBytes(userOp.pack());
+    // WIP based on calcPreVerificationGas.ts from the bundler's SDK
+    function calcPreVerificationGas(UserOperation calldata userOp) public pure returns (uint){
+        uint fixedCost = 21_000;
+        uint perUserOp = 18_300;
+        uint lengthInWord = (userOp.pack().length+31) / 32;
+        uint perUserOpWord = 4;
+        return fixedCost +
+        perUserOp +
+        lengthInWord * perUserOpWord;
     }
 
     /*
@@ -34,7 +41,7 @@ contract UserOpTestCounter is Script {
         uint256 _signerPKey,
         bytes memory _initCode,
         bytes memory _callDataForEntrypoint
-    ) internal view returns (UserOperation[] memory ops) {
+    ) internal returns (UserOperation[] memory ops) {
         uint256 nonce = entryPoint.getNonce(sender, 0);
 
         // Get user op fields
@@ -51,6 +58,8 @@ contract UserOpTestCounter is Script {
             paymasterAndData: bytes(""),
             signature: bytes("")
         });
+
+        this.calcPreVerificationGas(op);
 
         // Sign UserOp
         bytes32 opHash = entryPoint.getUserOpHash(op);
@@ -81,7 +90,7 @@ contract UserOpTestCounter is Script {
         address _target,
         uint256 _value,
         bytes memory _callData
-    ) internal view returns (UserOperation[] memory) {
+    ) internal returns (UserOperation[] memory) {
         bytes memory callDataForEntrypoint =
             abi.encodeWithSignature("execute(address,uint256,bytes)", _target, _value, _callData);
 
@@ -99,7 +108,7 @@ contract UserOpTestCounter is Script {
         address[] memory _target,
         uint256[] memory _value,
         bytes[] memory _callData
-    ) internal view returns (UserOperation[] memory) {
+    ) internal returns (UserOperation[] memory) {
         bytes memory callDataForEntrypoint =
             abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
 
@@ -129,8 +138,6 @@ contract UserOpTestCounter is Script {
         UserOperation[] memory userOp = _setupUserOpExecute(
             account, deployPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
-
-        this.calcPreVerificationGas(userOp[0]);
 
         entryPoint.depositTo{value: 10000000000000000}(account);
         entryPoint.handleOps(userOp, payable(deployAddress));

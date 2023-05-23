@@ -238,6 +238,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -270,6 +272,8 @@ contract StaticOpenfortAccountTest is Test {
             _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -295,6 +299,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -323,6 +329,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -354,6 +362,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -364,6 +374,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -395,6 +407,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -405,6 +419,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -424,6 +440,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
     }
 
@@ -452,6 +470,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -462,6 +482,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -488,13 +510,15 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
     }
 
     /*
      *  Should fail, try to use a sessionKey that is expired.
      */
-    function testFailTestCounterViaSessionKeyExpired() public {
+    function testTestCounterViaSessionKeyExpired() public {
         // Create an static account wallet and get its address
         address account = staticOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -514,6 +538,9 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        vm.expectRevert();
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -543,6 +570,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -573,6 +602,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         userOp = _setupUserOpExecute(
@@ -580,6 +611,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has only increased by one
@@ -620,6 +653,8 @@ contract StaticOpenfortAccountTest is Test {
             _setupUserOpExecuteBatch(account, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -650,6 +685,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -680,6 +717,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -709,6 +748,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -756,6 +797,8 @@ contract StaticOpenfortAccountTest is Test {
             _setupUserOpExecuteBatch(account, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -786,6 +829,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -832,6 +877,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has not increased
@@ -897,6 +944,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the counter has increased
@@ -927,6 +976,8 @@ contract StaticOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verifiy that the totalSupply has increased
