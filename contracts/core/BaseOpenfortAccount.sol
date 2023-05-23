@@ -118,13 +118,6 @@ abstract contract BaseOpenfortAccount is
             return false;
         } // Not owner or session key revoked
 
-        // Calculate the time range
-        bool outOfTimeRange = block.timestamp > sessionKeys[_sessionKey].validUntil
-            || block.timestamp < sessionKeys[_sessionKey].validAfter;
-        if (outOfTimeRange) {
-            return false;
-        } // Session key expired
-
         // Let's first get the selector of the function that the caller is using
         bytes4 funcSelector =
             callData[0] | (bytes4(callData[1]) >> 8) | (bytes4(callData[2]) >> 16) | (bytes4(callData[3]) >> 24);
