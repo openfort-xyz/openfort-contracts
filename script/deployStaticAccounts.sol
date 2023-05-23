@@ -11,9 +11,10 @@ contract StaticOpenfortDeploy is Script {
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
 
     function run() public {
+        bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
         vm.startBroadcast(deployPrivKey);
 
-        StaticOpenfortFactory staticOpenfortFactory = new StaticOpenfortFactory(address(entryPoint));
+        StaticOpenfortFactory staticOpenfortFactory = new StaticOpenfortFactory{salt: versionSalt}(address(entryPoint));
         // staticOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address

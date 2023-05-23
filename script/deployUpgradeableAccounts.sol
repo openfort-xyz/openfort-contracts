@@ -11,9 +11,10 @@ contract UpgradeableOpenfortDeploy is Script {
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
 
     function run() public {
+        bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
         vm.startBroadcast(deployPrivKey);
 
-        UpgradeableOpenfortFactory upgradeableOpenfortFactory = new UpgradeableOpenfortFactory(address(entryPoint));
+        UpgradeableOpenfortFactory upgradeableOpenfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(address(entryPoint));
         //address account1 = upgradeableOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
