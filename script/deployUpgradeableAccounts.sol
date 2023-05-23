@@ -2,15 +2,13 @@
 pragma solidity ^0.8.12;
 
 import {Script, console} from "forge-std/Script.sol";
-import {UpgradeableOpenfortFactory} from "../contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import {UpgradeableOpenfortFactory} from "../contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 
 contract UpgradeableOpenfortDeploy is Script {
     uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
-    address internal deployAddress = makeAddr(vm.envString("MNEMONIC"));
+    address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
-
-    function setUp() public {}
 
     function run() public {
         vm.startBroadcast(deployPrivKey);
