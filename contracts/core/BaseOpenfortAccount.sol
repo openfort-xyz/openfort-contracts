@@ -113,8 +113,9 @@ abstract contract BaseOpenfortAccount is
      * @notice Return whether a sessionKey is valid.
      */
     function isValidSessionKey(address _sessionKey, bytes calldata callData) public returns (bool valid) {
+        SessionKeyStruct storage sessionKey = sessionKeys[_sessionKey];
         // If the signer is a session key that is still valid
-        if (sessionKeys[_sessionKey].validUntil == 0) {
+        if (sessionKey.validUntil == 0) {
             return false;
         } // Not owner or session key revoked
 
@@ -123,15 +124,15 @@ abstract contract BaseOpenfortAccount is
             callData[0] | (bytes4(callData[1]) >> 8) | (bytes4(callData[2]) >> 16) | (bytes4(callData[3]) >> 24);
 
         if (funcSelector == EXECUTE_SELECTOR) {
-            if (sessionKeys[_sessionKey].limit == 0) {
+            if (sessionKey.limit == 0) {
                 return false;
             } // Limit of transactions per sessionKey reached
             unchecked {
-                sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - 1;
+                sessionKey.limit = sessionKey.limit - 1;
             }
 
             // Check if it is a masterSessionKey
-            if (sessionKeys[_sessionKey].masterSessionKey) {
+            if (sessionKey.masterSessionKey) {
                 return true;
             }
 
@@ -143,22 +144,22 @@ abstract contract BaseOpenfortAccount is
             } // Only masterSessionKey can reenter
 
             // If there is no whitelist or there is, but the target is whitelisted, return true
-            if (!sessionKeys[_sessionKey].whitelising || sessionKeys[_sessionKey].whitelist[toContract]) {
+            if (!sessionKey.whitelising || sessionKey.whitelist[toContract]) {
                 return true;
             }
 
             return false; // All other cases, deny
         } else if (funcSelector == EXECUTEBATCH_SELECTOR) {
             (address[] memory toContract,,) = abi.decode(callData[4:], (address[], uint256[], bytes[]));
-            if (sessionKeys[_sessionKey].limit < toContract.length || toContract.length > 9) {
+            if (sessionKey.limit < toContract.length || toContract.length > 9) {
                 return false;
             } // Limit of transactions per sessionKey reached
             unchecked {
-                sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - uint48(toContract.length);
+                sessionKey.limit = sessionKey.limit - uint48(toContract.length);
             }
 
             // Check if it is a masterSessionKey
-            if (sessionKeys[_sessionKey].masterSessionKey) {
+            if (sessionKey.masterSessionKey) {
                 return true;
             }
 
@@ -166,11 +167,11 @@ abstract contract BaseOpenfortAccount is
                 if (toContract[i] == address(this)) {
                     return false;
                 } // Only masterSessionKey can reenter
-                if (sessionKeys[_sessionKey].whitelising && !sessionKeys[_sessionKey].whitelist[toContract[i]]) {
+                if (sessionKey.whitelising && !sessionKey.whitelist[toContract[i]]) {
                     return false;
                 } // One contract's not in the sessionKey's whitelist (if any)
                 unchecked {
-                    i++; // gas optimization
+                    ++i; // gas optimization
                 }
             }
             return true;
@@ -215,7 +216,7 @@ abstract contract BaseOpenfortAccount is
         for (uint256 i = 0; i < _target.length;) {
             _call(_target[i], _value[i], _calldata[i]);
             unchecked {
-                i++; // gas optimization
+                ++i; // gas optimization
             }
         }
     }
@@ -347,7 +348,7 @@ abstract contract BaseOpenfortAccount is
         for (uint256 i = 0; i < _whitelist.length;) {
             sessionKeys[_key].whitelist[_whitelist[i]] = true;
             unchecked {
-                i++; // gas optimization
+                ++i; // gas optimization
             }
         }
 
