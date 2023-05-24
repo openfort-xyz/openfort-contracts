@@ -98,7 +98,9 @@ contract OpenfortPaymaster is BasePaymaster {
             "VerifyingPaymaster: invalid signature length in paymasterAndData"
         );
         bytes32 hash = ECDSA.toEthSignedMessageHash(getHash(userOp, validUntil, validAfter, erc20Token, exchangeRate));
-        senderNonce[userOp.getSender()]++;
+        unchecked {
+            ++senderNonce[userOp.getSender()];
+        }
         context = "";
         if (erc20Token != address(0)) {
             context =
