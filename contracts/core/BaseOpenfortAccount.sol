@@ -65,6 +65,11 @@ abstract contract BaseOpenfortAccount is
     event SessionKeyRegistered(address indexed key);
     event SessionKeyRevoked(address indexed key);
 
+    error ZeroAddressNotAllowed();
+    error NotOwnerOrEntrypoint();
+    error NotOwnerOrEntrypointOrSelf();
+    error InvalidParameterLength();
+
     // solhint-disable-next-line no-empty-blocks
     receive() external payable virtual {}
 
@@ -89,17 +94,18 @@ abstract contract BaseOpenfortAccount is
      * Require the function call went through EntryPoint or owner
      */
     function _requireFromEntryPointOrOwner() internal view {
-        require(msg.sender == address(entryPoint()) || msg.sender == owner(), "Account: not Owner or EntryPoint");
+        if(msg.sender != address(entryPoint()) && msg.sender != owner()) {
+            revert NotOwnerOrEntrypoint();
+        }
     }
 
     /**
      * Require the function call went through EntryPoint, owner or self
      */
     function _requireFromEntryPointOrOwnerorSelf() internal view {
-        require(
-            msg.sender == address(entryPoint()) || msg.sender == owner() || msg.sender == address(this),
-            "Account: not EntryPoint, Owner or self"
-        );
+        if(msg.sender != address(entryPoint()) && msg.sender != owner() && msg.sender != address(this)) {
+            revert NotOwnerOrEntrypointOrSelf();
+        }
     }
 
     /**
@@ -210,7 +216,9 @@ abstract contract BaseOpenfortAccount is
      */
     function executeBatch(address[] calldata _target, uint256[] calldata _value, bytes[] calldata _calldata) external {
         _requireFromEntryPointOrOwner();
-        require(_target.length == _calldata.length && _target.length == _value.length, "Account: wrong array lengths.");
+        if(_target.length != _calldata.length || _target.length != _value.length) {
+            revert InvalidParameterLength();
+        }
         for (uint256 i = 0; i < _target.length;) {
             _call(_target[i], _value[i], _calldata[i]);
             unchecked {
@@ -335,6 +343,7 @@ abstract contract BaseOpenfortAccount is
     ) public {
         _requireFromEntryPointOrOwnerorSelf();
 
+        // Not sure why changing this for a custom error increases gas dramatically
         require(_whitelist.length < 11, "Whitelist too big");
         for (uint256 i = 0; i < _whitelist.length;) {
             sessionKeys[_key].whitelist[_whitelist[i]] = true;

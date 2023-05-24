@@ -5,6 +5,8 @@ interface IBaseOpenfortFactory {
     /// @notice Emitted when a new Account is created.
     event AccountCreated(address indexed account, address indexed accountAdmin);
 
+    error ZeroAddressNotAllowed();
+
     /// @notice Deploys a new Account for admin.
     function createAccount(address _admin, bytes calldata _data) external returns (address account);
 

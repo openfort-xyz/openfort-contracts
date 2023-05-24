@@ -20,7 +20,9 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
     address public immutable accountImplementation;
 
     constructor(address _entrypoint) {
-        require(_entrypoint != address(0), "_entrypoint cannot be 0");
+        if(_entrypoint == address(0)) {
+            revert ZeroAddressNotAllowed();
+        }
         entrypointContract = _entrypoint;
         accountImplementation = address(new UpgradeableOpenfortAccount());
     }
