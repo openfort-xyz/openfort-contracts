@@ -8,9 +8,12 @@ import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
 import {StaticOpenfortFactory} from "contracts/core/static/StaticOpenfortFactory.sol";
 import {StaticOpenfortAccount} from "contracts/core/static/StaticOpenfortAccount.sol";
+import "account-abstraction/core/Helpers.sol" as Helpers;
 
-contract StaticOpenfortAccountTest is Test {
+contract Specific4337Tests is Test {
     using ECDSA for bytes32;
+
+    uint48 constant MAX_TIME = 2 ** 48 - 1;
 
     uint256 public mumbaiFork;
 
@@ -72,7 +75,6 @@ contract StaticOpenfortAccountTest is Test {
         // Store UserOp
         ops = new UserOperation[](1);
         ops[0] = op;
-        console.log(StaticOpenfortAccount(payable(sender)).validateUserOp(op, msgHash, 0));
     }
 
     /* 
@@ -93,22 +95,20 @@ contract StaticOpenfortAccountTest is Test {
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
 
-    /* 
-     * Auxiliary function to generate a userOP using the executeBatch()
-     * from the account
-     */
-    function _setupUserOpExecuteBatch(
+    function _getValidationData(
         address sender,
         uint256 _signerPKey,
         bytes memory _initCode,
-        address[] memory _target,
-        uint256[] memory _value,
-        bytes[] memory _callData
-    ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint =
-            abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
+        address _target,
+        uint256 _value,
+        bytes memory _callData
+    ) internal returns (uint256 validationData) {
+        UserOperation[] memory userOp = _setupUserOpExecute(sender, _signerPKey, _initCode, _target, _value, _callData);
 
-        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
+        bytes32 opHash = EntryPoint(entryPoint).getUserOpHash(userOp[0]);
+
+        vm.prank(address(entryPoint));
+        return StaticOpenfortAccount(payable(sender)).validateUserOp(userOp[0], opHash, 0);
     }
 
     /**
@@ -139,4 +139,81 @@ contract StaticOpenfortAccountTest is Test {
         testToken = new TestToken();
     }
 
+    /*
+     * Should succeed. Return 0 as it is the owner calling
+     * 
+     */
+    function testValidateUserOp() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
+
+        uint256 validationData = _getValidationData(
+            account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
+        assertEq(validationData, 0);
+    }
+
+    /*
+     * Should return 1, therefore fail
+     * Use an incorrect private key
+     */
+    function testWrongValidateUserOp() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
+
+        // Using an invalid private key
+        uint256 validationData = _getValidationData(
+            account, factoryAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
+
+        assertEq(validationData, 1);
+    }
+
+    /*
+     * Should succeed. Return (false, ValidAfter, ValidUntil) // false, MAX, 0
+     * Use a sessionKey that is registered.
+     */
+    function testValidateUserOpSessionKey() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, MAX_TIME);
+
+        uint256 validationData = _getValidationData(
+            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
+
+        uint256 expectedValidationData = Helpers._packValidationData(false, MAX_TIME, 0);
+        assertEq(validationData, expectedValidationData);
+    }
+
+    /*
+     * Use a sessionKey that is NOT registered.
+     * Should return 1; wrong!
+     */
+    function testWrongValidateUserOpSessionKey() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        address sessionKey2;
+        uint256 sessionKeyPrivKey2;
+        (sessionKey2, sessionKeyPrivKey2) = makeAddrAndKey("sessionKey2");
+
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, MAX_TIME);
+
+        uint256 validationData = _getValidationData(
+            account, sessionKeyPrivKey2, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
+        assertEq(validationData, 1);
+    }
 }
