@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.17;
 
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -26,7 +26,7 @@ contract OpenfortPaymaster is BasePaymaster {
 
     uint256 private constant VALID_PND_OFFSET = 20; // length of an address
     uint256 private constant SIGNATURE_OFFSET = 148; // 48+48+20+32 = 148
-    uint256 public constant POST_OP_GAS = 35000;
+    uint256 private constant POST_OP_GAS = 35000;
 
     event GasPaidInERC20(address ERC20, uint256 actualGasCost, uint256 actualTokensSent);
 

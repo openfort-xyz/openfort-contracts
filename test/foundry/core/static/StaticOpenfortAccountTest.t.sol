@@ -806,6 +806,55 @@ contract StaticOpenfortAccountTest is Test {
     }
 
     /*
+     * Use a sessionKey with whitelisting to call ExecuteBatch().
+     */
+    function testFailIncrementCounterViaSessionKeyWhitelistingBatch() public {
+        // Create an static account wallet and get its address
+        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
+
+        // Verifiy that the counter is stil set to 0
+        assertEq(testCounter.counters(account), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = address(testCounter);
+        vm.prank(accountAdmin);
+        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 3, whitelist);
+
+        // Verify that the registered key is not a MasterKey but has whitelisting
+        bool isMasterKey;
+        bool isWhitelisted;
+        (,,, isMasterKey, isWhitelisted) = StaticOpenfortAccount(payable(account)).sessionKeys(sessionKey);
+        assert(!isMasterKey);
+        assert(isWhitelisted);
+
+        uint256 count = 11;
+        address[] memory targets = new address[](count);
+        uint256[] memory values = new uint256[](count);
+        bytes[] memory callData = new bytes[](count);
+
+        for (uint256 i = 0; i < count; i += 1) {
+            targets[i] = address(testCounter);
+            values[i] = 0;
+            callData[i] = abi.encodeWithSignature("count()");
+        }
+
+        UserOperation[] memory userOp =
+            _setupUserOpExecuteBatch(account, sessionKeyPrivKey, bytes(""), targets, values, callData);
+
+        entryPoint.depositTo{value: 1000000000000000000}(account);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verifiy that the counter has not increased
+        assertEq(testCounter.counters(account), 0);
+    }
+
+    /*
      * Should fail, try to use a sessionKey with invalid whitelisting to call Execute().
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingWrongAddress() public {
@@ -1056,14 +1105,15 @@ contract StaticOpenfortAccountTest is Test {
 
         // Create an static account wallet using the old EntryPoint and get its address
         address payable accountOld = payable(staticOpenfortFactoryOld.createAccount(accountAdmin, ""));
-        assertEq(address(StaticOpenfortAccount(accountOld).entryPoint()), oldEntryPoint);
+        StaticOpenfortAccount staticAccount = StaticOpenfortAccount(accountOld);
+        assertEq(address(staticAccount.entryPoint()), oldEntryPoint);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        StaticOpenfortAccount(accountOld).updateEntryPoint(newEntryPoint);
+        staticAccount.updateEntryPoint(newEntryPoint);
 
         vm.prank(accountAdmin);
-        StaticOpenfortAccount(accountOld).updateEntryPoint(newEntryPoint);
+        staticAccount.updateEntryPoint(newEntryPoint);
 
-        assertEq(address(StaticOpenfortAccount(accountOld).entryPoint()), newEntryPoint);
+        assertEq(address(staticAccount.entryPoint()), newEntryPoint);
     }
 }
