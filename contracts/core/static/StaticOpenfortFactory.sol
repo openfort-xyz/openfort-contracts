@@ -46,7 +46,10 @@ contract StaticOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @notice Deploy a new Account for _admin and a given nonce.
      */
-    function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce) external returns (address account) {
+    function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce)
+        external
+        returns (address account)
+    {
         address impl = accountImplementation;
         bytes32 salt = keccak256(abi.encode(_admin, nonce));
         account = Clones.predictDeterministicAddress(impl, salt);
