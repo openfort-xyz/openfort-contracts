@@ -207,7 +207,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      * Create an account using the factory and make it call count() directly.
      */
-    function testTestCounterDirect() public {
+    function testIncrementCounterDirect() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -228,7 +228,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Create an account by directly calling the factory and make it call count()
      * using the execute() function using the EntryPoint (userOp). Leaveraging ERC-4337.
      */
-    function testTestCounterViaEntrypoint() public {
+    function testIncrementCounterViaEntrypoint() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -252,7 +252,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Create an account by directly calling the factory and make it call count()
      * using the executeBatching() function using the EntryPoint (userOp). Leaveraging ERC-4337.
      */
-    function testTestCounterViaEntrypointBatching() public {
+    function testIncrementCounterViaEntrypointBatching() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -285,7 +285,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      *  Should fail, try to use a sessionKey that is not registered.
      */
-    function testFailTestCounterViaSessionKeyNotregistered() public {
+    function testFailIncrementCounterViaSessionKeyNotregistered() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -312,7 +312,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      * Use a sessionKey that is registered.
      */
-    function testTestCounterViaSessionKey() public {
+    function testIncrementCounterViaSessionKey() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -520,7 +520,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      *  Should fail, try to use a sessionKey that is expired.
      */
-    function testTestCounterViaSessionKeyExpired() public {
+    function testIncrementCounterViaSessionKeyExpired() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -552,7 +552,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      *  Should fail, try to use a sessionKey that is revoked.
      */
-    function testFailTestCounterViaSessionKeyRevoked() public {
+    function testFailIncrementCounterViaSessionKeyRevoked() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -583,7 +583,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      *  Should fail, try to use a sessionKey that reached its limit.
      */
-    function testFailTestCounterViaSessionKeyReachLimit() public {
+    function testFailIncrementCounterViaSessionKeyReachLimit() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -624,7 +624,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      *  Should fail, try to use a sessionKey that reached its limit.
      */
-    function testFailTestCounterViaSessionKeyReachLimitBatching() public {
+    function testFailIncrementCounterViaSessionKeyReachLimitBatching() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -698,7 +698,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      * Use a sessionKey with whitelisting to call Execute().
      */
-    function testTestCounterViaSessionKeyWhitelisting() public {
+    function testIncrementCounterViaSessionKeyWhitelisting() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -730,7 +730,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      * Should fail, try to register a sessionKey with a large whitelist.
      */
-    function testFailTestCounterViaSessionKeyWhitelistingTooBig() public {
+    function testFailIncrementCounterViaSessionKeyWhitelistingTooBig() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -761,7 +761,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      * Use a sessionKey with whitelisting to call ExecuteBatch().
      */
-    function testTestCounterViaSessionKeyWhitelistingBatch() public {
+    function testIncrementCounterViaSessionKeyWhitelistingBatch() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -810,7 +810,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      * Should fail, try to use a sessionKey with invalid whitelisting to call Execute().
      */
-    function testFailTestCounterViaSessionKeyWhitelistingWrongAddress() public {
+    function testFailIncrementCounterViaSessionKeyWhitelistingWrongAddress() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -842,7 +842,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      * Should fail, try to use a sessionKey with invalid whitelisting to call ExecuteBatch().
      */
-    function testFailTestCounterViaSessionKeyWhitelistingBatchWrongAddress() public {
+    function testFailIncrementCounterViaSessionKeyWhitelistingBatchWrongAddress() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -959,7 +959,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      * Test an account with testToken instead of TestCount.
      */
-    function testTokenAccount() public {
+    function testMintTokenAccount() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
