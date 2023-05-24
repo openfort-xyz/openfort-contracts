@@ -112,7 +112,7 @@ abstract contract BaseOpenfortAccount is
     /*
      * @notice Return whether a sessionKey is valid.
      */
-    function isValidSessionKey(address _sessionKey, bytes calldata callData) public virtual returns (bool valid) {
+    function isValidSessionKey(address _sessionKey, bytes calldata callData) public returns (bool valid) {
         // If the signer is a session key that is still valid
         if (sessionKeys[_sessionKey].validUntil == 0) {
             return false;
@@ -149,14 +149,12 @@ abstract contract BaseOpenfortAccount is
 
             return false; // All other cases, deny
         } else if (funcSelector == EXECUTEBATCH_SELECTOR) {
-            address[] memory toContract;
-            (toContract,,) = abi.decode(callData[4:], (address[], uint256[], bytes[]));
-            uint256 lengthBatch = toContract.length;
-            if (sessionKeys[_sessionKey].limit < uint48(lengthBatch)) {
+            (address[] memory toContract,,) = abi.decode(callData[4:], (address[], uint256[], bytes[]));
+            if (sessionKeys[_sessionKey].limit < toContract.length || toContract.length > 9) {
                 return false;
             } // Limit of transactions per sessionKey reached
             unchecked {
-                sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - uint48(lengthBatch);
+                sessionKeys[_sessionKey].limit = sessionKeys[_sessionKey].limit - uint48(toContract.length);
             }
 
             // Check if it is a masterSessionKey
@@ -164,13 +162,16 @@ abstract contract BaseOpenfortAccount is
                 return true;
             }
 
-            for (uint256 i = 0; i < lengthBatch; i++) {
+            for (uint i = 0; i < toContract.length;) {
                 if (toContract[i] == address(this)) {
                     return false;
                 } // Only masterSessionKey can reenter
                 if (sessionKeys[_sessionKey].whitelising && !sessionKeys[_sessionKey].whitelist[toContract[i]]) {
                     return false;
                 } // One contract's not in the sessionKey's whitelist (if any)
+                unchecked {
+                    i++; // gas optimization
+                }
             }
             return true;
         }
@@ -186,7 +187,6 @@ abstract contract BaseOpenfortAccount is
     function isValidSignature(bytes32 _hash, bytes memory _signature)
         public
         view
-        virtual
         override
         returns (bytes4 magicValue)
     {
@@ -209,12 +209,14 @@ abstract contract BaseOpenfortAccount is
      */
     function executeBatch(address[] calldata _target, uint256[] calldata _value, bytes[] calldata _calldata)
         external
-        virtual
     {
         _requireFromEntryPointOrOwner();
         require(_target.length == _calldata.length && _target.length == _value.length, "Account: wrong array lengths.");
-        for (uint256 i = 0; i < _target.length; i++) {
+        for (uint256 i = 0; i < _target.length;) {
             _call(_target[i], _value[i], _calldata[i]);
+            unchecked {
+                i++; // gas optimization
+            }
         }
     }
 
@@ -238,7 +240,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * @dev Call a target contract and reverts if it fails.
      */
-    function _call(address _target, uint256 value, bytes memory _calldata) internal {
+    function _call(address _target, uint256 value, bytes calldata _calldata) internal {
         (bool success, bytes memory result) = _target.call{value: value}(_calldata);
         if (!success) {
             assembly {
@@ -252,7 +254,6 @@ abstract contract BaseOpenfortAccount is
      */
     function _validateSignature(UserOperation calldata userOp, bytes32 userOpHash)
         internal
-        virtual
         override
         returns (uint256 validationData)
     {
@@ -342,10 +343,12 @@ abstract contract BaseOpenfortAccount is
         sessionKeys[_key].masterSessionKey = false;
         sessionKeys[_key].whitelising = true;
 
-        uint256 whitelistLen = _whitelist.length;
-        require(whitelistLen <= 10, "Whitelist too big");
-        for (uint256 i = 0; i < whitelistLen; i++) {
+        require(_whitelist.length < 11, "Whitelist too big");
+        for (uint256 i = 0; i < _whitelist.length;) {
             sessionKeys[_key].whitelist[_whitelist[i]] = true;
+            unchecked {
+                i++; // gas optimization
+            }
         }
 
         emit SessionKeyRegistered(_key);

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "@openzeppelin/contracts/utils/Create2.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 // Smart wallet implementation to use
 import {UpgradeableOpenfortAccount} from "./UpgradeableOpenfortAccount.sol";
 // Interfaces
@@ -28,32 +28,32 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @notice Deploy a new Account for _admin.
      */
-    function createAccount(address _admin, bytes calldata _data) external returns (address) {
+    function createAccount(address _admin, bytes calldata _data) external returns (address account) {
         bytes32 salt = keccak256(abi.encode(_admin));
-        address account = getAddress(_admin);
+        account = getAddress(_admin);
 
         if (account.code.length > 0) {
             return account;
         }
 
-        UpgradeableOpenfortAccount newUpgradeableOpenfortAccount = UpgradeableOpenfortAccount(
-            payable(
-                new ERC1967Proxy{salt : bytes32(salt)}(
-                address(accountImplementation),
-                abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
+        account = address(
+            UpgradeableOpenfortAccount(
+                payable(
+                    new ERC1967Proxy{salt : bytes32(salt)}(
+                    address(accountImplementation),
+                    abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
+                    )
                 )
             )
         );
 
         emit AccountCreated(account, _admin);
-
-        return address(newUpgradeableOpenfortAccount);
     }
 
     /*
      * @notice Deploy a new Account for _admin.
      */
-    function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce) external returns (address) {
+    function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce) external returns (address account) {
         bytes32 salt = keccak256(abi.encode(_admin, nonce));
         address account = getAddressWithNonce(_admin, nonce);
 
@@ -61,18 +61,18 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
             return account;
         }
 
-        UpgradeableOpenfortAccount newUpgradeableOpenfortAccount = UpgradeableOpenfortAccount(
-            payable(
-                new ERC1967Proxy{salt : bytes32(salt)}(
-                address(accountImplementation),
-                abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
+        account = address(
+            UpgradeableOpenfortAccount(
+                payable(
+                    new ERC1967Proxy{salt : bytes32(salt)}(
+                    address(accountImplementation),
+                    abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
+                    )
                 )
             )
         );
 
         emit AccountCreated(account, _admin);
-
-        return address(newUpgradeableOpenfortAccount);
     }
 
     /*
