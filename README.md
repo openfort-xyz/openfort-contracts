@@ -16,14 +16,19 @@ forge test
 
 Before executing any of the scripts below, make sure you've properly configured your `.env` file.
 
+### Generate a gas report
 
-### Check paymaster's deposit on different chains:
+```
+./script/gasProfile.sh
+```
+
+### Check paymaster's deposit on different chains
 
 ```
 forge script CheckPaymasterDeposit
 ```
 
-### Deploy one static factory and one account:
+### Deploy one static factory and one account
 
 Simulation:
 
@@ -37,7 +42,7 @@ Actual deployment:
 forge script StaticOpenfortDeploy --fork-url $<rpc_network> --verify --broadcast
 ```
 
-### Deploy one upgradeable factory and one account:
+### Deploy one upgradeable factory and one account
 
 Simulation:
 
