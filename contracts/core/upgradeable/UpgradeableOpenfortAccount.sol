@@ -17,8 +17,9 @@ contract UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * @notice Initializes the smart contract wallet.
      */
     function initialize(address _defaultAdmin, address _entrypoint, bytes calldata) public override initializer {
-        require(_defaultAdmin != address(0), "_defaultAdmin cannot be 0");
-        require(_entrypoint != address(0), "_entrypoint cannot be 0");
+        if(_defaultAdmin == address(0) || _entrypoint == address(0)) {
+            revert ZeroAddressNotAllowed();
+        }
         _transferOwnership(_defaultAdmin);
         entrypointContract = _entrypoint;
     }

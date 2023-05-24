@@ -19,8 +19,9 @@ contract StaticOpenfortAccount is BaseOpenfortAccount {
      * @notice Initializes the smart contract wallet.
      */
     function initialize(address _defaultAdmin, address _entrypoint, bytes calldata) public override initializer {
-        require(_defaultAdmin != address(0), "_defaultAdmin cannot be 0");
-        require(_entrypoint != address(0), "_entrypoint cannot be 0");
+        if(_defaultAdmin == address(0) || _entrypoint == address(0)) {
+            revert ZeroAddressNotAllowed();
+        }
         emit EntryPointUpdated(entrypointContract, _entrypoint);
         _transferOwnership(_defaultAdmin);
         entrypointContract = _entrypoint;
@@ -30,7 +31,9 @@ contract StaticOpenfortAccount is BaseOpenfortAccount {
      * Update the EntryPoint address
      */
     function updateEntryPoint(address _newEntrypoint) external onlyOwner {
-        require(_newEntrypoint != address(0), "_newEntrypoint cannot be 0");
+        if(_newEntrypoint == address(0)) {
+            revert ZeroAddressNotAllowed();
+        }
         emit EntryPointUpdated(entrypointContract, _newEntrypoint);
         entrypointContract = _newEntrypoint;
     }
