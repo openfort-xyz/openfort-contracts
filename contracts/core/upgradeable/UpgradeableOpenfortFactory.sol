@@ -55,7 +55,7 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
      */
     function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce) external returns (address account) {
         bytes32 salt = keccak256(abi.encode(_admin, nonce));
-        address account = getAddressWithNonce(_admin, nonce);
+        account = getAddressWithNonce(_admin, nonce);
 
         if (account.code.length > 0) {
             return account;
