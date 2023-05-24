@@ -9,3 +9,7 @@ cache_path  = 'cache_forge'
 no_match_test = 'testCounter'
 gas_reports = ["*"]
 gas_reports_ignore = ["TestToken", "TestCounter"]
+
+# default
+optimizer = true
+optimizer_runs = 200

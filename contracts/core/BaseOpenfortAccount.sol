@@ -163,7 +163,7 @@ abstract contract BaseOpenfortAccount is
                 return true;
             }
 
-            for (uint i = 0; i < toContract.length;) {
+            for (uint256 i = 0; i < toContract.length;) {
                 if (toContract[i] == address(this)) {
                     return false;
                 } // Only masterSessionKey can reenter
@@ -208,9 +208,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * Execute a sequence of transactions
      */
-    function executeBatch(address[] calldata _target, uint256[] calldata _value, bytes[] calldata _calldata)
-        external
-    {
+    function executeBatch(address[] calldata _target, uint256[] calldata _value, bytes[] calldata _calldata) external {
         _requireFromEntryPointOrOwner();
         require(_target.length == _calldata.length && _target.length == _value.length, "Account: wrong array lengths.");
         for (uint256 i = 0; i < _target.length;) {
@@ -284,7 +282,6 @@ abstract contract BaseOpenfortAccount is
      * @notice default limit set to 100.
      */
     function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) public {
-        _requireFromEntryPointOrOwnerorSelf();
         registerSessionKey(_key, _validAfter, _validUntil, DEFAULT_LIMIT);
         sessionKeys[_key].masterSessionKey = true;
     }
@@ -318,7 +315,6 @@ abstract contract BaseOpenfortAccount is
     function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, address[] calldata _whitelist)
         public
     {
-        _requireFromEntryPointOrOwnerorSelf();
         registerSessionKey(_key, _validAfter, _validUntil, DEFAULT_LIMIT, _whitelist);
     }
 
@@ -338,11 +334,6 @@ abstract contract BaseOpenfortAccount is
         address[] calldata _whitelist
     ) public {
         _requireFromEntryPointOrOwnerorSelf();
-        sessionKeys[_key].validAfter = _validAfter;
-        sessionKeys[_key].validUntil = _validUntil;
-        sessionKeys[_key].limit = _limit;
-        sessionKeys[_key].masterSessionKey = false;
-        sessionKeys[_key].whitelising = true;
 
         require(_whitelist.length < 11, "Whitelist too big");
         for (uint256 i = 0; i < _whitelist.length;) {
@@ -351,6 +342,12 @@ abstract contract BaseOpenfortAccount is
                 ++i; // gas optimization
             }
         }
+
+        sessionKeys[_key].validAfter = _validAfter;
+        sessionKeys[_key].validUntil = _validUntil;
+        sessionKeys[_key].limit = _limit;
+        sessionKeys[_key].masterSessionKey = false;
+        sessionKeys[_key].whitelising = true;
 
         emit SessionKeyRegistered(_key);
     }
