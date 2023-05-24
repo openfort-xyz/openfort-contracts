@@ -27,7 +27,7 @@ contract DeployBatching is Script {
         uint256 _signerPKey,
         bytes memory _initCode,
         bytes memory _callDataForEntrypoint
-    ) internal returns (UserOperation[] memory ops) {
+    ) internal view returns (UserOperation[] memory ops) {
         uint256 nonce = entryPoint.getNonce(sender, 0);
 
         // Get user op fields
