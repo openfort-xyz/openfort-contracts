@@ -73,14 +73,6 @@ forge snapshot --silent --diff gas_reports/2023-05-24_11:52.snap.out
 
 As of 26th of May 2023, the current average cost for deploying the different smart contracts of this project is:
 
-- StaticOpenfortFactory: 2.269.483
-- StaticOpenfortAccount: 1.868.978
-
-- UpgradeableOpenfortFactory: 2.971.793
-- UpgradeableOpenfortAccount: 2.228.876
-
-- OpenfortPaymaster: 1.216.063
-
 | Smart Contract  | Avg deployment gas cost |
 | :-------------- | :--------------------- |
 | StaticOpenfortFactory  | 2.269.483  |
