@@ -22,6 +22,12 @@ Before executing any of the scripts below, make sure you've properly configured 
 ./script/gasProfile.sh
 ```
 
+### Deploy Static and Upgradeable factories to all chains
+
+```
+./script/deployAllChains.sh
+```
+
 ### Check paymaster's deposit on different chains
 
 ```
@@ -54,3 +60,15 @@ Actual deployment:
 ```
 forge script UpgradeableOpenfortDeploy --fork-url $<rpc_network> --verify --broadcast
 ```
+
+## Gas Stats
+
+As of 26th of May 2023, the current average cost for deploying the different smart contracts of this project is:
+
+- StaticOpenfortFactory: 2.269.483
+- StaticOpenfortAccount: 1.868.978
+
+- UpgradeableOpenfortFactory: 2.971.793
+- UpgradeableOpenfortAccount: 2.228.876
+
+- OpenfortPaymaster: 1.216.063
