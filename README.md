@@ -61,6 +61,14 @@ Actual deployment:
 forge script UpgradeableOpenfortDeploy --fork-url $<rpc_network> --verify --broadcast
 ```
 
+### Compare gas costs
+
+You can compare gas costs by running the following command against different gas reports:
+
+```
+forge snapshot --silent --diff gas_reports/2023-05-24_11:52.snap.out
+```
+
 ## Gas Stats
 
 As of 26th of May 2023, the current average cost for deploying the different smart contracts of this project is:
