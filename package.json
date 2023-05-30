@@ -1,5 +1,5 @@
 {
-  "name": "openfort-contracts",
+  "name": "@openfort/openfort-contracts",
   "version": "0.0.1",
   "description": "Official Contracts of the Openfort Project",
   "scripts": {
