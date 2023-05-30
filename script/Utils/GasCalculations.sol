@@ -9,6 +9,6 @@ struct DefaultGasOverheads {
     uint256 fixedCost;
 }
 
-function calcPreVerificationGas(UserOperation calldata userOp) {
+function calcPreVerificationGas(UserOperation calldata userOp) pure {
     userOp.pack();
 }

@@ -74,7 +74,7 @@ contract DeployBatching is Script {
         address[] memory _target,
         uint256[] memory _value,
         bytes[] memory _callData
-    ) internal returns (UserOperation[] memory) {
+    ) internal view returns (UserOperation[] memory) {
         bytes memory callDataForEntrypoint =
             abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
 
