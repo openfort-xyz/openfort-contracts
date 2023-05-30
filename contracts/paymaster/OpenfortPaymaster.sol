@@ -135,8 +135,8 @@ contract OpenfortPaymaster is BasePaymaster {
 
         uint256 actualTokenCost = ((actualGasCost + (POST_OP_GAS * opGasPrice)) * exchangeRate) / 1e18;
         if (mode != PostOpMode.postOpReverted) {
-            token.safeTransferFrom(sender, owner(), actualTokenCost);
             emit GasPaidInERC20(address(token), actualGasCost, actualTokenCost);
+            token.safeTransferFrom(sender, owner(), actualTokenCost);
         }
     }
 
