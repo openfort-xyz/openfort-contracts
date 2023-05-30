@@ -121,6 +121,8 @@ If you want to perform a static analysis of the smart contracts using Mythril, y
   myth analyze contracts/core/static/StaticOpenfortAccount.sol --solc-json mythril.config.json
 ```
 
+If you run into the error `ImportError: cannot import name 'getargspec' from 'inspect'` from Python3 running the commands above, please see the temporary fix [on this comment](https://github.com/ethereum/web3.py/issues/2704#issuecomment-1333163491).
+
 ## Gas Stats
 
 As of May 2023, the current average gas cost for deploying or using the different smart contracts of this project is:
