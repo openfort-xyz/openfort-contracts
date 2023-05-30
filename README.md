@@ -125,6 +125,7 @@ If you want to perform a static analysis of the smart contracts using Mythril, y
 
 As of May 2023, the current average gas cost for deploying or using the different smart contracts of this project is:
 
+### Static Accounts
 |   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
 | :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
 |   StaticOpenfortFactory  | Deploy factory (containing StaticOpenfortAccount's implementation) | 1 | 2,505,952 |
@@ -133,6 +134,7 @@ As of May 2023, the current average gas cost for deploying or using the differen
 |   StaticOpenfortAccount  | Updating the EntryPoint address using `updateEntryPoint()` | indefinite | 1,483  |
 |   StaticOpenfortAccount  | Transfering the ownership using `transferOwnership()` | indefinite | 22,375  |
 
+### Upgradeable Accounts
 |   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
 | :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
 | UpgradeableOpenfortFactory | Deploy factory (containing UpgradeableOpenfortAccount's implementation) | 1 | 3,262,120  |
@@ -140,6 +142,7 @@ As of May 2023, the current average gas cost for deploying or using the differen
 |   UpgradeableOpenfortAccount  | Create a new upgradeable account using the `createAccountWithNonce()` of the factory | indefinite | 202,797 |
 |   UpgradeableOpenfortAccount  | Updating to a new implementation using `upgradeTo()` | indefinite | 3,226  |
 
+### Paymaster
 |   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
 | :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
 |   OpenfortPaymaster | Deploy Paymaster to pay gas in ERC20s | 1 | 1,216,063  |
