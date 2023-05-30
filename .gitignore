@@ -24,3 +24,6 @@ broadcast/
 
 /.DS_Store
 .DS_Store
+
+contracts/mock/*
+script/deployMock.sol
