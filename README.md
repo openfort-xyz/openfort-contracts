@@ -20,7 +20,7 @@
   </h4>
 </div>
 
-[banner-image]: .github/img/fullOpenfortRed.png
+[banner-image]: .github/img/OpenfortRed.png
 
 
 # Openfort Contracts
