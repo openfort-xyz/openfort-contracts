@@ -101,7 +101,7 @@ forge snapshot --silent --diff gas_reports/2023-05-24_11:52.snap.out
 
 ## Static Analyzers
 
-### Static snalysis using Slither
+### Static analysis using Slither
 If you want to perform a static analysis of the smart contracts using Slither, you can run the following commands:
 
 ```
@@ -112,7 +112,7 @@ If you want to perform a static analysis of the smart contracts using Slither, y
   slither .
 ```
 
-### Static snalysis using Mythril
+### Static analysis using Mythril
 If you want to perform a static analysis of the smart contracts using Mythril, you can run the following commands:
 
 ```
