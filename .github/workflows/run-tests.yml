@@ -21,6 +21,6 @@ jobs:
 
       - name: Run tests
         env: # Or as an environment variable
-          ENTRY_POINT_ADDRESS: ${{ secrets.ENTRY_POINT_ADDRESS }}
-          POLYGON_MUMBAI_RPC: ${{ vars.POLYGON_MUMBAI_RPC }}
+          ENTRY_POINT_ADDRESS: ${{ vars.ENTRY_POINT_ADDRESS }}
+          POLYGON_MUMBAI_RPC: ${{ secrets.POLYGON_MUMBAI_RPC }}
         run: forge test
