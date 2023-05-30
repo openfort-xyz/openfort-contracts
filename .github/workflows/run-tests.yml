@@ -16,5 +16,8 @@ jobs:
         with:
           version: nightly
 
+      - name: Install dependencies
+        run: yarn
+
       - name: Run tests
-        run: npm i & forge test -vvvv
+        run: forge test -vvvv
