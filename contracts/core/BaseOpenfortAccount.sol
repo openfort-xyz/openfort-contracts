@@ -156,12 +156,12 @@ abstract contract BaseOpenfortAccount is
 
             return false; // All other cases, deny
         } else if (funcSelector == EXECUTEBATCH_SELECTOR) {
-            (address[] memory toContract,,) = abi.decode(callData[4:], (address[], uint256[], bytes[]));
-            if (sessionKey.limit < toContract.length || toContract.length > 9) {
+            (address[] memory toContracts,,) = abi.decode(callData[4:], (address[], uint256[], bytes[]));
+            if (sessionKey.limit < toContracts.length || toContracts.length > 9) {
                 return false;
             } // Limit of transactions per sessionKey reached
             unchecked {
-                sessionKey.limit = sessionKey.limit - uint48(toContract.length);
+                sessionKey.limit = sessionKey.limit - uint48(toContracts.length);
             }
 
             // Check if it is a masterSessionKey
@@ -169,11 +169,11 @@ abstract contract BaseOpenfortAccount is
                 return true;
             }
 
-            for (uint256 i = 0; i < toContract.length;) {
-                if (toContract[i] == address(this)) {
+            for (uint256 i = 0; i < toContracts.length;) {
+                if (toContracts[i] == address(this)) {
                     return false;
                 } // Only masterSessionKey can reenter
-                if (sessionKey.whitelising && !sessionKey.whitelist[toContract[i]]) {
+                if (sessionKey.whitelising && !sessionKey.whitelist[toContracts[i]]) {
                     return false;
                 } // One contract's not in the sessionKey's whitelist (if any)
                 unchecked {

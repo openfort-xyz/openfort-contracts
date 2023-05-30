@@ -1,3 +1,7 @@
 {
-  "filter_paths": "lib"
+  "filter_paths": "(lib/|script/|test/|openzeppelin)",
+  "exclude_informational": false,
+  "exclude_low": false,
+  "exclude_medium": false,
+  "exclude_high": false
 }

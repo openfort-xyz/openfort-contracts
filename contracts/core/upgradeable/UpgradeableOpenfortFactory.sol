@@ -38,6 +38,7 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
             return account;
         }
 
+        emit AccountCreated(account, _admin);
         account = address(
             UpgradeableOpenfortAccount(
                 payable(
@@ -48,8 +49,6 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
                 )
             )
         );
-
-        emit AccountCreated(account, _admin);
     }
 
     /*
@@ -66,6 +65,7 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
             return account;
         }
 
+        emit AccountCreated(account, _admin);
         account = address(
             UpgradeableOpenfortAccount(
                 payable(
@@ -76,8 +76,6 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
                 )
             )
         );
-
-        emit AccountCreated(account, _admin);
     }
 
     /*

@@ -38,11 +38,9 @@ contract StaticOpenfortFactory is IBaseOpenfortFactory {
             return account;
         }
 
-        account = Clones.cloneDeterministic(impl, salt);
-
-        _initializeAccount(account, _admin, entrypointContract, _data);
-
         emit AccountCreated(account, _admin);
+        account = Clones.cloneDeterministic(impl, salt);
+        _initializeAccount(account, _admin, entrypointContract, _data);
     }
 
     /*
@@ -60,11 +58,9 @@ contract StaticOpenfortFactory is IBaseOpenfortFactory {
             return account;
         }
 
-        account = Clones.cloneDeterministic(impl, salt);
-
-        _initializeAccount(account, _admin, entrypointContract, _data);
-
         emit AccountCreated(account, _admin);
+        account = Clones.cloneDeterministic(impl, salt);
+        _initializeAccount(account, _admin, entrypointContract, _data);
     }
 
     /*
