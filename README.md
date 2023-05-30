@@ -71,12 +71,23 @@ forge snapshot --silent --diff gas_reports/2023-05-24_11:52.snap.out
 
 ## Gas Stats
 
-As of 26th of May 2023, the current average cost for deploying the different smart contracts of this project is:
+As of 26th of May 2023, the current average gas cost for deploying or using the different smart contracts of this project is:
 
-| Smart Contract  | Avg deployment gas cost |
-| :-------------- | :--------------------- |
-| StaticOpenfortFactory  | 2.269.483  |
-| StaticOpenfortAccount  | 1.868.978  |
-| UpgradeableOpenfortFactory  | 2.971.793  |
-| UpgradeableOpenfortAccount  | 2.228.876  |
-| OpenfortPaymaster      | 1.216.063  |
+|   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
+| :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
+|   StaticOpenfortFactory  | Factory to create static accounts (containing StaticOpenfortAccount's implementation) | 1 | 2,505,952 |
+|   StaticOpenfortAccount  | Creation of a new static account using the `createAccount()` of the factory | indefinite | 145,878  |
+|   StaticOpenfortAccount  | Creation of a new static account using the `createAccountWithNonce()` of the factory | indefinite | 146,047  |
+|   StaticOpenfortAccount  | Updating the EntryPoint address using `updateEntryPoint()` | indefinite | 1,483  |
+|   StaticOpenfortAccount  | Transfering the ownership using `transferOwnership()` | indefinite | 22,375  |
+
+|   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
+| :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
+| UpgradeableOpenfortFactory | Factory to create upgradeable accounts (containing UpgradeableOpenfortAccount's implementation) | 1 | 3,262,120  |
+|   UpgradeableOpenfortAccount  | Creation of a new upgradeable account using the `createAccount()` of the factory | indefinite | 202,604  |
+|   UpgradeableOpenfortAccount  | Creation of a new upgradeable account using the `createAccountWithNonce()` of the factory | indefinite | 202,797 |
+|   UpgradeableOpenfortAccount  | Updating to a new implementation using `upgradeTo()` | indefinite | 3,226  |
+
+|   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
+| :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
+|   OpenfortPaymaster | Paymaster to pay gas in ERC20s | 1 | 1,216,063  |
