@@ -24,16 +24,16 @@ contract UpgradeableOpenfortDeploy is Script {
         );
         
         assert(account1 != account2);
-        address account3 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, "", 3);
-        console.log(
-            "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account3
-        );
-        assert(account2 != account3);
-        address account4 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, "", 4);
-        console.log(
-            "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account4
-        );
-        assert(account3 != account4);
+        // address account3 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, "", 3);
+        // console.log(
+        //     "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account3
+        // );
+        // assert(account2 != account3);
+        // address account4 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, "", 4);
+        // console.log(
+        //     "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account4
+        // );
+        // assert(account3 != account4);
 
 
         //address account3 = upgradeableOpenfortFactory.createAccount(deployAddress, bytes(""));
