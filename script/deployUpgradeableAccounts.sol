@@ -15,13 +15,27 @@ contract UpgradeableOpenfortDeploy is Script {
         vm.startBroadcast(deployPrivKey);
 
         UpgradeableOpenfortFactory upgradeableOpenfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(address(entryPoint));
-        //address account1 = upgradeableOpenfortFactory.accountImplementation();
+        address account1 = upgradeableOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
         address account2 = upgradeableOpenfortFactory.createAccount(deployAddress, bytes(""));
         console.log(
             "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account2
         );
+        
+        assert(account1 != account2);
+        address account3 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, "", 3);
+        console.log(
+            "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account3
+        );
+        assert(account2 != account3);
+        address account4 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, "", 4);
+        console.log(
+            "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account4
+        );
+        assert(account3 != account4);
+
+
         //address account3 = upgradeableOpenfortFactory.createAccount(deployAddress, bytes(""));
 
         //assert(account1 != account2);

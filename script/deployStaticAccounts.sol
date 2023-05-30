@@ -15,14 +15,24 @@ contract StaticOpenfortDeploy is Script {
         vm.startBroadcast(deployPrivKey);
 
         StaticOpenfortFactory staticOpenfortFactory = new StaticOpenfortFactory{salt: versionSalt}(address(entryPoint));
-        // staticOpenfortFactory.accountImplementation();
+        // address account1 = staticOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
         address account2 = staticOpenfortFactory.createAccount(deployAddress, bytes(""));
         console.log(
             "Factory at address %s has created an account at address %s", address(staticOpenfortFactory), account2
         );
-        // staticOpenfortFactory.createAccount(deployAddress, bytes(""));
+        // assert(account1 != account2);
+        // address account3 = staticOpenfortFactory.createAccountWithNonce(deployAddress, "", 3);
+        // console.log(
+        //     "Factory at address %s has created an account at address %s", address(staticOpenfortFactory), account3
+        // );
+        // assert(account2 != account3);
+        // address account4 = staticOpenfortFactory.createAccountWithNonce(deployAddress, "", 4);
+        // console.log(
+        //     "Factory at address %s has created an account at address %s", address(staticOpenfortFactory), account4
+        // );
+        // assert(account3 != account4);
 
         vm.stopBroadcast();
     }
