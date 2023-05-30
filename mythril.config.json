@@ -1,0 +1,12 @@
+{
+    "remappings": [
+        "@openzeppelin/=node_modules/@openzeppelin/",
+        "account-abstraction/=lib/account-abstraction/contracts/",
+        "ds-test/=lib/ds-test/src/",
+        "forge-std/=lib/forge-std/src/"
+    ],
+    "optimizer": {
+        "enabled": true,
+        "runs": 200
+    }
+}
