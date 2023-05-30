@@ -35,7 +35,7 @@ Official Contracts of the Openfort Project
 
 ### Build and test
 ```
-  git clone https://github.com/openfort-xyz/openfort-contracts.git
+  git clone https://github.com/openfort-xyz/openfort-contracts.git && cd openfort-contracts
   forge install
   forge build
   forge test
