@@ -1,20 +1,20 @@
 ![Openfort Protocol][banner-image]
 
-<div align="center" style="color:red;">
+<div align="center">
   <h4>
-    <a href="https://www.openfort.xyz/" style="color:red;">
+    <a href="https://www.openfort.xyz/">
       Website
     </a>
     <span> | </span>
-    <a href="https://www.openfort.xyz/docs" style="color:red;">
+    <a href="https://www.openfort.xyz/docs">
       Documentation
     </a>
     <span> | </span>
-    <a href="https://www.openfort.xyz/docs/api" style="color:red;">
+    <a href="https://www.openfort.xyz/docs/api">
       API Docs
     </a>
     <span> | </span>
-    <a href="https://twitter.com/openfortxyz" style="color:red;">
+    <a href="https://twitter.com/openfortxyz">
       Twitter
     </a>
   </h4>
