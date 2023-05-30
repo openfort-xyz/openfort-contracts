@@ -1,4 +1,10 @@
 {
+  "solc_remaps": [
+    "ds-test/=lib/ds-test/src/",
+    "forge-std/=lib/forge-std/src/",
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "account-abstraction/=lib/account-abstraction/contracts/"
+  ],
   "filter_paths": "(lib/|script/|test/|openzeppelin)",
   "exclude_informational": false,
   "exclude_low": false,
