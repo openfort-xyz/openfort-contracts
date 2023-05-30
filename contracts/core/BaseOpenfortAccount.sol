@@ -11,7 +11,7 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
 import "account-abstraction/core/Helpers.sol" as Helpers;
 
 /**
- * @title BaseUpgradeableOpenfortAccount (Non-upgradeable)
+ * @title BaseOpenfortAccount (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
@@ -79,7 +79,7 @@ abstract contract BaseOpenfortAccount is
     }
 
     /*
-     * @notice Initializes the smart contract wallet.
+     * @notice Initialize the smart contract wallet.
      */
     function initialize(address _defaultAdmin, address _entrypoint, bytes calldata) public virtual;
 
@@ -94,7 +94,7 @@ abstract contract BaseOpenfortAccount is
      * Require the function call went through EntryPoint or owner
      */
     function _requireFromEntryPointOrOwner() internal view {
-        if(msg.sender != address(entryPoint()) && msg.sender != owner()) {
+        if (msg.sender != address(entryPoint()) && msg.sender != owner()) {
             revert NotOwnerOrEntrypoint();
         }
     }
@@ -103,7 +103,7 @@ abstract contract BaseOpenfortAccount is
      * Require the function call went through EntryPoint, owner or self
      */
     function _requireFromEntryPointOrOwnerorSelf() internal view {
-        if(msg.sender != address(entryPoint()) && msg.sender != owner() && msg.sender != address(this)) {
+        if (msg.sender != address(entryPoint()) && msg.sender != owner() && msg.sender != address(this)) {
             revert NotOwnerOrEntrypointOrSelf();
         }
     }
@@ -118,7 +118,7 @@ abstract contract BaseOpenfortAccount is
     /*
      * @notice Return whether a sessionKey is valid.
      */
-    function isValidSessionKey(address _sessionKey, bytes calldata callData) public returns (bool valid) {
+    function isValidSessionKey(address _sessionKey, bytes calldata callData) public returns (bool) {
         SessionKeyStruct storage sessionKey = sessionKeys[_sessionKey];
         // If the signer is a session key that is still valid
         if (sessionKey.validUntil == 0) {
@@ -212,11 +212,11 @@ abstract contract BaseOpenfortAccount is
     }
 
     /**
-     * Execute a sequence of transactions
+     * Execute a sequence of transactions. Maximum 9.
      */
     function executeBatch(address[] calldata _target, uint256[] calldata _value, bytes[] calldata _calldata) external {
         _requireFromEntryPointOrOwner();
-        if(_target.length != _calldata.length || _target.length != _value.length) {
+        if (_target.length > 9 || _target.length != _calldata.length || _target.length != _value.length) {
             revert InvalidParameterLength();
         }
         for (uint256 i = 0; i < _target.length;) {

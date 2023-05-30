@@ -10,14 +10,15 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  * @author Eloi<eloi@openfort.xyz>
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
- *  - BaseUpgradeableOpenfortAccount
+ *  - BaseOpenfortAccount
+ *  - UUPSUpgradeable
  */
 contract UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     /*
-     * @notice Initializes the smart contract wallet.
+     * @notice Initialize the smart contract wallet.
      */
     function initialize(address _defaultAdmin, address _entrypoint, bytes calldata) public override initializer {
-        if(_defaultAdmin == address(0) || _entrypoint == address(0)) {
+        if (_defaultAdmin == address(0) || _entrypoint == address(0)) {
             revert ZeroAddressNotAllowed();
         }
         _transferOwnership(_defaultAdmin);
