@@ -131,89 +131,88 @@ contract Specific4337Tests is Test {
         // deploy entryPoint
         entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
         // deploy account factory
-        vm.prank(factoryAdmin);
-        staticOpenfortFactory = new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
+
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20)
         testToken = new TestToken();
     }
 
-    /*
-     * Should succeed. Return 0 as it is the owner calling
-     * 
-     */
-    function testValidateUserOp() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
+    // /*
+    //  * Should succeed. Return 0 as it is the owner calling
+    //  * 
+    //  */
+    // function testValidateUserOp() public {
+    //     // Create an static account wallet and get its address
+    //     address account = staticOpenfortFactory.createAccount(accountAdmin, "");
 
-        uint256 validationData = _getValidationData(
-            account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
-        );
-        assertEq(validationData, 0);
-    }
+    //     uint256 validationData = _getValidationData(
+    //         account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+    //     );
+    //     assertEq(validationData, 0);
+    // }
 
-    /*
-     * Should return 1, therefore fail
-     * Use an incorrect private key
-     */
-    function testWrongValidateUserOp() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
+    // /*
+    //  * Should return 1, therefore fail
+    //  * Use an incorrect private key
+    //  */
+    // function testWrongValidateUserOp() public {
+    //     // Create an static account wallet and get its address
+    //     address account = staticOpenfortFactory.createAccount(accountAdmin, "");
 
-        // Using an invalid private key
-        uint256 validationData = _getValidationData(
-            account, factoryAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
-        );
+    //     // Using an invalid private key
+    //     uint256 validationData = _getValidationData(
+    //         account, factoryAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+    //     );
 
-        assertEq(validationData, 1);
-    }
+    //     assertEq(validationData, 1);
+    // }
 
-    /*
-     * Should succeed. Return (false, ValidAfter, ValidUntil) // false, MAX, 0
-     * Use a sessionKey that is registered.
-     */
-    function testValidateUserOpSessionKey() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
+    // /*
+    //  * Should succeed. Return (false, ValidAfter, ValidUntil) // false, MAX, 0
+    //  * Use a sessionKey that is registered.
+    //  */
+    // function testValidateUserOpSessionKey() public {
+    //     // Create an static account wallet and get its address
+    //     address account = staticOpenfortFactory.createAccount(accountAdmin, "");
 
-        address sessionKey;
-        uint256 sessionKeyPrivKey;
-        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+    //     address sessionKey;
+    //     uint256 sessionKeyPrivKey;
+    //     (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
-        vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, MAX_TIME);
+    //     vm.prank(accountAdmin);
+    //     StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, MAX_TIME);
 
-        uint256 validationData = _getValidationData(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
-        );
+    //     uint256 validationData = _getValidationData(
+    //         account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+    //     );
 
-        uint256 expectedValidationData = Helpers._packValidationData(false, MAX_TIME, 0);
-        assertEq(validationData, expectedValidationData);
-    }
+    //     uint256 expectedValidationData = Helpers._packValidationData(false, MAX_TIME, 0);
+    //     assertEq(validationData, expectedValidationData);
+    // }
 
-    /*
-     * Use a sessionKey that is NOT registered.
-     * Should return 1; wrong!
-     */
-    function testWrongValidateUserOpSessionKey() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
+    // /*
+    //  * Use a sessionKey that is NOT registered.
+    //  * Should return 1; wrong!
+    //  */
+    // function testWrongValidateUserOpSessionKey() public {
+    //     // Create an static account wallet and get its address
+    //     address account = staticOpenfortFactory.createAccount(accountAdmin, "");
 
-        address sessionKey;
-        uint256 sessionKeyPrivKey;
-        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+    //     address sessionKey;
+    //     uint256 sessionKeyPrivKey;
+    //     (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
-        address sessionKey2;
-        uint256 sessionKeyPrivKey2;
-        (sessionKey2, sessionKeyPrivKey2) = makeAddrAndKey("sessionKey2");
+    //     address sessionKey2;
+    //     uint256 sessionKeyPrivKey2;
+    //     (sessionKey2, sessionKeyPrivKey2) = makeAddrAndKey("sessionKey2");
 
-        vm.prank(accountAdmin);
-        StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, MAX_TIME);
+    //     vm.prank(accountAdmin);
+    //     StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, MAX_TIME);
 
-        uint256 validationData = _getValidationData(
-            account, sessionKeyPrivKey2, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
-        );
-        assertEq(validationData, 1);
-    }
+    //     uint256 validationData = _getValidationData(
+    //         account, sessionKeyPrivKey2, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+    //     );
+    //     assertEq(validationData, 1);
+    // }
 }

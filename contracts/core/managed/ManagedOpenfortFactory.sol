@@ -1,31 +1,32 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.12;
 
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 // Smart wallet implementation to use
-import {UpgradeableOpenfortAccount} from "./UpgradeableOpenfortAccount.sol";
+import {ManagedOpenfortAccount} from "./ManagedOpenfortAccount.sol";
+import {OpenfortBeacon} from "./OpenfortBeacon.sol";
 // Interfaces
 import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
 
 /**
- * @title UpgradeableOpenfortFactory (Non-upgradeable)
+ * @title ManagedOpenfortFactory (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
- * @notice Contract to create an on-chain factory to deploy new UpgradeableOpenfortAccounts.
- * It uses OpenZeppelin's Create2 and ERC1967Proxy libraries.
+ * @notice Contract to create an on-chain factory to deploy new ManagedOpenfortAccounts.
+ * It uses OpenZeppelin's Create2 and BeaconProxy libraries.
  * It inherits from:
  *  - IBaseOpenfortFactory
  */
-contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
+contract ManagedOpenfortFactory is IBaseOpenfortFactory {
     address public immutable entrypointContract;
-    address public immutable accountImplementation;
+    address public immutable openfortBeacon;
 
-    constructor(address _entrypoint, address _accountImplementation) {
-        if (_entrypoint == address(0) || _accountImplementation == address(0)) {
+    constructor(address _entrypoint, address _openfortBeacon) {
+        if (_entrypoint == address(0) || _openfortBeacon == address(0)) {
             revert ZeroAddressNotAllowed();
         }
         entrypointContract = _entrypoint;
-        accountImplementation = _accountImplementation;
+        openfortBeacon = _openfortBeacon;
     }
 
     /*
@@ -41,9 +42,9 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(
-            new ERC1967Proxy{salt: salt}(
-                accountImplementation,
-                abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data)) 
+            new BeaconProxy{salt: salt}(
+            openfortBeacon,
+            abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, _data))
             )
         );
     }
@@ -64,9 +65,9 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(
-            new ERC1967Proxy{salt: salt}(
-                accountImplementation,
-                abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
+            new BeaconProxy{salt: salt}(
+                openfortBeacon,
+                abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, _data))
             )
         );
     }
@@ -80,10 +81,10 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
             bytes32(salt),
             keccak256(
                 abi.encodePacked(
-                    type(ERC1967Proxy).creationCode,
+                    type(BeaconProxy).creationCode,
                     abi.encode(
-                        address(accountImplementation),
-                        abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
+                        openfortBeacon,
+                        abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, ""))
                     )
                 )
             )
@@ -99,13 +100,17 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
             bytes32(salt),
             keccak256(
                 abi.encodePacked(
-                    type(ERC1967Proxy).creationCode,
+                    type(BeaconProxy).creationCode,
                     abi.encode(
-                        address(accountImplementation),
-                        abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
+                        openfortBeacon,
+                        abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, ""))
                     )
                 )
             )
         );
+    }
+
+    function accountImplementation() external view override returns (address) {
+        return OpenfortBeacon(openfortBeacon).implementation();
     }
 }
