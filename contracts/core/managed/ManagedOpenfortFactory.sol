@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 // Smart wallet implementation to use
 import {ManagedOpenfortAccount} from "./ManagedOpenfortAccount.sol";
 import {OpenfortBeacon} from "./OpenfortBeacon.sol";
+import {OpenfortBeaconProxy} from "./OpenfortBeaconProxy.sol";
+
 // Interfaces
 import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
 
@@ -13,7 +14,7 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
  * @title ManagedOpenfortFactory (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
  * @notice Contract to create an on-chain factory to deploy new ManagedOpenfortAccounts.
- * It uses OpenZeppelin's Create2 and BeaconProxy libraries.
+ * It uses OpenZeppelin's Create2 and OpenfortBeaconProxy libraries.
  * It inherits from:
  *  - IBaseOpenfortFactory
  */
@@ -40,7 +41,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(
-            new BeaconProxy{salt: salt}(
+            new OpenfortBeaconProxy{salt: salt}(
             openfortBeacon,
             abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, _data))
             )
@@ -63,7 +64,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(
-            new BeaconProxy{salt: salt}(
+            new OpenfortBeaconProxy{salt: salt}(
                 openfortBeacon,
                 abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, _data))
             )
@@ -76,10 +77,10 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
     function getAddress(address _admin) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin));
         return Create2.computeAddress(
-            bytes32(salt),
+            salt,
             keccak256(
                 abi.encodePacked(
-                    type(BeaconProxy).creationCode,
+                    type(OpenfortBeaconProxy).creationCode,
                     abi.encode(
                         openfortBeacon,
                         abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, ""))
@@ -95,10 +96,10 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
     function getAddressWithNonce(address _admin, uint256 nonce) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin, nonce));
         return Create2.computeAddress(
-            bytes32(salt),
+            salt,
             keccak256(
                 abi.encodePacked(
-                    type(BeaconProxy).creationCode,
+                    type(OpenfortBeaconProxy).creationCode,
                     abi.encode(
                         openfortBeacon,
                         abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, ""))
