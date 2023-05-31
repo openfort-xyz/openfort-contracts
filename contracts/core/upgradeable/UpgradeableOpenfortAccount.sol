@@ -16,6 +16,8 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 contract UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     address internal entrypointContract;
 
+    event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
+
     /*
      * @notice Initialize the smart contract wallet.
      */
@@ -34,5 +36,16 @@ contract UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
     function entryPoint() public view override returns (IEntryPoint) {
         return IEntryPoint(entrypointContract);
+    }
+
+    /**
+     * Update the EntryPoint address
+     */
+    function updateEntryPoint(address _newEntrypoint) external onlyOwner {
+        if (_newEntrypoint == address(0)) {
+            revert ZeroAddressNotAllowed();
+        }
+        emit EntryPointUpdated(entrypointContract, _newEntrypoint);
+        entrypointContract = _newEntrypoint;
     }
 }
