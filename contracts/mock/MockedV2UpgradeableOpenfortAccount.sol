@@ -2,16 +2,18 @@
 pragma solidity ^0.8.12;
 
 // Base account contract to inherit from
-import {BaseOpenfortAccount} from "../BaseOpenfortAccount.sol";
+import {BaseOpenfortAccount} from "../core/BaseOpenfortAccount.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
- * @title ManagedOpenfortAccount (Upgradeable via Beacon)
+ * @title MockedV2UpgradeableOpenfortAccount
  * @author Eloi<eloi@openfort.xyz>
- * @notice Smart contract wallet managed via Beacon with session keys following the ERC-4337 standard.
+ * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseOpenfortAccount
+ *  - UUPSUpgradeable
  */
-contract ManagedOpenfortAccount is BaseOpenfortAccount {
+contract MockedV2UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     /*
      * @notice Initialize the smart contract wallet.
      */
@@ -21,5 +23,11 @@ contract ManagedOpenfortAccount is BaseOpenfortAccount {
         }
         _transferOwnership(_defaultAdmin);
         entrypointContract = _entrypoint;
+    }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    function version() external pure override returns (uint256) {
+        return 2;
     }
 }

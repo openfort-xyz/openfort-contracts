@@ -3,11 +3,13 @@ pragma solidity ^0.8.19;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
+import {MockedV2UpgradeableOpenfortAccount} from "contracts/mock/MockedV2UpgradeableOpenfortAccount.sol";
 
 contract UpgradeableOpenfortAccountTest is Test {
     using ECDSA for bytes32;
@@ -1059,13 +1061,17 @@ contract UpgradeableOpenfortAccountTest is Test {
     function testUpgradeAccount() public {
         // Create an static account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
+        assertEq(UpgradeableOpenfortAccount(payable(account)).version(), 1);
 
-        UpgradeableOpenfortAccount newAccountImplementation = new UpgradeableOpenfortAccount();
+        MockedV2UpgradeableOpenfortAccount newAccountImplementation = new MockedV2UpgradeableOpenfortAccount();
 
         vm.expectRevert("Ownable: caller is not the owner");
         UpgradeableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
 
         vm.prank(accountAdmin);
         UpgradeableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
+
+        // Notice that, even though we bind the address to the old implementation, version() now returns 2
+        assertEq(UpgradeableOpenfortAccount(payable(account)).version(), 2);
     }
 }
