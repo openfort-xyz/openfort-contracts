@@ -5,6 +5,7 @@ import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol"
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 // Smart wallet implementation to use
 import {ManagedOpenfortAccount} from "./ManagedOpenfortAccount.sol";
+import {OpenfortBeacon} from "./OpenfortBeacon.sol";
 // Interfaces
 import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
 
@@ -18,14 +19,14 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
  */
 contract ManagedOpenfortFactory is IBaseOpenfortFactory {
     address public immutable entrypointContract;
-    address public immutable accountImplementation;
+    address public immutable openfortBeacon;
 
-    constructor(address _entrypoint) {
-        if (_entrypoint == address(0)) {
+    constructor(address _entrypoint, address _openfortBeacon) {
+        if (_entrypoint == address(0) || _openfortBeacon == address(0)) {
             revert ZeroAddressNotAllowed();
         }
         entrypointContract = _entrypoint;
-        accountImplementation = address(new ManagedOpenfortAccount());
+        openfortBeacon = _openfortBeacon;
     }
 
     /*
@@ -43,8 +44,8 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
         account = address(
             ManagedOpenfortAccount(
                 payable(
-                    new ERC1967Proxy{salt : bytes32(salt)}(
-                    address(accountImplementation),
+                    new BeaconProxy{salt : bytes32(salt)}(
+                    openfortBeacon,
                     abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, _data))
                     )
                 )
@@ -70,8 +71,8 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
         account = address(
             ManagedOpenfortAccount(
                 payable(
-                    new ERC1967Proxy{salt : bytes32(salt)}(
-                    address(accountImplementation),
+                    new BeaconProxy{salt : bytes32(salt)}(
+                    openfortBeacon,
                     abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, _data))
                     )
                 )
@@ -88,9 +89,9 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
             bytes32(salt),
             keccak256(
                 abi.encodePacked(
-                    type(ERC1967Proxy).creationCode,
+                    type(BeaconProxy).creationCode,
                     abi.encode(
-                        address(accountImplementation),
+                        openfortBeacon,
                         abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, ""))
                     )
                 )
@@ -107,13 +108,17 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
             bytes32(salt),
             keccak256(
                 abi.encodePacked(
-                    type(ERC1967Proxy).creationCode,
+                    type(BeaconProxy).creationCode,
                     abi.encode(
-                        address(accountImplementation),
+                        openfortBeacon,
                         abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, ""))
                     )
                 )
             )
         );
+    }
+
+    function accountImplementation() external override view returns (address) {
+        return OpenfortBeacon(openfortBeacon).implementation();
     }
 }
