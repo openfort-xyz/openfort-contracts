@@ -38,8 +38,6 @@ abstract contract BaseOpenfortAccount is
     bytes4 internal constant EXECUTEBATCH_SELECTOR = 0x47e1da2a;
     uint48 internal constant DEFAULT_LIMIT = 100;
 
-    address internal entrypointContract;
-
     /**
      * Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
      * @param validAfter this sessionKey is valid only after this timestamp.
@@ -76,13 +74,6 @@ abstract contract BaseOpenfortAccount is
     constructor() {
         emit AccountCreated(msg.sender);
         _disableInitializers();
-    }
-
-    /**
-     * @inheritdoc BaseAccount
-     */
-    function entryPoint() public view override returns (IEntryPoint) {
-        return IEntryPoint(entrypointContract);
     }
 
     /**
