@@ -2,7 +2,7 @@
 pragma solidity ^0.8.12;
 
 // Base account contract to inherit from
-import {BaseOpenfortAccount} from "../BaseOpenfortAccount.sol";
+import {BaseOpenfortAccount, IEntryPoint} from "../BaseOpenfortAccount.sol";
 
 /**
  * @title StaticOpenfortAccount (Non-upgradeable)
@@ -13,6 +13,8 @@ import {BaseOpenfortAccount} from "../BaseOpenfortAccount.sol";
  *  - BaseOpenfortAccount
  */
 contract StaticOpenfortAccount is BaseOpenfortAccount {
+    address internal entrypointContract;
+
     event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
 
     /*
@@ -25,6 +27,13 @@ contract StaticOpenfortAccount is BaseOpenfortAccount {
         emit EntryPointUpdated(entrypointContract, _entrypoint);
         _transferOwnership(_defaultAdmin);
         entrypointContract = _entrypoint;
+    }
+
+    /**
+     * Return the current EntryPoint
+     */
+    function entryPoint() public view override returns (IEntryPoint) {
+        return IEntryPoint(entrypointContract);
     }
 
     /**
