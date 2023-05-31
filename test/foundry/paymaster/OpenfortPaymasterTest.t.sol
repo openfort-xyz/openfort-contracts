@@ -16,6 +16,7 @@ contract OpenfortPaymasterTest is Test {
     uint256 public mumbaiFork;
 
     EntryPoint public entryPoint;
+    StaticOpenfortAccount public staticOpenfortAccount;
     StaticOpenfortFactory public staticOpenfortFactory;
     OpenfortPaymaster public openfortPaymaster;
     TestCounter public testCounter;
@@ -165,7 +166,9 @@ contract OpenfortPaymasterTest is Test {
 
         // deploy account factory
         vm.prank(factoryAdmin);
-        staticOpenfortFactory = new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
+        staticOpenfortAccount = new StaticOpenfortAccount();
+        vm.prank(factoryAdmin);
+        staticOpenfortFactory = new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(staticOpenfortAccount));
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20) and mint 100
