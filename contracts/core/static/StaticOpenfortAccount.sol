@@ -8,7 +8,7 @@ import {BaseOpenfortAccount} from "../BaseOpenfortAccount.sol";
  * @title StaticOpenfortAccount (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
- * The EntryPoint can be updated via updateEntryPoint()
+ * The EntryPoint can be updated via updateEntryPoint().
  * It inherits from:
  *  - BaseOpenfortAccount
  */

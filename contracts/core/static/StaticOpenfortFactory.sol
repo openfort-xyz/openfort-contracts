@@ -10,7 +10,11 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
 /**
  * @title StaticOpenfortFactory (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
- * @notice Contract to create account factories
+ * @notice Contract to create an on-chain factory to deploy new StaticOpenfortAccounts using OpenZeppelin's Clones library.
+ * As explained by OZ: The Clones library provides a way to deploy minimal non-upgradeable proxies for cheap.
+ * This can be useful for applications that require deploying many instances of the same contract (for example one per user, or one per task).
+ * These instances are designed to be both cheap to deploy, and cheap to call.
+ * The drawback being that they are not upgradeable.
  * It inherits from:
  *  - IBaseOpenfortFactory
  */
