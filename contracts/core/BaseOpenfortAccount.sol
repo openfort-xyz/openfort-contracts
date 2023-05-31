@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.12;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
@@ -16,7 +16,7 @@ import "account-abstraction/core/Helpers.sol" as Helpers;
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseAccount to comply with ERC-4337
- *  - Initializable because StaticOpenfortAccounts are meant to be created using StaticOpenfortFactory
+ *  - Initializable because accounts are meant to be created using Factories
  *  - Ownable2StepUpgradeable to have permissions
  *  - IERC1271Upgradeable for Signature Validation
  *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
@@ -37,8 +37,6 @@ abstract contract BaseOpenfortAccount is
     // bytes4(keccak256("executeBatch(address[],uint256[],bytes[])")
     bytes4 internal constant EXECUTEBATCH_SELECTOR = 0x47e1da2a;
     uint48 internal constant DEFAULT_LIMIT = 100;
-
-    address internal entrypointContract;
 
     /**
      * Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
@@ -76,18 +74,6 @@ abstract contract BaseOpenfortAccount is
     constructor() {
         emit AccountCreated(msg.sender);
         _disableInitializers();
-    }
-
-    /*
-     * @notice Initialize the smart contract wallet.
-     */
-    function initialize(address _defaultAdmin, address _entrypoint, bytes calldata) public virtual;
-
-    /**
-     * @inheritdoc BaseAccount
-     */
-    function entryPoint() public view override returns (IEntryPoint) {
-        return IEntryPoint(entrypointContract);
     }
 
     /**

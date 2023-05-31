@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
@@ -8,6 +8,7 @@ import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
+import {MockedV2UpgradeableOpenfortAccount} from "contracts/mock/MockedV2UpgradeableOpenfortAccount.sol";
 
 contract UpgradeableOpenfortAccountTest is Test {
     using ECDSA for bytes32;
@@ -115,7 +116,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * @notice Initialize the UpgradeableOpenfortAccount testing contract.
      * Scenario:
      * - factoryAdmin is the deployer (and owner) of the UpgradeableOpenfortFactory
-     * - accountAdmin is the account used to deploy new static accounts
+     * - accountAdmin is the account used to deploy new upgradeable accounts
      * - entryPoint is the singleton EntryPoint
      * - testCounter is the counter used to test userOps
      */
@@ -153,7 +154,7 @@ contract UpgradeableOpenfortAccountTest is Test {
         vm.expectEmit(true, true, false, true);
         emit AccountCreated(account, accountAdmin);
 
-        // Deploy a static account to the counterfactual address
+        // Deploy a upgradeable account to the counterfactual address
         upgradeableOpenfortFactory.createAccount(accountAdmin, bytes(""));
 
         // Make sure the counterfactual address has not been altered
@@ -164,7 +165,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Test account creation using nonces using the factory.
      */
     function testCreateAccountViaFactoryWithNonce() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
         address account2 = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
@@ -212,13 +213,13 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Create an account using the factory and make it call count() directly.
      */
     function testIncrementCounterDirect() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
-        // Make the admin of the static account wallet (deployer) call "count"
+        // Make the admin of the upgradeable account wallet (deployer) call "count"
         vm.prank(accountAdmin);
         UpgradeableOpenfortAccount(payable(account)).execute(
             address(testCounter), 0, abi.encodeWithSignature("count()")
@@ -233,7 +234,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * using the execute() function using the EntryPoint (userOp). Leaveraging ERC-4337.
      */
     function testIncrementCounterViaEntrypoint() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -257,7 +258,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * using the executeBatching() function using the EntryPoint (userOp). Leaveraging ERC-4337.
      */
     function testIncrementCounterViaEntrypointBatching() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -290,7 +291,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that is not registered.
      */
     function testFailIncrementCounterViaSessionKeyNotregistered() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -317,7 +318,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Use a sessionKey that is registered.
      */
     function testIncrementCounterViaSessionKey() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -348,7 +349,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * using the EntryPoint (userOp). Then use the sessionKey to count
      */
     function testRegisterSessionKeyViaEntrypoint() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -393,7 +394,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * using the EntryPoint (userOp). Then use that sessionKey to register a second one
      */
     function testRegisterSessionKeyViaEntrypoint2ndKey() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -456,7 +457,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * using the EntryPoint (userOp). Then use that sessionKey to register a second one
      */
     function testFailAttackRegisterSessionKeyViaEntrypoint2ndKey() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -525,7 +526,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that is expired.
      */
     function testIncrementCounterViaSessionKeyExpired() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -557,7 +558,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that is revoked.
      */
     function testFailIncrementCounterViaSessionKeyRevoked() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -588,7 +589,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that reached its limit.
      */
     function testFailIncrementCounterViaSessionKeyReachLimit() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -629,7 +630,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that reached its limit.
      */
     function testFailIncrementCounterViaSessionKeyReachLimitBatching() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -671,7 +672,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      *  Should fail, try to revoke a sessionKey using a non-privileged user
      */
     function testFailRevokeSessionKeyInvalidUser() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -703,7 +704,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Use a sessionKey with whitelisting to call Execute().
      */
     function testIncrementCounterViaSessionKeyWhitelisting() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -735,7 +736,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Should fail, try to register a sessionKey with a large whitelist.
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingTooBig() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -766,7 +767,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Use a sessionKey with whitelisting to call ExecuteBatch().
      */
     function testIncrementCounterViaSessionKeyWhitelistingBatch() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -815,7 +816,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Should fail, try to use a sessionKey with invalid whitelisting to call Execute().
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingWrongAddress() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -847,7 +848,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Should fail, try to use a sessionKey with invalid whitelisting to call ExecuteBatch().
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingBatchWrongAddress() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -903,7 +904,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * 5- Test that the new owner can directly interact with the account and make it call the testCounter contract.
      */
     function testChangeOwnershipAndCountDirect() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         address accountAdmin2;
@@ -918,7 +919,7 @@ contract UpgradeableOpenfortAccountTest is Test {
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
-        // Make the admin of the static account wallet (deployer) call "count"
+        // Make the admin of the upgradeable account wallet (deployer) call "count"
         vm.prank(accountAdmin2);
         UpgradeableOpenfortAccount(payable(account)).execute(
             address(testCounter), 0, abi.encodeWithSignature("count()")
@@ -932,7 +933,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Change the owner of an account and call TestCounter though the Entrypoint
      */
     function testChangeOwnershipAndCountEntryPoint() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         address accountAdmin2;
@@ -964,7 +965,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Test an account with testToken instead of TestCount.
      */
     function testMintTokenAccount() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the totalSupply is stil 0
@@ -996,7 +997,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Test receive native tokens.
      */
     function testReceiveNativeToken() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         assertEq(address(account).balance, 0);
@@ -1011,7 +1012,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Transfer native tokens out of an account.
      */
     function testTransferOutNativeToken() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         uint256 value = 1000;
@@ -1034,7 +1035,7 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Basic test of simulateValidation() to check that it always reverts.
      */
     function testSimulateValidation() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
 
         // Verifiy that the counter is stil set to 0
@@ -1057,15 +1058,42 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Create an account and upgrade its implementation
      */
     function testUpgradeAccount() public {
-        // Create an static account wallet and get its address
+        // Create an upgradeable account wallet and get its address
         address account = upgradeableOpenfortFactory.createAccount(accountAdmin, "");
+        assertEq(UpgradeableOpenfortAccount(payable(account)).version(), 1);
 
-        UpgradeableOpenfortAccount newAccountImplementation = new UpgradeableOpenfortAccount();
+        MockedV2UpgradeableOpenfortAccount newAccountImplementation = new MockedV2UpgradeableOpenfortAccount();
 
         vm.expectRevert("Ownable: caller is not the owner");
         UpgradeableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
 
         vm.prank(accountAdmin);
         UpgradeableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
+
+        // Notice that, even though we bind the address to the old implementation, version() now returns 2
+        assertEq(UpgradeableOpenfortAccount(payable(account)).version(), 2);
+    }
+
+    /*
+     * 1- Deploy a factory using the old EntryPoint to create an account.
+     * 2- Inform the account of the new EntryPoint by calling updateEntryPoint()
+     */
+    function testUpdateEntryPoint() public {
+        address oldEntryPoint = address(0x0576a174D229E3cFA37253523E645A78A0C91B57);
+        address newEntryPoint = vm.envAddress("ENTRY_POINT_ADDRESS");
+        UpgradeableOpenfortFactory upgradeableOpenfortFactoryOld = new UpgradeableOpenfortFactory(payable(oldEntryPoint), address(upgradeableOpenfortAccount));
+
+        // Create an upgradeable account wallet using the old EntryPoint and get its address
+        address payable accountOld = payable(upgradeableOpenfortFactoryOld.createAccount(accountAdmin, ""));
+        UpgradeableOpenfortAccount upgradeableAccount = UpgradeableOpenfortAccount(accountOld);
+        assertEq(address(upgradeableAccount.entryPoint()), oldEntryPoint);
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        upgradeableAccount.updateEntryPoint(newEntryPoint);
+
+        vm.prank(accountAdmin);
+        upgradeableAccount.updateEntryPoint(newEntryPoint);
+
+        assertEq(address(upgradeableAccount.entryPoint()), newEntryPoint);
     }
 }

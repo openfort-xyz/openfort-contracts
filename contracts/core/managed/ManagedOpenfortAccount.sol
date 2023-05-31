@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.12;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
 
 // Base account contract to inherit from
-import {BaseOpenfortAccount} from "../BaseOpenfortAccount.sol";
+import {BaseOpenfortAccount, IEntryPoint} from "../BaseOpenfortAccount.sol";
 
 /**
  * @title ManagedOpenfortAccount (Upgradeable via Beacon)
@@ -12,14 +12,21 @@ import {BaseOpenfortAccount} from "../BaseOpenfortAccount.sol";
  *  - BaseOpenfortAccount
  */
 contract ManagedOpenfortAccount is BaseOpenfortAccount {
+    address constant private ENTRYPOINTCONTRACT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
     /*
      * @notice Initialize the smart contract wallet.
      */
-    function initialize(address _defaultAdmin, address _entrypoint, bytes calldata) public override initializer {
-        if (_defaultAdmin == address(0) || _entrypoint == address(0)) {
+    function initialize(address _defaultAdmin, bytes calldata) public initializer {
+        if (_defaultAdmin == address(0)) {
             revert ZeroAddressNotAllowed();
         }
         _transferOwnership(_defaultAdmin);
-        entrypointContract = _entrypoint;
+    }
+
+    /**
+     * Return the current EntryPoint
+     */
+    function entryPoint() public pure override returns (IEntryPoint) {
+        return IEntryPoint(ENTRYPOINTCONTRACT);
     }
 }
