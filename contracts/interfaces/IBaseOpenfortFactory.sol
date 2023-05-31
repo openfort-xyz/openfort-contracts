@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.19;
 
 interface IBaseOpenfortFactory {
     /// @notice Emitted when a new Account is created.
