@@ -18,14 +18,12 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
  *  - IBaseOpenfortFactory
  */
 contract ManagedOpenfortFactory is IBaseOpenfortFactory {
-    address public immutable entrypointContract;
     address public immutable openfortBeacon;
 
-    constructor(address _entrypoint, address _openfortBeacon) {
-        if (_entrypoint == address(0) || _openfortBeacon == address(0)) {
+    constructor(address _openfortBeacon) {
+        if ( _openfortBeacon == address(0)) {
             revert ZeroAddressNotAllowed();
         }
-        entrypointContract = _entrypoint;
         openfortBeacon = _openfortBeacon;
     }
 
@@ -44,7 +42,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
         account = address(
             new BeaconProxy{salt: salt}(
             openfortBeacon,
-            abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, _data))
+            abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, _data))
             )
         );
     }
@@ -67,7 +65,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
         account = address(
             new BeaconProxy{salt: salt}(
                 openfortBeacon,
-                abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, _data))
+                abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, _data))
             )
         );
     }
@@ -84,7 +82,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
                     type(BeaconProxy).creationCode,
                     abi.encode(
                         openfortBeacon,
-                        abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, ""))
+                        abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, ""))
                     )
                 )
             )
@@ -103,7 +101,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
                     type(BeaconProxy).creationCode,
                     abi.encode(
                         openfortBeacon,
-                        abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, ""))
+                        abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, ""))
                     )
                 )
             )

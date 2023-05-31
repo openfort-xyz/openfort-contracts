@@ -140,7 +140,7 @@ contract ManagedOpenfortAccountTest is Test {
         // deploy OpenfortBeacon
         openfortBeacon = new OpenfortBeacon(address(managedOpenfortAccount));
         // deploy account factory
-        managedOpenfortFactory = new ManagedOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(openfortBeacon));
+        managedOpenfortFactory = new ManagedOpenfortFactory(address(openfortBeacon));
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20)

@@ -23,7 +23,7 @@ contract ManagedOpenfortDeploy is Script {
         OpenfortBeacon openfortBeacon = new OpenfortBeacon(address(managedOpenfortAccount));
 
         // Create a factory to deploy cloned accounts
-        ManagedOpenfortFactory managedOpenfortFactory = new ManagedOpenfortFactory{salt: versionSalt}(address(entryPoint), address(openfortBeacon));
+        ManagedOpenfortFactory managedOpenfortFactory = new ManagedOpenfortFactory{salt: versionSalt}(address(openfortBeacon));
         // address account1 = managedOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
@@ -33,6 +33,7 @@ contract ManagedOpenfortDeploy is Script {
         );
 
         MockedV2ManagedOpenfortAccount mockedOpenfortAccount = new MockedV2ManagedOpenfortAccount{salt: versionSalt}();
+        (mockedOpenfortAccount);
 
         // assert(account1 != account2);
         // address account3 = managedOpenfortFactory.createAccountWithNonce(deployAddress, "", 3);
