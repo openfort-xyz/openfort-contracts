@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.19;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
-import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
+import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 
 contract UpgradeableOpenfortAccountTest is Test {
     using ECDSA for bytes32;
@@ -15,6 +15,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     uint256 public mumbaiFork;
 
     EntryPoint public entryPoint;
+    UpgradeableOpenfortAccount public upgradeableOpenfortAccount;
     UpgradeableOpenfortFactory public upgradeableOpenfortFactory;
     TestCounter public testCounter;
     TestToken public testToken;
@@ -127,15 +128,18 @@ contract UpgradeableOpenfortAccountTest is Test {
         (accountAdmin, accountAdminPKey) = makeAddrAndKey("accountAdmin");
         vm.deal(accountAdmin, 100 ether);
 
+        vm.startPrank(factoryAdmin);
         // deploy entryPoint
         entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
-        // deploy account factory
-        vm.prank(factoryAdmin);
-        upgradeableOpenfortFactory = new UpgradeableOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
+        // deploy upgradeable account implementation
+        upgradeableOpenfortAccount = new UpgradeableOpenfortAccount();
+        // deploy upgradeable account factory
+        upgradeableOpenfortFactory = new UpgradeableOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(upgradeableOpenfortAccount));
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20)
         testToken = new TestToken();
+        vm.stopPrank();
     }
 
     /*

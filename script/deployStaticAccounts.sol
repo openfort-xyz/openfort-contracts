@@ -3,6 +3,7 @@ pragma solidity ^0.8.12;
 
 import {Script, console} from "forge-std/Script.sol";
 import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import {StaticOpenfortAccount} from "../contracts/core/static/StaticOpenfortAccount.sol";
 import {StaticOpenfortFactory} from "../contracts/core/static/StaticOpenfortFactory.sol";
 
 contract StaticOpenfortDeploy is Script {
@@ -14,7 +15,11 @@ contract StaticOpenfortDeploy is Script {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
         vm.startBroadcast(deployPrivKey);
 
-        StaticOpenfortFactory staticOpenfortFactory = new StaticOpenfortFactory{salt: versionSalt}(address(entryPoint));
+        // Create an acccount to server as implementation
+        StaticOpenfortAccount staticOpenfortAccount = new StaticOpenfortAccount{salt: versionSalt}();
+
+        // Create a factory to deploy cloned accounts
+        StaticOpenfortFactory staticOpenfortFactory = new StaticOpenfortFactory{salt: versionSalt}(address(entryPoint), address(staticOpenfortAccount));
         // address account1 = staticOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
