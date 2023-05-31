@@ -3,6 +3,7 @@ pragma solidity ^0.8.12;
 
 import {Script, console} from "forge-std/Script.sol";
 import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import {UpgradeableOpenfortAccount} from "../contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "../contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 
 contract UpgradeableOpenfortDeploy is Script {
@@ -14,7 +15,9 @@ contract UpgradeableOpenfortDeploy is Script {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
         vm.startBroadcast(deployPrivKey);
 
-        UpgradeableOpenfortFactory upgradeableOpenfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(address(entryPoint));
+        UpgradeableOpenfortAccount upgradeableOpenfortAccount = new UpgradeableOpenfortAccount{salt: versionSalt}();
+
+        UpgradeableOpenfortFactory upgradeableOpenfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(address(entryPoint), address(upgradeableOpenfortAccount));
         address account1 = upgradeableOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
