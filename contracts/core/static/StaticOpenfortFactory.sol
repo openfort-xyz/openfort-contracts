@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.12;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 // Smart wallet implementation to use
