@@ -41,13 +41,9 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(
-            UpgradeableOpenfortAccount(
-                payable(
-                    new ERC1967Proxy{salt : bytes32(salt)}(
-                    address(accountImplementation),
-                    abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
-                    )
-                )
+            new ERC1967Proxy{salt: salt}(
+                accountImplementation,
+                abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data)) 
             )
         );
     }
@@ -68,13 +64,9 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(
-            UpgradeableOpenfortAccount(
-                payable(
-                    new ERC1967Proxy{salt : bytes32(salt)}(
-                    address(accountImplementation),
-                    abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
-                    )
-                )
+            new ERC1967Proxy{salt: salt}(
+                accountImplementation,
+                abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
             )
         );
     }
