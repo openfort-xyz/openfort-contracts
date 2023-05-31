@@ -25,6 +25,7 @@ contract UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         if (_defaultAdmin == address(0) || _entrypoint == address(0)) {
             revert ZeroAddressNotAllowed();
         }
+        emit EntryPointUpdated(entrypointContract, _entrypoint);
         _transferOwnership(_defaultAdmin);
         entrypointContract = _entrypoint;
     }
