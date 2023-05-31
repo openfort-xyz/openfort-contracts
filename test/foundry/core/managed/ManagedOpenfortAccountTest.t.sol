@@ -1111,16 +1111,12 @@ contract ManagedOpenfortAccountTest is Test {
     function testUpgradeTo() public {
         // Create an managed account wallet using the old implementation and get its address
         address payable account = payable(managedOpenfortFactory.createAccount(accountAdmin, ""));
-        // BeaconProxy proxyAccount = BeaconProxy(account);
         ManagedOpenfortAccount managedAccount = ManagedOpenfortAccount(account);
-        managedAccount.getDeposit();
-        managedAccount.version();
+        assertEq(managedAccount.version(), 1);
 
+        // Deploy the new implementation
         MockedV2ManagedOpenfortAccount newImplementation = new MockedV2ManagedOpenfortAccount();
         address newImplementationAddress = address(newImplementation);
-
-        // Deploy a factory using the new EntryPoint
-        // ManagedOpenfortFactory managedOpenfortFactoryNew = new ManagedOpenfortFactory(payable(newEntryPoint), address(staticOpenfortAccount));
 
         vm.expectRevert("Ownable: caller is not the owner");
         openfortBeacon.upgradeTo(newImplementationAddress);
@@ -1130,17 +1126,20 @@ contract ManagedOpenfortAccountTest is Test {
 
         assertEq(openfortBeacon.implementation(), newImplementationAddress);
 
-        MockedV2ManagedOpenfortAccount newManagedAccount = MockedV2ManagedOpenfortAccount(account);
+        // Notice that, even though we bind the address to the old implementation, version() now returns 2
+        assertEq(managedAccount.version(), 2);
 
-        newManagedAccount.getDeposit();
-        newManagedAccount.version();
+        // Same for new accounts. From now on, they have the new version.
+        address payable account2 = payable(managedOpenfortFactory.createAccount(accountAdmin, ""));
+        ManagedOpenfortAccount managedAccount2 = ManagedOpenfortAccount(account2);
+        managedAccount2.version();
     }
 
     /*
      * 1- Deploy a factory using the old EntryPoint to create an account.
      * 2- Inform the account of the new EntryPoint by calling updateEntryPoint()
      */
-    // function testUpgradeTo() public {
+    // function testUpgradeEntryPoint() public {
     //     address oldEntryPoint = address(0x0576a174D229E3cFA37253523E645A78A0C91B57);
     //     address newEntryPoint = vm.envAddress("ENTRY_POINT_ADDRESS");
     //     ManagedOpenfortFactory managedOpenfortFactoryOld = new ManagedOpenfortFactory(payable(oldEntryPoint), address(staticOpenfortAccount));
