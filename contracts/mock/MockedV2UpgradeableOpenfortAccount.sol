@@ -2,21 +2,19 @@
 pragma solidity ^0.8.19;
 
 // Base account contract to inherit from
-import {BaseOpenfortAccount, IEntryPoint} from "../BaseOpenfortAccount.sol";
+import {BaseOpenfortAccount, IEntryPoint} from "../core/BaseOpenfortAccount.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
- * @title StaticOpenfortAccount (Non-upgradeable)
+ * @title MockedV2UpgradeableOpenfortAccount
  * @author Eloi<eloi@openfort.xyz>
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
- * The EntryPoint can be updated via updateEntryPoint().
  * It inherits from:
  *  - BaseOpenfortAccount
+ *  - UUPSUpgradeable
  */
-contract StaticOpenfortAccount is BaseOpenfortAccount {
+contract MockedV2UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     address internal entrypointContract;
-
-    event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
-
     /*
      * @notice Initialize the smart contract wallet.
      */
@@ -24,9 +22,14 @@ contract StaticOpenfortAccount is BaseOpenfortAccount {
         if (_defaultAdmin == address(0) || _entrypoint == address(0)) {
             revert ZeroAddressNotAllowed();
         }
-        emit EntryPointUpdated(entrypointContract, _entrypoint);
         _transferOwnership(_defaultAdmin);
         entrypointContract = _entrypoint;
+    }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    function version() external pure override returns (uint256) {
+        return 2;
     }
 
     /**
@@ -34,16 +37,5 @@ contract StaticOpenfortAccount is BaseOpenfortAccount {
      */
     function entryPoint() public view override returns (IEntryPoint) {
         return IEntryPoint(entrypointContract);
-    }
-
-    /**
-     * Update the EntryPoint address
-     */
-    function updateEntryPoint(address _newEntrypoint) external onlyOwner {
-        if (_newEntrypoint == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
-        emit EntryPointUpdated(entrypointContract, _newEntrypoint);
-        entrypointContract = _newEntrypoint;
     }
 }
