@@ -11,7 +11,8 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
 /**
  * @title UpgradeableOpenfortFactory (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
- * @notice Factory to deploy UpgradeableOpenfortAccounts
+ * @notice Contract to create an on-chain factory to deploy new UpgradeableOpenfortAccounts.
+ * It uses OpenZeppelin's Create2 and ERC1967Proxy libraries.
  * It inherits from:
  *  - IBaseOpenfortFactory
  */
