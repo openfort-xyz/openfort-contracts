@@ -372,4 +372,8 @@ abstract contract BaseOpenfortAccount is
             emit SessionKeyRevoked(_key);
         }
     }
+
+    function version() external pure virtual returns (uint256) {
+        return 1;
+    }
 }

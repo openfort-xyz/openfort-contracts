@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.19;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -128,16 +128,18 @@ contract UpgradeableOpenfortAccountTest is Test {
         (accountAdmin, accountAdminPKey) = makeAddrAndKey("accountAdmin");
         vm.deal(accountAdmin, 100 ether);
 
+        vm.startPrank(factoryAdmin);
         // deploy entryPoint
         entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
-        // deploy account factory
+        // deploy upgradeable account implementation
         upgradeableOpenfortAccount = new UpgradeableOpenfortAccount();
-        vm.prank(factoryAdmin);
+        // deploy upgradeable account factory
         upgradeableOpenfortFactory = new UpgradeableOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(upgradeableOpenfortAccount));
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20)
         testToken = new TestToken();
+        vm.stopPrank();
     }
 
     /*
