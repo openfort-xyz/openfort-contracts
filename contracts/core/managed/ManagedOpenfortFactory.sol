@@ -42,13 +42,9 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(
-            ManagedOpenfortAccount(
-                payable(
-                    new BeaconProxy{salt : bytes32(salt)}(
-                    openfortBeacon,
-                    abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, _data))
-                    )
-                )
+            new BeaconProxy{salt: salt}(
+            openfortBeacon,
+            abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, _data))
             )
         );
     }
@@ -69,13 +65,9 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(
-            ManagedOpenfortAccount(
-                payable(
-                    new BeaconProxy{salt : bytes32(salt)}(
-                    openfortBeacon,
-                    abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, _data))
-                    )
-                )
+            new BeaconProxy{salt: salt}(
+                openfortBeacon,
+                abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, entrypointContract, _data))
             )
         );
     }
