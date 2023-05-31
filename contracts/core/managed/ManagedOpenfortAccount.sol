@@ -5,14 +5,13 @@ pragma solidity ^0.8.12;
 import {BaseOpenfortAccount} from "../BaseOpenfortAccount.sol";
 
 /**
- * @title ManagedOpenfortAccount (Non-upgradeable)
+ * @title ManagedOpenfortAccount (Upgradeable via Beacon)
  * @author Eloi<eloi@openfort.xyz>
- * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
+ * @notice Smart contract wallet managed via Beacon with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseOpenfortAccount
  */
 contract ManagedOpenfortAccount is BaseOpenfortAccount {
-
     /*
      * @notice Initialize the smart contract wallet.
      */
