@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 // Smart wallet implementation to use
 import {UpgradeableOpenfortAccount} from "./UpgradeableOpenfortAccount.sol";
+import {OpenfortUpgradeableProxy} from "./OpenfortUpgradeableProxy.sol";
 // Interfaces
 import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
 
@@ -12,7 +12,7 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
  * @title UpgradeableOpenfortFactory (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
  * @notice Contract to create an on-chain factory to deploy new UpgradeableOpenfortAccounts.
- * It uses OpenZeppelin's Create2 and ERC1967Proxy libraries.
+ * It uses OpenZeppelin's Create2 and OpenfortUpgradeableProxy libraries.
  * It inherits from:
  *  - IBaseOpenfortFactory
  */
@@ -41,7 +41,7 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(
-            new ERC1967Proxy{salt: salt}(
+            new OpenfortUpgradeableProxy{salt: salt}(
                 accountImplementation,
                 abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data)) 
             )
@@ -64,7 +64,7 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(
-            new ERC1967Proxy{salt: salt}(
+            new OpenfortUpgradeableProxy{salt: salt}(
                 accountImplementation,
                 abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
             )
@@ -80,7 +80,7 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
             salt,
             keccak256(
                 abi.encodePacked(
-                    type(ERC1967Proxy).creationCode,
+                    type(OpenfortUpgradeableProxy).creationCode,
                     abi.encode(
                         accountImplementation,
                         abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
@@ -99,7 +99,7 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
             salt,
             keccak256(
                 abi.encodePacked(
-                    type(ERC1967Proxy).creationCode,
+                    type(OpenfortUpgradeableProxy).creationCode,
                     abi.encode(
                         accountImplementation,
                         abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
