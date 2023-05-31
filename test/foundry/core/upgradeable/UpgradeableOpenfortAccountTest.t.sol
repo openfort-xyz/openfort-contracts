@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
