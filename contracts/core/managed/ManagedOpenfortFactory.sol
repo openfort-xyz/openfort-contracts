@@ -118,7 +118,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
         );
     }
 
-    function accountImplementation() external override view returns (address) {
+    function accountImplementation() external view override returns (address) {
         return OpenfortBeacon(openfortBeacon).implementation();
     }
 }
