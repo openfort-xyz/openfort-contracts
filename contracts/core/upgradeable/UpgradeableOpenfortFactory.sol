@@ -77,12 +77,12 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
     function getAddress(address _admin) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin));
         return Create2.computeAddress(
-            bytes32(salt),
+            salt,
             keccak256(
                 abi.encodePacked(
                     type(ERC1967Proxy).creationCode,
                     abi.encode(
-                        address(accountImplementation),
+                        accountImplementation,
                         abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
                     )
                 )
@@ -96,12 +96,12 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
     function getAddressWithNonce(address _admin, uint256 nonce) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin, nonce));
         return Create2.computeAddress(
-            bytes32(salt),
+            salt,
             keccak256(
                 abi.encodePacked(
                     type(ERC1967Proxy).creationCode,
                     abi.encode(
-                        address(accountImplementation),
+                        accountImplementation,
                         abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
                     )
                 )

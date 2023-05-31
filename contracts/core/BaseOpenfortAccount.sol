@@ -16,7 +16,7 @@ import "account-abstraction/core/Helpers.sol" as Helpers;
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseAccount to comply with ERC-4337
- *  - Initializable because StaticOpenfortAccounts are meant to be created using StaticOpenfortFactory
+ *  - Initializable because accounts are meant to be created using Factories
  *  - Ownable2StepUpgradeable to have permissions
  *  - IERC1271Upgradeable for Signature Validation
  *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
@@ -77,11 +77,6 @@ abstract contract BaseOpenfortAccount is
         emit AccountCreated(msg.sender);
         _disableInitializers();
     }
-
-    /*
-     * @notice Initialize the smart contract wallet.
-     */
-    function initialize(address _defaultAdmin, address _entrypoint, bytes calldata) public virtual;
 
     /**
      * @inheritdoc BaseAccount
