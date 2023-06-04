@@ -23,14 +23,12 @@ contract UserOpTestCounter is Script {
     TestCounter testCounter;
 
     // WIP based on calcPreVerificationGas.ts from the bundler's SDK
-    function calcPreVerificationGas(UserOperation calldata userOp) public pure returns (uint){
-        uint fixedCost = 21_000;
-        uint perUserOp = 18_300;
-        uint lengthInWord = (userOp.pack().length+31) / 32;
-        uint perUserOpWord = 4;
-        return fixedCost +
-        perUserOp +
-        lengthInWord * perUserOpWord;
+    function calcPreVerificationGas(UserOperation calldata userOp) public pure returns (uint256) {
+        uint256 fixedCost = 21_000;
+        uint256 perUserOp = 18_300;
+        uint256 lengthInWord = (userOp.pack().length + 31) / 32;
+        uint256 perUserOpWord = 4;
+        return fixedCost + perUserOp + lengthInWord * perUserOpWord;
     }
 
     /*
