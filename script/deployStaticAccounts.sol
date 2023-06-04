@@ -19,7 +19,8 @@ contract StaticOpenfortDeploy is Script {
         StaticOpenfortAccount staticOpenfortAccount = new StaticOpenfortAccount{salt: versionSalt}();
 
         // Create a factory to deploy cloned accounts
-        StaticOpenfortFactory staticOpenfortFactory = new StaticOpenfortFactory{salt: versionSalt}(address(entryPoint), address(staticOpenfortAccount));
+        StaticOpenfortFactory staticOpenfortFactory =
+            new StaticOpenfortFactory{salt: versionSalt}(address(entryPoint), address(staticOpenfortAccount));
         // address account1 = staticOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
