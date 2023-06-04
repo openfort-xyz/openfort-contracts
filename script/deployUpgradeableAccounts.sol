@@ -17,7 +17,8 @@ contract UpgradeableOpenfortDeploy is Script {
 
         UpgradeableOpenfortAccount upgradeableOpenfortAccount = new UpgradeableOpenfortAccount{salt: versionSalt}();
 
-        UpgradeableOpenfortFactory upgradeableOpenfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(address(entryPoint), address(upgradeableOpenfortAccount));
+        UpgradeableOpenfortFactory upgradeableOpenfortFactory =
+            new UpgradeableOpenfortFactory{salt: versionSalt}(address(entryPoint), address(upgradeableOpenfortAccount));
         address account1 = upgradeableOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
@@ -25,7 +26,7 @@ contract UpgradeableOpenfortDeploy is Script {
         console.log(
             "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account2
         );
-        
+
         assert(account1 != account2);
         // address account3 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, "", 3);
         // console.log(
@@ -37,7 +38,6 @@ contract UpgradeableOpenfortDeploy is Script {
         //     "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account4
         // );
         // assert(account3 != account4);
-
 
         //address account3 = upgradeableOpenfortFactory.createAccount(deployAddress, bytes(""));
 
