@@ -168,7 +168,8 @@ contract OpenfortPaymasterTest is Test {
         vm.prank(factoryAdmin);
         staticOpenfortAccount = new StaticOpenfortAccount();
         vm.prank(factoryAdmin);
-        staticOpenfortFactory = new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(staticOpenfortAccount));
+        staticOpenfortFactory =
+            new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(staticOpenfortAccount));
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20) and mint 100

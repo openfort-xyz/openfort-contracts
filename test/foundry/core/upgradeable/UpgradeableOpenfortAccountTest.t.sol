@@ -135,7 +135,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         // deploy upgradeable account implementation
         upgradeableOpenfortAccount = new UpgradeableOpenfortAccount();
         // deploy upgradeable account factory
-        upgradeableOpenfortFactory = new UpgradeableOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(upgradeableOpenfortAccount));
+        upgradeableOpenfortFactory =
+        new UpgradeableOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(upgradeableOpenfortAccount));
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20)
@@ -1081,7 +1082,8 @@ contract UpgradeableOpenfortAccountTest is Test {
     function testUpdateEntryPoint() public {
         address oldEntryPoint = address(0x0576a174D229E3cFA37253523E645A78A0C91B57);
         address newEntryPoint = vm.envAddress("ENTRY_POINT_ADDRESS");
-        UpgradeableOpenfortFactory upgradeableOpenfortFactoryOld = new UpgradeableOpenfortFactory(payable(oldEntryPoint), address(upgradeableOpenfortAccount));
+        UpgradeableOpenfortFactory upgradeableOpenfortFactoryOld =
+            new UpgradeableOpenfortFactory(payable(oldEntryPoint), address(upgradeableOpenfortAccount));
 
         // Create an upgradeable account wallet using the old EntryPoint and get its address
         address payable accountOld = payable(upgradeableOpenfortFactoryOld.createAccount(accountAdmin, ""));
