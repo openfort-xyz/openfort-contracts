@@ -134,7 +134,8 @@ contract StaticOpenfortAccountTest is Test {
         // deploy static account implementation
         staticOpenfortAccount = new StaticOpenfortAccount();
         // deploy static account factory
-        staticOpenfortFactory = new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(staticOpenfortAccount));
+        staticOpenfortFactory =
+            new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(staticOpenfortAccount));
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20)
@@ -1105,7 +1106,8 @@ contract StaticOpenfortAccountTest is Test {
     function testUpdateEntryPoint() public {
         address oldEntryPoint = address(0x0576a174D229E3cFA37253523E645A78A0C91B57);
         address newEntryPoint = vm.envAddress("ENTRY_POINT_ADDRESS");
-        StaticOpenfortFactory staticOpenfortFactoryOld = new StaticOpenfortFactory(payable(oldEntryPoint), address(staticOpenfortAccount));
+        StaticOpenfortFactory staticOpenfortFactoryOld =
+            new StaticOpenfortFactory(payable(oldEntryPoint), address(staticOpenfortAccount));
 
         // Create an static account wallet using the old EntryPoint and get its address
         address payable accountOld = payable(staticOpenfortFactoryOld.createAccount(accountAdmin, ""));
