@@ -22,7 +22,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
     address public immutable openfortBeacon;
 
     constructor(address _openfortBeacon) {
-        if ( _openfortBeacon == address(0)) {
+        if (_openfortBeacon == address(0)) {
             revert ZeroAddressNotAllowed();
         }
         openfortBeacon = _openfortBeacon;
@@ -81,10 +81,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
             keccak256(
                 abi.encodePacked(
                     type(OpenfortBeaconProxy).creationCode,
-                    abi.encode(
-                        openfortBeacon,
-                        abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, ""))
-                    )
+                    abi.encode(openfortBeacon, abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, "")))
                 )
             )
         );
@@ -100,10 +97,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
             keccak256(
                 abi.encodePacked(
                     type(OpenfortBeaconProxy).creationCode,
-                    abi.encode(
-                        openfortBeacon,
-                        abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, ""))
-                    )
+                    abi.encode(openfortBeacon, abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, "")))
                 )
             )
         );

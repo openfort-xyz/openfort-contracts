@@ -12,7 +12,7 @@ import {BaseOpenfortAccount, IEntryPoint} from "../core/BaseOpenfortAccount.sol"
  *  - BaseOpenfortAccount
  */
 contract MockedV2ManagedOpenfortAccount is BaseOpenfortAccount {
-    address constant private ENTRYPOINTCONTRACT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
+    address private constant ENTRYPOINTCONTRACT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
 
     /*
      * @notice Initialize the smart contract wallet.

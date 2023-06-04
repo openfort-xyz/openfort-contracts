@@ -12,7 +12,8 @@ import {BaseOpenfortAccount, IEntryPoint} from "../BaseOpenfortAccount.sol";
  *  - BaseOpenfortAccount
  */
 contract ManagedOpenfortAccount is BaseOpenfortAccount {
-    address constant private ENTRYPOINTCONTRACT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
+    address private constant ENTRYPOINTCONTRACT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
+    
     /*
      * @notice Initialize the smart contract wallet.
      */
