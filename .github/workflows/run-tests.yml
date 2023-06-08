@@ -7,7 +7,7 @@ name: Openfort Test Contracts
 
 jobs:
   check:
-    name: Foundry project
+    name: Foundry tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -23,6 +23,8 @@ jobs:
         run: yarn
 
       - name: Local tests
+        env: # Or as an environment variable
+          ENTRY_POINT_ADDRESS: ${{ vars.ENTRY_POINT_ADDRESS }}
         run: forge test --force -vvv --match-test test
 
       - name: Fork tests (Mumbai)
