@@ -129,7 +129,7 @@ contract StaticOpenfortAccountTest is Test {
         vm.startPrank(factoryAdmin);
         console.log(vm.envAddress("ENTRY_POINT_ADDRESS").code.length);
         // If we are in a fork
-        if(vm.envAddress("ENTRY_POINT_ADDRESS").code.length > 0) {
+        if (vm.envAddress("ENTRY_POINT_ADDRESS").code.length > 0) {
             entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
         }
         // If not a fork, deploy entryPoint
@@ -139,8 +139,7 @@ contract StaticOpenfortAccountTest is Test {
         // deploy static account implementation
         staticOpenfortAccount = new StaticOpenfortAccount();
         // deploy static account factory
-        staticOpenfortFactory =
-            new StaticOpenfortFactory(payable(address(entryPoint)), address(staticOpenfortAccount));
+        staticOpenfortFactory = new StaticOpenfortFactory(payable(address(entryPoint)), address(staticOpenfortAccount));
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20)
