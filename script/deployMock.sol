@@ -17,6 +17,7 @@ contract DeployMock is Script {
 
         // USDC u = new USDC();
         Rewards r = new Rewards();
+        (r);
 
         vm.stopBroadcast();
     }
