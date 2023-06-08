@@ -143,8 +143,8 @@ contract OpenfortPaymasterTest is Test {
      * - testCounter is the counter used to test userOps
      */
     function setUp() public {
-        mumbaiFork = vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
-        vm.selectFork(mumbaiFork);
+        // mumbaiFork = vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
+        // vm.selectFork(mumbaiFork);
         // Setup and fund signers
         (factoryAdmin, factoryAdminPKey) = makeAddrAndKey("factoryAdmin");
         vm.deal(factoryAdmin, 100 ether);
@@ -153,8 +153,16 @@ contract OpenfortPaymasterTest is Test {
         (paymasterAdmin, paymasterAdminPKey) = makeAddrAndKey("paymasterAdmin");
         vm.deal(paymasterAdmin, 100 ether);
 
-        // retrieve the entryPoint and deploy openfortPaymaster
-        entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
+        console.log(vm.envAddress("ENTRY_POINT_ADDRESS").code.length);
+        // If we are in a fork
+        if (vm.envAddress("ENTRY_POINT_ADDRESS").code.length > 0) {
+            entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
+        }
+        // If not a fork, deploy entryPoint
+        else {
+            entryPoint = new EntryPoint();
+        }
+        vm.prank(paymasterAdmin);
         openfortPaymaster = new OpenfortPaymaster(IEntryPoint(payable(address(entryPoint))), paymasterAdmin);
         // Fund the paymaster with 100 ETH
         vm.deal(address(openfortPaymaster), 100 ether);
