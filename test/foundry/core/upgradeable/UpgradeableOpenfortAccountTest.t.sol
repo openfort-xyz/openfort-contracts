@@ -130,20 +130,23 @@ contract UpgradeableOpenfortAccountTest is Test {
         vm.deal(accountAdmin, 100 ether);
 
         vm.startPrank(factoryAdmin);
-        console.log(vm.envAddress("ENTRY_POINT_ADDRESS").code.length);
         // If we are in a fork
         if (vm.envAddress("ENTRY_POINT_ADDRESS").code.length > 0) {
             entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
         }
-        // If not a fork, deploy entryPoint
+        // If not a fork, deploy entryPoint (at correct address)
         else {
-            entryPoint = new EntryPoint();
+            EntryPoint entryPoint_aux = new EntryPoint();
+            bytes memory code = address(entryPoint_aux).code;
+            address targetAddr = address(vm.envAddress("ENTRY_POINT_ADDRESS"));
+            vm.etch(targetAddr, code);
+            entryPoint = EntryPoint(payable(targetAddr));
         }
         // deploy upgradeable account implementation
         upgradeableOpenfortAccount = new UpgradeableOpenfortAccount();
         // deploy upgradeable account factory
         upgradeableOpenfortFactory =
-        new UpgradeableOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(upgradeableOpenfortAccount));
+            new UpgradeableOpenfortFactory(payable(address(entryPoint)), address(upgradeableOpenfortAccount));
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20)
