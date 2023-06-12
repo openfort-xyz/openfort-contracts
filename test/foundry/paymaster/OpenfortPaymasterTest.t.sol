@@ -13,12 +13,11 @@ import {OpenfortPaymaster} from "contracts/paymaster/OpenfortPaymaster.sol";
 contract OpenfortPaymasterTest is Test {
     using ECDSA for bytes32;
 
-    uint256 public mumbaiFork;
-
     EntryPoint public entryPoint;
     StaticOpenfortAccount public staticOpenfortAccount;
     StaticOpenfortFactory public staticOpenfortFactory;
     OpenfortPaymaster public openfortPaymaster;
+    address public account;
     TestCounter public testCounter;
     TestToken public testToken;
 
@@ -31,8 +30,6 @@ contract OpenfortPaymasterTest is Test {
 
     address private accountAdmin;
     uint256 private accountAdminPKey;
-
-    address account;
 
     address payable private beneficiary = payable(makeAddr("beneficiary"));
 
@@ -143,8 +140,6 @@ contract OpenfortPaymasterTest is Test {
      * - testCounter is the counter used to test userOps
      */
     function setUp() public {
-        // mumbaiFork = vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
-        // vm.selectFork(mumbaiFork);
         // Setup and fund signers
         (factoryAdmin, factoryAdminPKey) = makeAddrAndKey("factoryAdmin");
         vm.deal(factoryAdmin, 100 ether);
@@ -188,6 +183,7 @@ contract OpenfortPaymasterTest is Test {
         testToken.mint(address(this), 100);
 
         // Create an static account wallet and get its address
+        vm.prank(factoryAdmin);
         account = staticOpenfortFactory.createAccount(accountAdmin, "");
     }
 
