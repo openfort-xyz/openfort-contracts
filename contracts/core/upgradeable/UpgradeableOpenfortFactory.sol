@@ -31,22 +31,22 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @notice Deploy a new Account for _admin.
      */
-    function createAccount(address _admin, bytes calldata _data) external returns (address account) {
-        bytes32 salt = keccak256(abi.encode(_admin));
-        account = getAddress(_admin);
+    // function createAccount(address _admin, bytes calldata _data) external returns (address account) {
+    //     bytes32 salt = keccak256(abi.encode(msg.sender));
+    //     account = getAddress(_admin);
 
-        if (account.code.length > 0) {
-            return account;
-        }
+    //     if (account.code.length > 0) {
+    //         return account;
+    //     }
 
-        emit AccountCreated(account, _admin);
-        account = address(
-            new OpenfortUpgradeableProxy{salt: salt}(
-                accountImplementation,
-                abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data)) 
-            )
-        );
-    }
+    //     emit AccountCreated(account, _admin);
+    //     account = address(
+    //         new OpenfortUpgradeableProxy{salt: salt}(
+    //             accountImplementation,
+    //             abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
+    //         )
+    //     );
+    // }
 
     /*
      * @notice Deploy a new account for _admin with a nonce.
@@ -55,7 +55,7 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
         external
         returns (address account)
     {
-        bytes32 salt = keccak256(abi.encode(_admin, nonce));
+        bytes32 salt = keccak256(abi.encode(msg.sender, nonce));
         account = getAddressWithNonce(_admin, nonce);
 
         if (account.code.length > 0) {
@@ -74,27 +74,27 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @notice Return the address of an account that would be deployed with the given admin signer.
      */
-    function getAddress(address _admin) public view returns (address) {
-        bytes32 salt = keccak256(abi.encode(_admin));
-        return Create2.computeAddress(
-            salt,
-            keccak256(
-                abi.encodePacked(
-                    type(OpenfortUpgradeableProxy).creationCode,
-                    abi.encode(
-                        accountImplementation,
-                        abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
-                    )
-                )
-            )
-        );
-    }
+    // function getAddress(address _admin) public view returns (address) {
+    //     bytes32 salt = keccak256(abi.encode(msg.sender));
+    //     return Create2.computeAddress(
+    //         salt,
+    //         keccak256(
+    //             abi.encodePacked(
+    //                 type(OpenfortUpgradeableProxy).creationCode,
+    //                 abi.encode(
+    //                     accountImplementation,
+    //                     abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, ""))
+    //                 )
+    //             )
+    //         )
+    //     );
+    // }
 
     /*
      * @notice Return the address of an account that would be deployed with the given admin signer and nonce.
      */
     function getAddressWithNonce(address _admin, uint256 nonce) public view returns (address) {
-        bytes32 salt = keccak256(abi.encode(_admin, nonce));
+        bytes32 salt = keccak256(abi.encode(msg.sender, nonce));
         return Create2.computeAddress(
             salt,
             keccak256(

@@ -130,7 +130,7 @@ contract UserOpTestCounter is Script {
         testCounter.count();
         assert(testCounter.counters(deployAddress) == 1);
 
-        address account = staticOpenfortFactory.createAccount(deployAddress, "");
+        address account = staticOpenfortFactory.createAccountWithNonce(deployAddress, "", 1);
 
         // Count using userOp
         UserOperation[] memory userOp = _setupUserOpExecute(
