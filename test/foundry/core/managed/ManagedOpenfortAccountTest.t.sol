@@ -183,7 +183,7 @@ contract ManagedOpenfortAccountTest is Test {
      * Create an account calling the factory via EntryPoint.
      * Use initCode
      */
-    function testFailCreateAccountViaEntryPoint() public {
+    function testFailCreateAccountViaEntryPoint() public pure {
         // It is not possible to use the Factory using the EntryPoint enymore
         // Factories are ownable now and only OpenFort can use them to deploy new accounts
         revert();
