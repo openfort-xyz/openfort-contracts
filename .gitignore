@@ -18,6 +18,8 @@ dist/
 types/
 cache_forge/
 broadcast/
+lcov.info
+report/
 
 # Deployment log files
 *-deploymentAllChains.log
