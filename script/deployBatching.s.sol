@@ -94,7 +94,7 @@ contract DeployBatching is Script {
 
         // Created with:
         // $forge create StaticOpenfortAccount --constructor-args $ENTRY_POINT_ADDRESS 0x6E767F52d49b0abD686003727b8bc0684011819B --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify
-        address account = staticOpenfortFactory.createAccount(deployAddress, "");
+        address account = staticOpenfortFactory.createAccountWithNonce(deployAddress, "", 1);
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
