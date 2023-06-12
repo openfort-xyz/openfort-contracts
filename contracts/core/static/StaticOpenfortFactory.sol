@@ -33,19 +33,19 @@ contract StaticOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @notice Deploy a new account for _admin.
      */
-    function createAccount(address _admin, bytes calldata _data) external returns (address account) {
-        address impl = accountImplementation;
-        bytes32 salt = keccak256(abi.encode(_admin));
-        account = Clones.predictDeterministicAddress(impl, salt);
+    // function createAccount(address _admin, bytes calldata _data) external returns (address account) {
+    //     address impl = accountImplementation;
+    //     bytes32 salt = keccak256(abi.encode(msg.sender));
+    //     account = Clones.predictDeterministicAddress(impl, salt);
 
-        if (account.code.length > 0) {
-            return account;
-        }
+    //     if (account.code.length > 0) {
+    //         return account;
+    //     }
 
-        emit AccountCreated(account, _admin);
-        account = Clones.cloneDeterministic(impl, salt);
-        _initializeAccount(account, _admin, entrypointContract, _data);
-    }
+    //     emit AccountCreated(account, _admin);
+    //     account = Clones.cloneDeterministic(impl, salt);
+    //     _initializeAccount(account, _admin, entrypointContract, _data);
+    // }
 
     /*
      * @notice Deploy a new account for _admin and a given nonce.
@@ -55,7 +55,7 @@ contract StaticOpenfortFactory is IBaseOpenfortFactory {
         returns (address account)
     {
         address impl = accountImplementation;
-        bytes32 salt = keccak256(abi.encode(_admin, nonce));
+        bytes32 salt = keccak256(abi.encode(msg.sender, nonce));
         account = Clones.predictDeterministicAddress(impl, salt);
 
         if (account.code.length > 0) {
@@ -70,16 +70,16 @@ contract StaticOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @notice Return the address of an account that would be deployed with the given admin signer.
      */
-    function getAddress(address _adminSigner) public view returns (address) {
-        bytes32 salt = keccak256(abi.encode(_adminSigner));
-        return Clones.predictDeterministicAddress(accountImplementation, salt);
-    }
+    // function getAddress(address _admin) public view returns (address) {
+    //     bytes32 salt = keccak256(abi.encode(msg.sender));
+    //     return Clones.predictDeterministicAddress(accountImplementation, salt);
+    // }
 
     /*
      * @notice Return the address of an account that would be deployed with the given admin signer and nonce.
      */
-    function getAddressWithNonce(address _adminSigner, uint256 nonce) public view returns (address) {
-        bytes32 salt = keccak256(abi.encode(_adminSigner, nonce));
+    function getAddressWithNonce(address _admin, uint256 nonce) public view returns (address) {
+        bytes32 salt = keccak256(abi.encode(msg.sender, nonce));
         return Clones.predictDeterministicAddress(accountImplementation, salt);
     }
 

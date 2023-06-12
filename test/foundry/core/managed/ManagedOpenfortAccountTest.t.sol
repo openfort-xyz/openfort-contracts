@@ -161,6 +161,7 @@ contract ManagedOpenfortAccountTest is Test {
      */
     function testCreateAccountWithNonceViaFactory() public {
         // Get the counterfactual address
+        vm.prank(factoryAdmin);
         address account2 = managedOpenfortFactory.getAddressWithNonce(accountAdmin, 2);
 
         // Expect that we will see an event containing the account and admin
@@ -172,6 +173,7 @@ contract ManagedOpenfortAccountTest is Test {
         managedOpenfortFactory.createAccountWithNonce(accountAdmin, "", 2);
 
         // Make sure the counterfactual address has not been altered
+        vm.prank(factoryAdmin);
         assertEq(account2, managedOpenfortFactory.getAddressWithNonce(accountAdmin, 2));
     }
 
