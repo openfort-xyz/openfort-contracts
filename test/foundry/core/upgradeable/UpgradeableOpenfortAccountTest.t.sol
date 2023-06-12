@@ -179,8 +179,8 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Use initCode
      */
     function testFailCreateAccountViaEntryPoint() public pure {
-        // It is not possible to use the Factory using the EntryPoint enymore
-        // Factories are ownable now and only OpenFort can use them to deploy new accounts
+        // It is not correct to use the Factory using the EntryPoint anymore
+        // Accounts created using factories are depend on msg.sender now
         revert();
 
         // Get the counterfactual address
