@@ -20,3 +20,12 @@ echo "------ UpgradeableOpenfortDeploy ------ (Fuji)"
 forge script UpgradeableOpenfortDeploy --fork-url $AVALANCHE_FUJI_RPC -vvvv --verify --broadcast --etherscan-api-key $FUJI_API_KEY >> $LOG_FILE
 echo "------ UpgradeableOpenfortDeploy ------ (BSC testnet)"
 forge script UpgradeableOpenfortDeploy --fork-url $BSC_TESTNET_RPC -vvvv --verify --broadcast --etherscan-api-key $BSCSCAN_TESTNET_API_KEY >> $LOG_FILE
+
+echo "------ ManagedOpenfortDeploy ------ (Goerli)"
+forge script ManagedOpenfortDeploy --fork-url $GOERLI_RPC -vvvv --verify --broadcast --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
+echo "------ ManagedOpenfortDeploy ------ (Mumbai)"
+forge script ManagedOpenfortDeploy --fork-url $POLYGON_MUMBAI_RPC -vvvv --verify --broadcast --etherscan-api-key $POLYGON_MUMBAI_KEY >> $LOG_FILE
+echo "------ ManagedOpenfortDeploy ------ (Fuji)"
+forge script ManagedOpenfortDeploy --fork-url $AVALANCHE_FUJI_RPC -vvvv --verify --broadcast --etherscan-api-key $FUJI_API_KEY >> $LOG_FILE
+echo "------ ManagedOpenfortDeploy ------ (BSC testnet)"
+forge script ManagedOpenfortDeploy --fork-url $BSC_TESTNET_RPC -vvvv --verify --broadcast --etherscan-api-key $BSCSCAN_TESTNET_API_KEY >> $LOG_FILE
