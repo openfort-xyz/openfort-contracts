@@ -15,8 +15,6 @@ contract Specific4337Tests is Test {
 
     uint48 constant MAX_TIME = 2 ** 48 - 1;
 
-    uint256 public mumbaiFork;
-
     EntryPoint public entryPoint;
     StaticOpenfortFactory public staticOpenfortFactory;
     TestCounter public testCounter;
@@ -120,8 +118,6 @@ contract Specific4337Tests is Test {
      * - testCounter is the counter used to test userOps
      */
     function setUp() public {
-        // mumbaiFork = vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
-        // vm.selectFork(mumbaiFork);
         // Setup and fund signers
         (factoryAdmin, factoryAdminPKey) = makeAddrAndKey("factoryAdmin");
         vm.deal(factoryAdmin, 100 ether);

@@ -24,7 +24,7 @@ contract StaticOpenfortDeploy is Script {
         // address account1 = staticOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
-        address account2 = staticOpenfortFactory.createAccount(deployAddress, bytes(""));
+        address account2 = staticOpenfortFactory.createAccountWithNonce(deployAddress, "", 1);
         console.log(
             "Factory at address %s has created an account at address %s", address(staticOpenfortFactory), account2
         );
