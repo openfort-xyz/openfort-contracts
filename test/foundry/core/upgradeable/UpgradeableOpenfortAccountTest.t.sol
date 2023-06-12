@@ -13,8 +13,6 @@ import {MockedV2UpgradeableOpenfortAccount} from "contracts/mock/MockedV2Upgrade
 contract UpgradeableOpenfortAccountTest is Test {
     using ECDSA for bytes32;
 
-    uint256 public mumbaiFork;
-
     EntryPoint public entryPoint;
     UpgradeableOpenfortAccount public upgradeableOpenfortAccount;
     UpgradeableOpenfortFactory public upgradeableOpenfortFactory;
@@ -122,8 +120,6 @@ contract UpgradeableOpenfortAccountTest is Test {
      * - testCounter is the counter used to test userOps
      */
     function setUp() public {
-        // mumbaiFork = vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
-        // vm.selectFork(mumbaiFork);
         // Setup and fund signers
         (factoryAdmin, factoryAdminPKey) = makeAddrAndKey("factoryAdmin");
         vm.deal(factoryAdmin, 100 ether);
