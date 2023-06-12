@@ -156,6 +156,7 @@ contract StaticOpenfortAccountTest is Test {
      */
     function testCreateAccountWithNonceViaFactory() public {
         // Get the counterfactual address
+        vm.prank(factoryAdmin);
         address accountAddress2 = staticOpenfortFactory.getAddressWithNonce(accountAdmin, 2);
 
         // Expect that we will see an event containing the account and admin
@@ -167,6 +168,7 @@ contract StaticOpenfortAccountTest is Test {
         staticOpenfortFactory.createAccountWithNonce(accountAdmin, "", 2);
 
         // Make sure the counterfactual address has not been altered
+        vm.prank(factoryAdmin);
         assertEq(accountAddress2, staticOpenfortFactory.getAddressWithNonce(accountAdmin, 2));
     }
 
