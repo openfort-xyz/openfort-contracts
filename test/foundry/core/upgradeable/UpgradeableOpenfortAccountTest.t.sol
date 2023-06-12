@@ -1013,7 +1013,8 @@ contract UpgradeableOpenfortAccountTest is Test {
             new UpgradeableOpenfortFactory(payable(oldEntryPoint), address(upgradeableOpenfortAccount));
 
         // Create an upgradeable account wallet using the old EntryPoint and get its address
-        address payable accountOld = payable(upgradeableOpenfortFactoryOld.createAccount(accountAdmin, ""));
+        address payable accountOld =
+            payable(upgradeableOpenfortFactoryOld.createAccountWithNonce(accountAdmin, "", 999));
         UpgradeableOpenfortAccount upgradeableAccount = UpgradeableOpenfortAccount(accountOld);
         assertEq(address(upgradeableAccount.entryPoint()), oldEntryPoint);
 

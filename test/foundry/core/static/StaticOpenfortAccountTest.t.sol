@@ -1031,7 +1031,7 @@ contract StaticOpenfortAccountTest is Test {
             new StaticOpenfortFactory(payable(oldEntryPoint), address(staticOpenfortAccount));
 
         // Create an static account wallet using the old EntryPoint and get its address
-        address payable accountOld = payable(staticOpenfortFactoryOld.createAccount(accountAdmin, ""));
+        address payable accountOld = payable(staticOpenfortFactoryOld.createAccountWithNonce(accountAdmin, "", 99));
         StaticOpenfortAccount staticAccount = StaticOpenfortAccount(accountOld);
         assertEq(address(staticAccount.entryPoint()), oldEntryPoint);
 
