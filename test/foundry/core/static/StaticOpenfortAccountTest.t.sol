@@ -17,6 +17,7 @@ contract StaticOpenfortAccountTest is Test {
     EntryPoint public entryPoint;
     StaticOpenfortAccount public staticOpenfortAccount;
     StaticOpenfortFactory public staticOpenfortFactory;
+    address public account;
     TestCounter public testCounter;
     TestToken public testToken;
 
@@ -143,6 +144,8 @@ contract StaticOpenfortAccountTest is Test {
         staticOpenfortAccount = new StaticOpenfortAccount();
         // deploy static account factory
         staticOpenfortFactory = new StaticOpenfortFactory(payable(address(entryPoint)), address(staticOpenfortAccount));
+        // Create an static account wallet and get its address
+        account = staticOpenfortFactory.createAccountWithNonce(accountAdmin, "", 1);
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20)
@@ -153,76 +156,59 @@ contract StaticOpenfortAccountTest is Test {
     /*
      * Create an account by directly calling the factory.
      */
-    function testCreateAccountViaFactory() public {
+    function testCreateAccountWithNonceViaFactory() public {
         // Get the counterfactual address
-        address account = staticOpenfortFactory.getAddress(accountAdmin);
+        address accountAddress2 = staticOpenfortFactory.getAddressWithNonce(accountAdmin, 2);
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
-        emit AccountCreated(account, accountAdmin);
+        emit AccountCreated(accountAddress2, accountAdmin);
 
         // Deploy a static account to the counterfactual address
-        staticOpenfortFactory.createAccount(accountAdmin, bytes(""));
+        vm.prank(factoryAdmin);
+        staticOpenfortFactory.createAccountWithNonce(accountAdmin, "", 2);
 
         // Make sure the counterfactual address has not been altered
-        assertEq(account, staticOpenfortFactory.getAddress(accountAdmin));
-    }
-
-    /*
-     * Test account creation using nonces using the factory.
-     */
-    function testCreateAccountViaFactoryWithNonce() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-        address account2 = staticOpenfortFactory.createAccount(accountAdmin, "");
-
-        // Verifiy that createAccount() always generate the same address when used with the same admin
-        assertEq(account, account2);
-
-        // Create a new account with accountAdmin using a nonce
-        account2 = staticOpenfortFactory.createAccountWithNonce(accountAdmin, "", 0);
-
-        // Verifiy that the new account is indeed different now
-        assertNotEq(account, account2);
+        assertEq(accountAddress2, staticOpenfortFactory.getAddressWithNonce(accountAdmin, 2));
     }
 
     /*
      * Create an account calling the factory via EntryPoint.
      * Use initCode
      */
-    function testCreateAccountViaEntryPoint() public {
+    function testFailCreateAccountViaEntryPoint() public pure {
+        // It is not possible to use the Factory using the EntryPoint enymore
+        // Factories are ownable now and only OpenFort can use them to deploy new accounts
+        revert();
         // Get the counterfactual address
-        address account = staticOpenfortFactory.getAddress(accountAdmin);
+        // address account = staticOpenfortFactory.getAddress(accountAdmin);
 
-        // Make sure the smart account does not have any code yet
-        assertEq(account.code.length, 0);
+        // // Make sure the smart account does not have any code yet
+        // assertEq(account.code.length, 0);
 
-        bytes memory initCallData = abi.encodeWithSignature("createAccount(address,bytes)", accountAdmin, bytes(""));
-        bytes memory initCode = abi.encodePacked(abi.encodePacked(address(staticOpenfortFactory)), initCallData);
+        // bytes memory initCallData = abi.encodeWithSignature("createAccount(address,bytes)", accountAdmin, bytes(""));
+        // bytes memory initCode = abi.encodePacked(abi.encodePacked(address(staticOpenfortFactory)), initCallData);
 
-        UserOperation[] memory userOpCreateAccount =
-            _setupUserOpExecute(account, accountAdminPKey, initCode, address(0), 0, bytes(""));
+        // UserOperation[] memory userOpCreateAccount =
+        //     _setupUserOpExecute(account, accountAdminPKey, initCode, address(0), 0, bytes(""));
 
-        // Expect that we will see an event containing the account and admin
-        vm.expectEmit(true, true, false, true);
-        emit AccountCreated(account, accountAdmin);
+        // // Expect that we will see an event containing the account and admin
+        // vm.expectEmit(true, true, false, true);
+        // emit AccountCreated(account, accountAdmin);
 
-        entryPoint.handleOps(userOpCreateAccount, beneficiary);
+        // entryPoint.handleOps(userOpCreateAccount, beneficiary);
 
-        // Make sure the smart account does have some code now
-        assert(account.code.length > 0);
+        // // Make sure the smart account does have some code now
+        // assert(account.code.length > 0);
 
-        // Make sure the counterfactual address has not been altered
-        assertEq(account, staticOpenfortFactory.getAddress(accountAdmin));
+        // // Make sure the counterfactual address has not been altered
+        // assertEq(account, staticOpenfortFactory.getAddress(accountAdmin));
     }
 
     /*
      * Create an account using the factory and make it call count() directly.
      */
     function testIncrementCounterDirect() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -239,9 +225,6 @@ contract StaticOpenfortAccountTest is Test {
      * using the execute() function using the EntryPoint (userOp). Leaveraging ERC-4337.
      */
     function testIncrementCounterViaEntrypoint() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -263,9 +246,6 @@ contract StaticOpenfortAccountTest is Test {
      * using the executeBatching() function using the EntryPoint (userOp). Leaveraging ERC-4337.
      */
     function testIncrementCounterViaEntrypointBatching() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -296,9 +276,6 @@ contract StaticOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that is not registered.
      */
     function testFailIncrementCounterViaSessionKeyNotregistered() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -323,9 +300,6 @@ contract StaticOpenfortAccountTest is Test {
      * Use a sessionKey that is registered.
      */
     function testIncrementCounterViaSessionKey() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -354,9 +328,6 @@ contract StaticOpenfortAccountTest is Test {
      * using the EntryPoint (userOp). Then use the sessionKey to count
      */
     function testRegisterSessionKeyViaEntrypoint() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -399,9 +370,6 @@ contract StaticOpenfortAccountTest is Test {
      * using the EntryPoint (userOp). Then use that sessionKey to register a second one
      */
     function testRegisterSessionKeyViaEntrypoint2ndKey() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -462,9 +430,6 @@ contract StaticOpenfortAccountTest is Test {
      * using the EntryPoint (userOp). Then use that sessionKey to register a second one
      */
     function testFailAttackRegisterSessionKeyViaEntrypoint2ndKey() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -531,9 +496,6 @@ contract StaticOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that is expired.
      */
     function testIncrementCounterViaSessionKeyExpired() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -563,9 +525,6 @@ contract StaticOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that is revoked.
      */
     function testFailIncrementCounterViaSessionKeyRevoked() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -594,9 +553,6 @@ contract StaticOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that reached its limit.
      */
     function testFailIncrementCounterViaSessionKeyReachLimit() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -635,9 +591,6 @@ contract StaticOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that reached its limit.
      */
     function testFailIncrementCounterViaSessionKeyReachLimitBatching() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -677,9 +630,6 @@ contract StaticOpenfortAccountTest is Test {
      *  Should fail, try to revoke a sessionKey using a non-privileged user
      */
     function testFailRevokeSessionKeyInvalidUser() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -709,9 +659,6 @@ contract StaticOpenfortAccountTest is Test {
      * Use a sessionKey with whitelisting to call Execute().
      */
     function testIncrementCounterViaSessionKeyWhitelisting() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -741,9 +688,6 @@ contract StaticOpenfortAccountTest is Test {
      * Should fail, try to register a sessionKey with a large whitelist.
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingTooBig() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -772,9 +716,6 @@ contract StaticOpenfortAccountTest is Test {
      * Use a sessionKey with whitelisting to call ExecuteBatch().
      */
     function testIncrementCounterViaSessionKeyWhitelistingBatch() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -821,9 +762,6 @@ contract StaticOpenfortAccountTest is Test {
      * Use a sessionKey with whitelisting to call ExecuteBatch().
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingBatch() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -870,9 +808,6 @@ contract StaticOpenfortAccountTest is Test {
      * Should fail, try to use a sessionKey with invalid whitelisting to call Execute().
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingWrongAddress() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -902,9 +837,6 @@ contract StaticOpenfortAccountTest is Test {
      * Should fail, try to use a sessionKey with invalid whitelisting to call ExecuteBatch().
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingBatchWrongAddress() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -958,9 +890,6 @@ contract StaticOpenfortAccountTest is Test {
      * 5- Test that the new owner can directly interact with the account and make it call the testCounter contract.
      */
     function testChangeOwnershipAndCountDirect() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         address accountAdmin2;
         uint256 accountAdmin2PKey;
         (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
@@ -985,9 +914,6 @@ contract StaticOpenfortAccountTest is Test {
      * Change the owner of an account and call TestCounter though the Entrypoint
      */
     function testChangeOwnershipAndCountEntryPoint() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         address accountAdmin2;
         uint256 accountAdmin2PKey;
         (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
@@ -1017,9 +943,6 @@ contract StaticOpenfortAccountTest is Test {
      * Test an account with testToken instead of TestCount.
      */
     function testMintTokenAccount() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the totalSupply is stil 0
         assertEq(testToken.totalSupply(), 0);
 
@@ -1049,9 +972,6 @@ contract StaticOpenfortAccountTest is Test {
      * Test receive native tokens.
      */
     function testReceiveNativeToken() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         assertEq(address(account).balance, 0);
 
         vm.prank(accountAdmin);
@@ -1064,9 +984,6 @@ contract StaticOpenfortAccountTest is Test {
      * Transfer native tokens out of an account.
      */
     function testTransferOutNativeToken() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         uint256 value = 1000;
 
         assertEq(address(account).balance, 0);
@@ -1087,9 +1004,6 @@ contract StaticOpenfortAccountTest is Test {
      * Basic test of simulateValidation() to check that it always reverts.
      */
     function testSimulateValidation() public {
-        // Create an static account wallet and get its address
-        address account = staticOpenfortFactory.createAccount(accountAdmin, "");
-
         // Verifiy that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
