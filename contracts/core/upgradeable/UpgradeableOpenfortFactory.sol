@@ -43,7 +43,7 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
     //     account = address(
     //         new OpenfortUpgradeableProxy{salt: salt}(
     //             accountImplementation,
-    //             abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data)) 
+    //             abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract, _data))
     //         )
     //     );
     // }
