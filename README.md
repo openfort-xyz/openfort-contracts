@@ -40,8 +40,17 @@ Official Contracts of the Openfort Project
   forge install
   forge build
   forge test
-  forge coverage --report lcov
 ```
+
+### Unit Test Coverage
+
+You can use `Foundry` to get the unit test coverage.
+Use the `lcov` report format and `genhtml` to view the coverage data in a nice web interface.
+```
+  forge coverage --report lcov
+  genhtml -o report --branch-coverage lcov.info
+```
+
 
 ## Use different built-in scripts
 
