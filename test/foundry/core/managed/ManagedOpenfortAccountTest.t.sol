@@ -14,8 +14,6 @@ import {MockedV2ManagedOpenfortAccount} from "contracts/mock/MockedV2ManagedOpen
 contract ManagedOpenfortAccountTest is Test {
     using ECDSA for bytes32;
 
-    uint256 public mumbaiFork;
-
     EntryPoint public entryPoint;
     OpenfortBeacon public openfortBeacon;
     ManagedOpenfortAccount public managedOpenfortAccount;
@@ -124,8 +122,6 @@ contract ManagedOpenfortAccountTest is Test {
      * - testCounter is the counter used to test userOps
      */
     function setUp() public {
-        // mumbaiFork = vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
-        // vm.selectFork(mumbaiFork);
         // Setup and fund signers
         (factoryAdmin, factoryAdminPKey) = makeAddrAndKey("factoryAdmin");
         vm.deal(factoryAdmin, 100 ether);
