@@ -12,8 +12,6 @@ import {StaticOpenfortFactory} from "contracts/core/static/StaticOpenfortFactory
 contract StaticOpenfortAccountTest is Test {
     using ECDSA for bytes32;
 
-    uint256 public mumbaiFork;
-
     EntryPoint public entryPoint;
     StaticOpenfortAccount public staticOpenfortAccount;
     StaticOpenfortFactory public staticOpenfortFactory;
