@@ -68,10 +68,10 @@ Use the `lcov` report format and `genhtml` to view the coverage data in a nice w
 ./script/deployAllChains.sh
 ```
 
-### Check paymaster's deposit on different chains
+### Check paymaster's deposit and Patron's balance on different chains
 
 ```
-forge script CheckPaymasterDeposit
+forge script CheckDeposits --force
 ```
 
 ### Deploy one static factory and one account
