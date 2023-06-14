@@ -10,4 +10,4 @@ RUN source .env
 RUN forge build
 
 # Set the entrypoint to the forge deployment command
-ENTRYPOINT ["forge", "script", "CheckPaymasterDeposit"]
+ENTRYPOINT ["forge", "script", "CheckDeposits"]
