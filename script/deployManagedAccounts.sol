@@ -33,8 +33,8 @@ contract ManagedOpenfortDeploy is Script {
             "Factory at address %s has created an account at address %s", address(managedOpenfortFactory), account2
         );
 
-        MockedV2ManagedOpenfortAccount mockedOpenfortAccount = new MockedV2ManagedOpenfortAccount{salt: versionSalt}();
-        (mockedOpenfortAccount);
+        // MockedV2ManagedOpenfortAccount mockedOpenfortAccount = new MockedV2ManagedOpenfortAccount{salt: versionSalt}();
+        // (mockedOpenfortAccount);
 
         // assert(account1 != account2);
         // address account3 = managedOpenfortFactory.createAccountWithNonce(deployAddress, "", 3);
