@@ -29,26 +29,6 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
     }
 
     /*
-     * @notice Deploy a new Account for _admin.
-     */
-    // function createAccount(address _admin, bytes calldata _data) external returns (address account) {
-    //     bytes32 salt = keccak256(abi.encode(msg.sender));
-    //     account = getAddress(_admin);
-
-    //     if (account.code.length > 0) {
-    //         return account;
-    //     }
-
-    //     emit AccountCreated(account, _admin);
-    //     account = address(
-    //         new OpenfortBeaconProxy{salt: salt}(
-    //         openfortBeacon,
-    //         abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, _data))
-    //         )
-    //     );
-    // }
-
-    /*
      * @notice Deploy a new account for _admin with a nonce.
      */
     function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce)
@@ -70,22 +50,6 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
             )
         );
     }
-
-    /*
-     * @notice Return the address of an account that would be deployed with the given admin signer.
-     */
-    // function getAddress(address _admin) public view returns (address) {
-    //     bytes32 salt = keccak256(abi.encode(msg.sender));
-    //     return Create2.computeAddress(
-    //         salt,
-    //         keccak256(
-    //             abi.encodePacked(
-    //                 type(OpenfortBeaconProxy).creationCode,
-    //                 abi.encode(openfortBeacon, abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, "")))
-    //             )
-    //         )
-    //     );
-    // }
 
     /*
      * @notice Return the address of an account that would be deployed with the given admin signer and nonce.

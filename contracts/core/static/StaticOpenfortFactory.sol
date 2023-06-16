@@ -31,23 +31,6 @@ contract StaticOpenfortFactory is IBaseOpenfortFactory {
     }
 
     /*
-     * @notice Deploy a new account for _admin.
-     */
-    // function createAccount(address _admin, bytes calldata _data) external returns (address account) {
-    //     address impl = accountImplementation;
-    //     bytes32 salt = keccak256(abi.encode(msg.sender));
-    //     account = Clones.predictDeterministicAddress(impl, salt);
-
-    //     if (account.code.length > 0) {
-    //         return account;
-    //     }
-
-    //     emit AccountCreated(account, _admin);
-    //     account = Clones.cloneDeterministic(impl, salt);
-    //     _initializeAccount(account, _admin, entrypointContract, _data);
-    // }
-
-    /*
      * @notice Deploy a new account for _admin and a given nonce.
      */
     function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce)
@@ -66,14 +49,6 @@ contract StaticOpenfortFactory is IBaseOpenfortFactory {
         account = Clones.cloneDeterministic(impl, salt);
         _initializeAccount(account, _admin, entrypointContract, _data);
     }
-
-    /*
-     * @notice Return the address of an account that would be deployed with the given admin signer.
-     */
-    // function getAddress(address _admin) public view returns (address) {
-    //     bytes32 salt = keccak256(abi.encode(msg.sender));
-    //     return Clones.predictDeterministicAddress(accountImplementation, salt);
-    // }
 
     /*
      * @notice Return the address of an account that would be deployed with the given admin signer and nonce.
