@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source .env
-LOG_FILE=$(date +%Y-%m-%d_%H:%M)"-deploymentAllChains.log"
+LOG_FILE=script/deployments/$(date +%Y-%m-%d_%H:%M)"-deploymentAllChains.log"
 
 echo "------ StaticOpenfortDeploy ------ (Goerli)"
 forge script StaticOpenfortDeploy --rpc-url $GOERLI_RPC -vvvv --verify --broadcast --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
