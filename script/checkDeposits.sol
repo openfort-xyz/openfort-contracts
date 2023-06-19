@@ -14,6 +14,7 @@ contract CheckDeposits is Script {
     uint256 internal mumbaiFork = vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
     uint256 internal fujiFork = vm.createFork(vm.envString("AVALANCHE_FUJI_RPC"));
     uint256 internal bscFork = vm.createFork(vm.envString("BSC_TESTNET_RPC"));
+    uint256 internal arbitrumFork = vm.createFork(vm.envString("ARBITRUM_GOERLI_RPC"));
 
     function checkPaymasterDeposit(uint256 fork_id) internal {
         vm.selectFork(fork_id);
@@ -70,5 +71,9 @@ contract CheckDeposits is Script {
         console.log("Checking Paymaster and Patron on BSC testnet:");
         checkPaymasterDeposit(bscFork);
         checkPatronBalance(bscFork);
+
+        console.log("Checking Paymaster and Patron on Arbirtum Goerli testnet:");
+        checkPaymasterDeposit(arbitrumFork);
+        checkPatronBalance(arbitrumFork);
     }
 }
