@@ -148,7 +148,7 @@ contract ManagedOpenfortAccountTest is Test {
         // deploy account factory
         managedOpenfortFactory = new ManagedOpenfortFactory(address(openfortBeacon));
         // Create an static account wallet and get its address
-        account = managedOpenfortFactory.createAccountWithNonce(accountAdmin, "", 1);
+        account = managedOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20)
@@ -162,7 +162,7 @@ contract ManagedOpenfortAccountTest is Test {
     function testCreateAccountWithNonceViaFactory() public {
         // Get the counterfactual address
         vm.prank(factoryAdmin);
-        address account2 = managedOpenfortFactory.getAddressWithNonce(accountAdmin, 2);
+        address account2 = managedOpenfortFactory.getAddressWithNonce(accountAdmin, "2");
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
@@ -170,11 +170,11 @@ contract ManagedOpenfortAccountTest is Test {
 
         // Deploy a static account to the counterfactual address
         vm.prank(factoryAdmin);
-        managedOpenfortFactory.createAccountWithNonce(accountAdmin, "", 2);
+        managedOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
 
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
-        assertEq(account2, managedOpenfortFactory.getAddressWithNonce(accountAdmin, 2));
+        assertEq(account2, managedOpenfortFactory.getAddressWithNonce(accountAdmin, "2"));
     }
 
     /*
@@ -1032,7 +1032,7 @@ contract ManagedOpenfortAccountTest is Test {
     function testUpgradeTo() public {
         // Create a managed account wallet using the old implementation and get its address
         vm.prank(factoryAdmin);
-        address payable accountOld = payable(managedOpenfortFactory.createAccountWithNonce(accountAdmin, "", 2));
+        address payable accountOld = payable(managedOpenfortFactory.createAccountWithNonce(accountAdmin, "2"));
         ManagedOpenfortAccount managedAccount = ManagedOpenfortAccount(accountOld);
         assertEq(managedAccount.version(), 1);
 
@@ -1053,7 +1053,7 @@ contract ManagedOpenfortAccountTest is Test {
 
         // Same for new accounts. From now on, they have the new version.
         vm.prank(factoryAdmin);
-        address payable account3 = payable(managedOpenfortFactory.createAccountWithNonce(accountAdmin, "", 3));
+        address payable account3 = payable(managedOpenfortFactory.createAccountWithNonce(accountAdmin, "3"));
         ManagedOpenfortAccount managedAccount3 = ManagedOpenfortAccount(account3);
         managedAccount3.version();
     }

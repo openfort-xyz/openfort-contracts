@@ -17,7 +17,7 @@ contract MockedV2ManagedOpenfortAccount is BaseOpenfortAccount {
     /*
      * @notice Initialize the smart contract wallet.
      */
-    function initialize(address _defaultAdmin, bytes calldata) public initializer {
+    function initialize(address _defaultAdmin) public initializer {
         if (_defaultAdmin == address(0)) {
             revert ZeroAddressNotAllowed();
         }
