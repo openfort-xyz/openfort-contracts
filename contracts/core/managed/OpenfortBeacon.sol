@@ -11,5 +11,5 @@ import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/Upgradeabl
  *  - UpgradeableBeacon
  */
 contract OpenfortBeacon is UpgradeableBeacon {
-    constructor(address implementation_) UpgradeableBeacon(implementation_) {}
+    constructor(address _implementation) UpgradeableBeacon(_implementation) {}
 }

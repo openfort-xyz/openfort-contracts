@@ -31,12 +31,9 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @notice Deploy a new account for _admin with a nonce.
      */
-    function createAccountWithNonce(address _admin, bytes calldata _data, uint256 nonce)
-        external
-        returns (address account)
-    {
-        bytes32 salt = keccak256(abi.encode(msg.sender, nonce));
-        account = getAddressWithNonce(_admin, nonce);
+    function createAccountWithNonce(address _admin, bytes calldata _nonce) external returns (address account) {
+        bytes32 salt = keccak256(abi.encode(_admin, _nonce));
+        account = getAddressWithNonce(_admin, _nonce);
 
         if (account.code.length > 0) {
             return account;
@@ -46,7 +43,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
         account = address(
             new OpenfortBeaconProxy{salt: salt}(
                 openfortBeacon,
-                abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, _data))
+                abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin))
             )
         );
     }
@@ -54,14 +51,14 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
     /*
      * @notice Return the address of an account that would be deployed with the given admin signer and nonce.
      */
-    function getAddressWithNonce(address _admin, uint256 nonce) public view returns (address) {
-        bytes32 salt = keccak256(abi.encode(msg.sender, nonce));
+    function getAddressWithNonce(address _admin, bytes calldata _nonce) public view returns (address) {
+        bytes32 salt = keccak256(abi.encode(_admin, _nonce));
         return Create2.computeAddress(
             salt,
             keccak256(
                 abi.encodePacked(
                     type(OpenfortBeaconProxy).creationCode,
-                    abi.encode(openfortBeacon, abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin, "")))
+                    abi.encode(openfortBeacon, abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin)))
                 )
             )
         );

@@ -146,7 +146,7 @@ contract UpgradeableOpenfortAccountTest is Test {
             new UpgradeableOpenfortFactory(payable(address(entryPoint)), address(upgradeableOpenfortAccount));
 
         // Create an upgradeable account wallet and get its address
-        account = upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "", 1);
+        account = upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
 
         // deploy a new TestCounter
         testCounter = new TestCounter();
@@ -161,7 +161,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     function testCreateAccountWithNonceViaFactory() public {
         // Get the counterfactual address
         vm.prank(factoryAdmin);
-        address accountAddress2 = upgradeableOpenfortFactory.getAddressWithNonce(accountAdmin, 2);
+        address accountAddress2 = upgradeableOpenfortFactory.getAddressWithNonce(accountAdmin, "2");
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
@@ -169,11 +169,11 @@ contract UpgradeableOpenfortAccountTest is Test {
 
         // Deploy a upgradeable account to the counterfactual address
         vm.prank(factoryAdmin);
-        upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "", 2);
+        upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
 
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
-        assertEq(accountAddress2, upgradeableOpenfortFactory.getAddressWithNonce(accountAdmin, 2));
+        assertEq(accountAddress2, upgradeableOpenfortFactory.getAddressWithNonce(accountAdmin, "2"));
     }
 
     /*
@@ -1011,8 +1011,7 @@ contract UpgradeableOpenfortAccountTest is Test {
             new UpgradeableOpenfortFactory(payable(oldEntryPoint), address(upgradeableOpenfortAccount));
 
         // Create an upgradeable account wallet using the old EntryPoint and get its address
-        address payable accountOld =
-            payable(upgradeableOpenfortFactoryOld.createAccountWithNonce(accountAdmin, "", 999));
+        address payable accountOld = payable(upgradeableOpenfortFactoryOld.createAccountWithNonce(accountAdmin, "999"));
         UpgradeableOpenfortAccount upgradeableAccount = UpgradeableOpenfortAccount(accountOld);
         assertEq(address(upgradeableAccount.entryPoint()), oldEntryPoint);
 

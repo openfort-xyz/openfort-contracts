@@ -19,7 +19,7 @@ contract MockedV2UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradea
      * @notice Initialize the smart contract wallet.
      */
 
-    function initialize(address _defaultAdmin, address _entrypoint, bytes calldata) public initializer {
+    function initialize(address _defaultAdmin, address _entrypoint) public initializer {
         if (_defaultAdmin == address(0) || _entrypoint == address(0)) {
             revert ZeroAddressNotAllowed();
         }
