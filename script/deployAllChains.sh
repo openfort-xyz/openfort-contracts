@@ -15,15 +15,15 @@ echo "------ StaticOpenfortDeploy ------ (Arbitrum Goerli testnet)"
 forge script StaticOpenfortDeploy --rpc-url $ARBITRUM_GOERLI_RPC -vvvv --verify --broadcast --etherscan-api-key $ARBISCAN_API_KEY >> $LOG_FILE
 
 echo "------ UpgradeableOpenfortDeploy ------ (Goerli)"
-forge script UpgradeableOpenfortDeploy --rpc-url $GOERLI_RPC -vvvv --verify --broadcast --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
+forge script UpgradeableOpenfortDeploy --rpc-url $GOERLI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
 echo "------ UpgradeableOpenfortDeploy ------ (Mumbai)"
-forge script UpgradeableOpenfortDeploy --rpc-url $POLYGON_MUMBAI_RPC -vvvv --verify --broadcast --legacy --etherscan-api-key $POLYGON_MUMBAI_KEY >> $LOG_FILE
+forge script UpgradeableOpenfortDeploy --rpc-url $POLYGON_MUMBAI_RPC -vvvv --verify --broadcast --slow --legacy --etherscan-api-key $POLYGON_MUMBAI_KEY >> $LOG_FILE
 echo "------ UpgradeableOpenfortDeploy ------ (Fuji)"
-forge script UpgradeableOpenfortDeploy --rpc-url $AVALANCHE_FUJI_RPC -vvvv --verify --broadcast --etherscan-api-key $FUJI_API_KEY >> $LOG_FILE
+forge script UpgradeableOpenfortDeploy --rpc-url $AVALANCHE_FUJI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $FUJI_API_KEY >> $LOG_FILE
 echo "------ UpgradeableOpenfortDeploy ------ (BSC testnet)"
-forge script UpgradeableOpenfortDeploy --rpc-url $BSC_TESTNET_RPC -vvvv --verify --broadcast --etherscan-api-key $BSCSCAN_TESTNET_API_KEY >> $LOG_FILE
+forge script UpgradeableOpenfortDeploy --rpc-url $BSC_TESTNET_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $BSCSCAN_TESTNET_API_KEY >> $LOG_FILE
 echo "------ UpgradeableOpenfortDeploy ------ (Arbitrum Goerli testnet)"
-forge script UpgradeableOpenfortDeploy --rpc-url $ARBITRUM_GOERLI_RPC -vvvv --verify --broadcast --etherscan-api-key $ARBISCAN_API_KEY >> $LOG_FILE
+forge script UpgradeableOpenfortDeploy --rpc-url $ARBITRUM_GOERLI_RPC -vvvv --verify --broadcast --slow -g 200 --etherscan-api-key $ARBISCAN_API_KEY >> $LOG_FILE
 
 echo "------ ManagedOpenfortDeploy ------ (Goerli)"
 forge script ManagedOpenfortDeploy --rpc-url $GOERLI_RPC -vvvv --verify --broadcast --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
