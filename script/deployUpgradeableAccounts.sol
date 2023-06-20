@@ -19,6 +19,7 @@ contract UpgradeableOpenfortDeploy is Script {
 
         UpgradeableOpenfortFactory upgradeableOpenfortFactory =
             new UpgradeableOpenfortFactory{salt: versionSalt}(address(entryPoint), address(upgradeableOpenfortAccount));
+        (upgradeableOpenfortFactory);
         // address account1 = upgradeableOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
