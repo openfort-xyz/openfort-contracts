@@ -184,7 +184,7 @@ contract OpenfortPaymasterTest is Test {
 
         // Create an static account wallet and get its address
         vm.prank(factoryAdmin);
-        account = staticOpenfortFactory.createAccountWithNonce(accountAdmin, "", 1);
+        account = staticOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
     }
 
     /*

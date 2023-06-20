@@ -28,7 +28,7 @@ contract ManagedOpenfortDeploy is Script {
         // address account1 = managedOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
-        address account2 = managedOpenfortFactory.createAccountWithNonce(deployAddress, "", 1);
+        address account2 = managedOpenfortFactory.createAccountWithNonce(deployAddress, "1");
         console.log(
             "Factory at address %s has created an account at address %s", address(managedOpenfortFactory), account2
         );
@@ -37,12 +37,12 @@ contract ManagedOpenfortDeploy is Script {
         // (mockedOpenfortAccount);
 
         // assert(account1 != account2);
-        // address account3 = managedOpenfortFactory.createAccountWithNonce(deployAddress, "", 3);
+        // address account3 = managedOpenfortFactory.createAccountWithNonce(deployAddress, 3);
         // console.log(
         //     "Factory at address %s has created an account at address %s", address(managedOpenfortFactory), account3
         // );
         // assert(account2 != account3);
-        // address account4 = managedOpenfortFactory.createAccountWithNonce(deployAddress, "", 4);
+        // address account4 = managedOpenfortFactory.createAccountWithNonce(deployAddress, 4);
         // console.log(
         //     "Factory at address %s has created an account at address %s", address(managedOpenfortFactory), account4
         // );

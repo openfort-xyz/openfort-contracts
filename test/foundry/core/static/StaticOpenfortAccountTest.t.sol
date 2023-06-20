@@ -143,7 +143,7 @@ contract StaticOpenfortAccountTest is Test {
         // deploy static account factory
         staticOpenfortFactory = new StaticOpenfortFactory(payable(address(entryPoint)), address(staticOpenfortAccount));
         // Create an static account wallet and get its address
-        account = staticOpenfortFactory.createAccountWithNonce(accountAdmin, "", 1);
+        account = staticOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20)
@@ -157,7 +157,7 @@ contract StaticOpenfortAccountTest is Test {
     function testCreateAccountWithNonceViaFactory() public {
         // Get the counterfactual address
         vm.prank(factoryAdmin);
-        address accountAddress2 = staticOpenfortFactory.getAddressWithNonce(accountAdmin, 2);
+        address accountAddress2 = staticOpenfortFactory.getAddressWithNonce(accountAdmin, "2");
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
@@ -165,11 +165,11 @@ contract StaticOpenfortAccountTest is Test {
 
         // Deploy a static account to the counterfactual address
         vm.prank(factoryAdmin);
-        staticOpenfortFactory.createAccountWithNonce(accountAdmin, "", 2);
+        staticOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
 
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
-        assertEq(accountAddress2, staticOpenfortFactory.getAddressWithNonce(accountAdmin, 2));
+        assertEq(accountAddress2, staticOpenfortFactory.getAddressWithNonce(accountAdmin, "2"));
     }
 
     /*
@@ -1031,7 +1031,7 @@ contract StaticOpenfortAccountTest is Test {
             new StaticOpenfortFactory(payable(oldEntryPoint), address(staticOpenfortAccount));
 
         // Create an static account wallet using the old EntryPoint and get its address
-        address payable accountOld = payable(staticOpenfortFactoryOld.createAccountWithNonce(accountAdmin, "", 99));
+        address payable accountOld = payable(staticOpenfortFactoryOld.createAccountWithNonce(accountAdmin, "99"));
         StaticOpenfortAccount staticAccount = StaticOpenfortAccount(accountOld);
         assertEq(address(staticAccount.entryPoint()), oldEntryPoint);
 
