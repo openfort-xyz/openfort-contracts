@@ -135,26 +135,35 @@ If you run into the error `ImportError: cannot import name 'getargspec' from 'in
 
 ## Gas Stats
 
-As of May 2023, the current average gas cost for deploying or using the different smart contracts of this project is:
+As of June 2023, the current average gas cost for deploying or using the different smart contracts of this project is:
 
 ### Static Accounts
 |   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
 | :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
-|   StaticOpenfortFactory  | Deploy factory (containing StaticOpenfortAccount's implementation) | 1 | 2,505,952 |
-|   StaticOpenfortAccount  | Create a new static account using the `createAccount()` of the factory | indefinite | 145,878  |
-|   StaticOpenfortAccount  | Create a new static account using the `createAccountWithNonce()` of the factory | indefinite | 146,047  |
-|   StaticOpenfortAccount  | Updating the EntryPoint address using `updateEntryPoint()` | indefinite | 1,483  |
-|   StaticOpenfortAccount  | Transfering the ownership using `transferOwnership()` | indefinite | 22,375  |
+|   StaticOpenfortFactory  | Deploy factory (containing StaticOpenfortAccount's implementation) | 1 | ~2,500,000 |
+|   StaticOpenfortAccount  | Create a new static account using the `createAccountWithNonce()` of the factory | indefinite | ~150,000  |
+|   StaticOpenfortAccount  | Updating the EntryPoint address using `updateEntryPoint()` | indefinite | ~1,500  |
+|   StaticOpenfortAccount  | Transfering the ownership using `transferOwnership()` | indefinite | ~25,000  |
 
 ### Upgradeable Accounts
 |   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
 | :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
-| UpgradeableOpenfortFactory | Deploy factory (containing UpgradeableOpenfortAccount's implementation) | 1 | 3,262,120  |
-|   UpgradeableOpenfortAccount  | Create a new upgradeable account using the `createAccount()` of the factory | indefinite | 202,604  |
-|   UpgradeableOpenfortAccount  | Create a new upgradeable account using the `createAccountWithNonce()` of the factory | indefinite | 202,797 |
-|   UpgradeableOpenfortAccount  | Updating to a new implementation using `upgradeTo()` | indefinite | 3,226  |
+| UpgradeableOpenfortFactory | Deploy factory (containing UpgradeableOpenfortAccount's implementation) | 1 | ~3,250,000  |
+|   UpgradeableOpenfortAccount  | Create a new upgradeable account using the `createAccountWithNonce()` of the factory | indefinite | ~200,000 |
+|   UpgradeableOpenfortAccount  | Updating to a new implementation using `upgradeTo()` | indefinite | ~3,500  |
 
 ### Paymaster
 |   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
 | :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
-|   OpenfortPaymaster | Deploy Paymaster to pay gas in ERC20s | 1 | 1,216,063  |
+|   OpenfortPaymaster | Deploy Paymaster to pay gas in ERC20s | 1 | ~1,250,000  |
+
+
+## Gas Stats in USD
+The gas price range is reported as the daily average gas price for the first 90 days of 2023 ± one standard deviation.
+
+|   Blockchain   |    Gas Price Range    |    Token Price    |    Create an Static account   |   Create an Upgradeable account   |
+| :------------- | :-------------------- | :---------------- | :------ | :------ |
+|  Ethereum  | 30.5 ± 10.5 gwei | ~$1800 | $5.5-$11 | $7.5-15 |
+|  Polygon  | 220 ± 108 gwei | ~$0.67 | $0.01-$0.035 | $0.015-$0.045 |
+|  Avalanche  | 36 ± 4.5 nAVAX | ~$12.8 | $0.06-0.08  | $0.08-$0.11 |
+|  BSC  | 7 ± 0.55 gwei	| ~$240 | $0.24-$0.28  | $0.32-$0.36|
