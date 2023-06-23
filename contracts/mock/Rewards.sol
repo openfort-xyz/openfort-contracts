@@ -9,7 +9,7 @@ contract Rewards is ERC20 {
         ERC20("GEMS", "GEMS")
     {}
 
-    function claim() external {
-        _mint(msg.sender, 10);
+    function claim(uint256 amount) external {
+        _mint(msg.sender, amount);
     }
 }
