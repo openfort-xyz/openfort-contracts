@@ -1043,4 +1043,41 @@ contract StaticOpenfortAccountTest is Test {
 
         assertEq(address(staticAccount.entryPoint()), newEntryPoint);
     }
+
+    /*
+     * 
+     * 
+     */
+    function testSignatures() public {
+        StaticOpenfortAccount openfortAccount = StaticOpenfortAccount(payable(account));
+
+        // First regular hashing and signing using the EOA
+        bytes memory text = "Signed by Openfort";
+        bytes32 hash = keccak256(text);
+        console.logBytes32(hash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        console.logBytes(signature);
+        bytes4 validSig = openfortAccount.isValidSignature(hash, signature);
+        console.logBytes4(validSig);
+        assert(validSig == 0); // Should [PASS]. Regular signatures should not work
+
+        address signer = ecrecover(hash, v, r, s);
+        assertEq(openfortAccount.owner(), signer); // Should [PASS]
+        assertEq(accountAdmin, signer); // Should [PASS]
+
+        // Now using EIP-191. This time the isValidSignature() should return the MAGIC VALUE
+        bytes32 hash191 = hash.toEthSignedMessageHash();
+        console.logBytes32(hash191);
+        (v, r, s) = vm.sign(accountAdminPKey, hash191);
+        bytes memory signature191 = abi.encodePacked(r, s, v);
+        console.logBytes(signature191);
+        validSig = openfortAccount.isValidSignature(hash, signature191);
+        console.logBytes4(validSig);
+        assert(validSig == 0x1626ba7e); // Should [PASS]. EIP-191 signatures should work
+
+        signer = ecrecover(hash191, v, r, s);
+        assertEq(openfortAccount.owner(), signer); // Should [PASS]
+        assertEq(accountAdmin, signer); // Should [PASS]
+    }
 }
