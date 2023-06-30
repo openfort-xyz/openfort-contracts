@@ -177,12 +177,7 @@ abstract contract BaseOpenfortAccount is
      * @notice See EIP-1271
      * @ToDo only the owner can sign
      */
-    function isValidSignature(bytes32 _hash, bytes memory _signature)
-        public
-        view
-        override
-        returns (bytes4)
-    {
+    function isValidSignature(bytes32 _hash, bytes memory _signature) public view override returns (bytes4) {
         address signer = _hash.recover(_signature);
         if (owner() == signer) {
             return MAGICVALUE;
