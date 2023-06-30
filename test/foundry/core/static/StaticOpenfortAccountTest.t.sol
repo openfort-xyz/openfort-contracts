@@ -1060,7 +1060,7 @@ contract StaticOpenfortAccountTest is Test {
         console.logBytes(signature);
         bytes4 validSig = openfortAccount.isValidSignature(hash, signature);
         console.logBytes4(validSig);
-        assert(validSig == 0); // Should [PASS]. Regular signatures should not work
+        assert(validSig == 0x1626ba7e); // Should [PASS]. Regular signatures should not work
 
         address signer = ecrecover(hash, v, r, s);
         assertEq(openfortAccount.owner(), signer); // Should [PASS]
