@@ -24,9 +24,9 @@ contract UpgradeableOpenfortDeploy is Script {
 
         // The first call should create a new account, while the second will just return the corresponding account address
         address account2 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, "1");
-        // console.log(
-        //     "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account2
-        // );
+        console.log(
+            "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account2
+        );
 
         // assert(account1 != account2);
         // address account3 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, 3);

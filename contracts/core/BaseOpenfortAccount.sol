@@ -187,7 +187,7 @@ abstract contract BaseOpenfortAccount is
         if (owner() == signer) {
             return MAGICVALUE;
         }
-        return 0;
+        return 0xffffffff;
     }
 
     /**
