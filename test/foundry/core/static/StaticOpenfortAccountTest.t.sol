@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
+import {SigUtils} from "../../utils/SigUtils.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
@@ -1048,7 +1049,7 @@ contract StaticOpenfortAccountTest is Test {
      * 
      * 
      */
-    function testSignatures() public {
+    function testRegularSignature() public {
         StaticOpenfortAccount openfortAccount = StaticOpenfortAccount(payable(account));
 
         // First regular hashing and signing using the EOA
@@ -1060,23 +1061,101 @@ contract StaticOpenfortAccountTest is Test {
         console.logBytes(signature);
         bytes4 validSig = openfortAccount.isValidSignature(hash, signature);
         console.logBytes4(validSig);
-        assert(validSig == 0x1626ba7e); // Should [PASS]. Regular signatures should not work
+        assert(validSig == 0x1626ba7e); // Should [PASS]. Regular signatures should work
 
         address signer = ecrecover(hash, v, r, s);
         assertEq(openfortAccount.owner(), signer); // Should [PASS]
         assertEq(accountAdmin, signer); // Should [PASS]
+    }
 
-        // Now using EIP-191. This time the isValidSignature() should return the MAGIC VALUE
+    /*
+     * 
+     * 
+     */
+    function testEIP191Signature() public {
+        StaticOpenfortAccount openfortAccount = StaticOpenfortAccount(payable(account));
+
+        // Now using EIP-191. isValidSignature() should return the MAGIC VALUE too
+        bytes memory text = "Signed by Openfort";
+        bytes32 hash = keccak256(text);
         bytes32 hash191 = hash.toEthSignedMessageHash();
         console.logBytes32(hash191);
-        (v, r, s) = vm.sign(accountAdminPKey, hash191);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hash191);
         bytes memory signature191 = abi.encodePacked(r, s, v);
         console.logBytes(signature191);
-        validSig = openfortAccount.isValidSignature(hash, signature191);
+        bytes4 validSig = openfortAccount.isValidSignature(hash, signature191);
         console.logBytes4(validSig);
-        assert(validSig == 0x1626ba7e); // Should [PASS]. EIP-191 signatures should work
+        assert(validSig == 0x1626ba7e); // Should [PASS]. EIP-191 signatures should work too
 
-        signer = ecrecover(hash191, v, r, s);
+        address signer = ecrecover(hash191, v, r, s);
+        assertEq(openfortAccount.owner(), signer); // Should [PASS]
+        assertEq(accountAdmin, signer); // Should [PASS]
+    }
+
+    /*
+     * Test EIP712 Typed Signatures using isValidSignature's (EIP-1271)
+     */
+    function testEIP712Signature() public {
+        StaticOpenfortAccount openfortAccount = StaticOpenfortAccount(payable(account));
+
+        // Now using EIP-712. isValidSignature() should return the MAGIC VALUE too
+        bytes32 hash = keccak256("Signed by Openfort");
+        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+            openfortAccount.eip712Domain();
+        console.log(name);
+        bytes32 _TYPE_HASH =
+            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+        bytes32 domainSeparator = keccak256(
+            abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
+        );
+        bytes32 hash712 = domainSeparator.toTypedDataHash(hash);
+
+        console.logBytes32(hash712);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hash712);
+        bytes memory signature721 = abi.encodePacked(r, s, v);
+
+        console.logBytes(signature721);
+        {
+            bytes4 validSig = openfortAccount.isValidSignature(hash, signature721);
+            console.logBytes4(validSig);
+            assert(validSig == 0x1626ba7e); // Should [PASS]. EIP-712 typed signatures should work too
+        }
+        address signer = ecrecover(hash712, v, r, s);
+        assertEq(openfortAccount.owner(), signer); // Should [PASS]
+        assertEq(accountAdmin, signer); // Should [PASS]
+    }
+
+    /*
+     * Test FAIL EIP712 Typed Signatures using isValidSignature's (EIP-1271)
+     * Altered the ChainID
+     */
+    function testFailEIP712Signature() public {
+        StaticOpenfortAccount openfortAccount = StaticOpenfortAccount(payable(account));
+
+        // Now using EIP-712. isValidSignature() should return the MAGIC VALUE too
+        bytes32 hash = keccak256("Signed by Openfort");
+        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+            openfortAccount.eip712Domain();
+        console.log(name);
+        chainId = 9999;
+        bytes32 _TYPE_HASH =
+            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+        bytes32 domainSeparator = keccak256(
+            abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
+        );
+        bytes32 hash712 = domainSeparator.toTypedDataHash(hash);
+
+        console.logBytes32(hash712);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hash712);
+        bytes memory signature721 = abi.encodePacked(r, s, v);
+
+        console.logBytes(signature721);
+        {
+            bytes4 validSig = openfortAccount.isValidSignature(hash, signature721);
+            console.logBytes4(validSig);
+            assert(validSig == 0x1626ba7e); // Should [PASS]. EIP-712 typed signatures should work too
+        }
+        address signer = ecrecover(hash712, v, r, s);
         assertEq(openfortAccount.owner(), signer); // Should [PASS]
         assertEq(accountAdmin, signer); // Should [PASS]
     }
