@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
+import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
 
 import {BaseAccount, UserOperation, IEntryPoint} from "account-abstraction/core/BaseAccount.sol";
@@ -18,13 +19,15 @@ import "account-abstraction/core/Helpers.sol" as Helpers;
  *  - BaseAccount to comply with ERC-4337
  *  - Initializable because accounts are meant to be created using Factories
  *  - Ownable2StepUpgradeable to have permissions
- *  - IERC1271Upgradeable for Signature Validation
- *  - TokenCallbackHandler to support ERC777, ERC721 and ERC1155
+ *  - EIP712Upgradeable to use typed structured signatures EIP-712 (supporting ERC-5267 too)
+ *  - IERC1271Upgradeable for Signature Validation (ERC-1271)
+ *  - TokenCallbackHandler to support ERC-777, ERC-721 and ERC-1155
  */
 abstract contract BaseOpenfortAccount is
     BaseAccount,
     Initializable,
     Ownable2StepUpgradeable,
+    EIP712Upgradeable,
     IERC1271Upgradeable,
     TokenCallbackHandler
 {
@@ -175,7 +178,7 @@ abstract contract BaseOpenfortAccount is
 
     /*
      * @notice See EIP-1271
-     * @ToDo only the owner can sign
+     * Right now, only the owner can sign. In other words, session keys cannot be used for signing.
      */
     function isValidSignature(bytes32 _hash, bytes memory _signature) public view override returns (bytes4) {
         address signer = _hash.recover(_signature);
@@ -184,6 +187,11 @@ abstract contract BaseOpenfortAccount is
         }
         bytes32 hash = _hash.toEthSignedMessageHash();
         signer = hash.recover(_signature);
+        if (owner() == signer) {
+            return MAGICVALUE;
+        }
+        bytes32 digest = _hashTypedDataV4(_hash);
+        signer = digest.recover(_signature);
         if (owner() == signer) {
             return MAGICVALUE;
         }

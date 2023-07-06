@@ -27,6 +27,7 @@ contract StaticOpenfortAccount is BaseOpenfortAccount {
         emit EntryPointUpdated(entrypointContract, _entrypoint);
         _transferOwnership(_defaultAdmin);
         entrypointContract = _entrypoint;
+        __EIP712_init("Openfort", "0.3");
     }
 
     /**
