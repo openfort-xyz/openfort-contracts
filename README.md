@@ -23,7 +23,16 @@
 [banner-image]: .github/img/OpenfortRed.png
 
 # Openfort Contracts
-Official Contracts of the Openfort Project
+Official Contracts of the Openfort Project.
+
+The following standards are supported:
+- ERC-20, ERC-721, ERC-777 and ERC-1155 for different token handling.
+- ERC-173 for ownership standard.
+- EIP-712 and EIP-5267 for typed structured data hashing and signing.
+- ERC-1271 for standard signature validation.
+- ERC-1967 and ERC-1822 for proxies (upgradeable Openfort accounts).
+- EIP-1014 for generating counterfactual addresses using Openfort factories.
+- ERC-4337 for leveraging Account Abstraction using alternative mempools.
 
 ## Development
 
