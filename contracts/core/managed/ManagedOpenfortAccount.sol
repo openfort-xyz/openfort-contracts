@@ -22,7 +22,7 @@ contract ManagedOpenfortAccount is BaseOpenfortAccount {
             revert ZeroAddressNotAllowed();
         }
         _transferOwnership(_defaultAdmin);
-        __EIP712_init("Openfort", "0.3");
+        __EIP712_init("Openfort", "0.4");
     }
 
     /**
