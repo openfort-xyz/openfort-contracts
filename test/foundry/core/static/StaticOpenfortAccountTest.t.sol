@@ -1159,4 +1159,173 @@ contract StaticOpenfortAccountTest is Test {
         assertEq(openfortAccount.owner(), signer); // Should [PASS]
         assertEq(accountAdmin, signer); // Should [PASS]
     }
+
+    /*
+     * Test Session key Signatures using isValidSignature's (EIP-1271)
+     */
+    function testSessionKeySignature() public {
+        StaticOpenfortAccount openfortAccount = StaticOpenfortAccount(payable(account));
+
+        // Now using Session keys. isValidSignature() should return the MAGIC VALUE too
+        bytes32 hash = keccak256("Signed by Openfort");
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        vm.warp(100);
+        vm.prank(accountAdmin);
+        openfortAccount.registerSessionKey(sessionKey, 0, 150);
+        bytes32 domainSeparator;
+        {
+            (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+                openfortAccount.eip712Domain();
+            console.log(name);
+            bytes32 _TYPE_HASH =
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+            domainSeparator = keccak256(
+                abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
+            );
+        }
+        bytes32 hash712 = domainSeparator.toTypedDataHash(hash);
+        console.logBytes32(hash712);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(sessionKeyPrivKey, hash712);
+        bytes memory signature721 = abi.encodePacked(r, s, v);
+        console.logBytes(signature721);
+        bytes4 validSig = openfortAccount.isValidSignature(hash, signature721);
+        console.logBytes4(validSig);
+        assert(validSig == 0x1626ba7e); // Should [PASS]. EIP-712 typed signatures should work too
+        address signer = ecrecover(hash712, v, r, s);
+        assertEq(sessionKey, signer); // Should [PASS]
+        assertNotEq(accountAdmin, signer); // Should [PASS]
+    }
+
+    /*
+     * Test FAIL Session key Signatures using isValidSignature's (EIP-1271)
+     * Session key has expired
+     */
+    function testFailSessionKeySignatureExpired() public {
+        StaticOpenfortAccount openfortAccount = StaticOpenfortAccount(payable(account));
+
+        // Now using Session keys. isValidSignature() should return the MAGIC VALUE too
+        bytes32 hash = keccak256("Signed by Openfort");
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        // We are now at timestamp 100
+        vm.warp(100);
+        vm.prank(accountAdmin);
+        openfortAccount.registerSessionKey(sessionKey, 0, 99); // register an expired session key
+        bytes32 domainSeparator;
+        {
+            (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+                openfortAccount.eip712Domain();
+            console.log(name);
+            bytes32 _TYPE_HASH =
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+            domainSeparator = keccak256(
+                abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
+            );
+        }
+        bytes32 hash712 = domainSeparator.toTypedDataHash(hash);
+        console.logBytes32(hash712);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(sessionKeyPrivKey, hash712);
+        bytes memory signature721 = abi.encodePacked(r, s, v);
+        console.logBytes(signature721);
+        bytes4 validSig = openfortAccount.isValidSignature(hash, signature721);
+        console.logBytes4(validSig);
+        assert(validSig == 0x1626ba7e); // Should fail because the session key is expired
+        address signer = ecrecover(hash712, v, r, s);
+        assertEq(sessionKey, signer); // Should [PASS]
+        assertNotEq(accountAdmin, signer); // Should [PASS]
+    }
+
+    /*
+     * Test FAIL Session key Signatures using isValidSignature's (EIP-1271)
+     * Session key is not valid yet
+     */
+    function testFailSessionKeySignatureNotYet() public {
+        StaticOpenfortAccount openfortAccount = StaticOpenfortAccount(payable(account));
+
+        // Now using Session keys. isValidSignature() should return the MAGIC VALUE too
+        bytes32 hash = keccak256("Signed by Openfort");
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        // We are now at timestamp 100
+        vm.warp(100);
+        vm.prank(accountAdmin);
+        openfortAccount.registerSessionKey(sessionKey, 150, 250); // register a session key that is not valid yet
+        bytes32 domainSeparator;
+        {
+            (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+                openfortAccount.eip712Domain();
+            console.log(name);
+            bytes32 _TYPE_HASH =
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+            domainSeparator = keccak256(
+                abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
+            );
+        }
+        bytes32 hash712 = domainSeparator.toTypedDataHash(hash);
+        console.logBytes32(hash712);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(sessionKeyPrivKey, hash712);
+        bytes memory signature721 = abi.encodePacked(r, s, v);
+        console.logBytes(signature721);
+        bytes4 validSig = openfortAccount.isValidSignature(hash, signature721);
+        console.logBytes4(validSig);
+        assert(validSig == 0x1626ba7e); // Should fail because the session key is expired
+        address signer = ecrecover(hash712, v, r, s);
+        assertEq(sessionKey, signer); // Should [PASS]
+        assertNotEq(accountAdmin, signer); // Should [PASS]
+    }
+
+    /*
+     * Test FAIL Session key Signatures using isValidSignature's (EIP-1271)
+     * Session key is not a valid one. Using a wrong session key
+     */
+    function testFailSessionKeySignatureInvalid() public {
+        StaticOpenfortAccount openfortAccount = StaticOpenfortAccount(payable(account));
+
+        // Now using Session keys. isValidSignature() should return the MAGIC VALUE too
+        bytes32 hash = keccak256("Signed by Openfort");
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address sessionKey2;
+        uint256 sessionKeyPrivKey2;
+        (sessionKey2, sessionKeyPrivKey2) = makeAddrAndKey("sessionKey2");
+
+        // We are now at timestamp 100
+        vm.warp(100);
+        vm.prank(accountAdmin);
+        openfortAccount.registerSessionKey(sessionKey, 150, 250); // register a session key that is not valid yet
+        bytes32 domainSeparator;
+        {
+            (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+                openfortAccount.eip712Domain();
+            console.log(name);
+            bytes32 _TYPE_HASH =
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+            domainSeparator = keccak256(
+                abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
+            );
+        }
+        bytes32 hash712 = domainSeparator.toTypedDataHash(hash);
+        console.logBytes32(hash712);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(sessionKeyPrivKey2, hash712);
+        bytes memory signature721 = abi.encodePacked(r, s, v);
+        console.logBytes(signature721);
+        bytes4 validSig = openfortAccount.isValidSignature(hash, signature721);
+        console.logBytes4(validSig);
+        assert(validSig == 0x1626ba7e); // Should fail because the session key is expired
+        address signer = ecrecover(hash712, v, r, s);
+        assertEq(sessionKey, signer); // Should [PASS]
+        assertNotEq(accountAdmin, signer); // Should [PASS]
+    }
 }
