@@ -1,8 +1,8 @@
 {
   "name": "@openfort/openfort-contracts",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Official Contracts of the Openfort Project",
-  "license" : "MIT",
+  "license": "MIT",
   "scripts": {
     "build": "npm run clean-all && npm run compile",
     "clean-all": "npx hardhat clean && forge clean && rm -rf cache/ broadcast/",
@@ -16,7 +16,7 @@
     "@typechain/hardhat": "^8.0.0",
     "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^20.3.3",
+    "@types/node": "^20.4.0",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
     "chai": "^4.3.7",
@@ -40,7 +40,7 @@
     "@openzeppelin/contracts-upgradeable": "^4.9.0",
     "dotenv": "^16.0.3",
     "hardhat-gas-reporter": "^1.0.9",
-    "solidity-coverage": "^0.8.2"
+    "solidity-coverage": "^0.8.4"
   },
   "repository": {
     "type": "git",
