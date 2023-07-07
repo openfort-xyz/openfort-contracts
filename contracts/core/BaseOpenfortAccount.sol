@@ -47,7 +47,6 @@ abstract contract BaseOpenfortAccount is
      * @param validUntil this sessionKey is valid only after this timestamp.
      * @param limit limit of uses remaining
      * @param masterSessionKey if set to true, the session key does not have any limitation other than the validity time
-     * @param canSign if set to true, the session key can sign as the account (future)
      * @param whitelising if set to true, the session key has to follow whitelisting rules
      * @param whitelist - this session key can only interact with the addresses in the whitelist.
      */
@@ -178,7 +177,7 @@ abstract contract BaseOpenfortAccount is
 
     /*
      * @notice See EIP-1271
-     * Right now, only the owner can sign. In other words, session keys cannot be used for signing.
+     * Any signature by the owner is valid. Session keys need to sign using EIP712.
      */
     function isValidSignature(bytes32 _hash, bytes memory _signature) public view override returns (bytes4) {
         address signer = _hash.recover(_signature);
@@ -195,7 +194,18 @@ abstract contract BaseOpenfortAccount is
         if (owner() == signer) {
             return MAGICVALUE;
         }
-        return 0xffffffff;
+
+        SessionKeyStruct storage sessionKey = sessionKeys[signer];
+        // If the signer is a session key that is still valid
+        if (
+            sessionKey.validUntil == 0 || sessionKey.validAfter > block.timestamp
+                || sessionKey.validUntil < block.timestamp || sessionKey.limit < 1
+        ) {
+            return 0xffffffff;
+        } // Not owner or session key revoked
+        else {
+            return MAGICVALUE;
+        }
     }
 
     /**
