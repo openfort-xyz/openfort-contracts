@@ -180,34 +180,33 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Create an account calling the factory via EntryPoint.
      * Use initCode
      */
-    function testFailCreateAccountViaEntryPoint() public pure {
+    function testCreateAccountViaEntryPoint() public {
         // It is not correct to use the Factory using the EntryPoint anymore
         // Accounts created using factories are depend on msg.sender now
-        revert();
+        // revert();
 
-        // Get the counterfactual address
-        // address accountAddress = upgradeableOpenfortFactory.getAddress(accountAdmin);
+        // Make sure the smart account does not have any code yet
+        address account2 = upgradeableOpenfortFactory.getAddressWithNonce(accountAdmin, bytes32("2"));
+        assertEq(account2.code.length, 0);
 
-        // // Make sure the smart account does not have any code yet
-        // assertEq(accountAddress.code.length, 0);
+        bytes memory initCallData =
+            abi.encodeWithSignature("createAccountWithNonce(address,bytes32)", accountAdmin, bytes32("2"));
+        bytes memory initCode = abi.encodePacked(abi.encodePacked(address(upgradeableOpenfortFactory)), initCallData);
 
-        // bytes memory initCallData = abi.encodeWithSignature("createAccount(address,bytes)", accountAdmin, bytes(""));
-        // bytes memory initCode = abi.encodePacked(abi.encodePacked(address(upgradeableOpenfortFactory)), initCallData);
+        UserOperation[] memory userOpCreateAccount =
+            _setupUserOpExecute(account2, accountAdminPKey, initCode, address(0), 0, bytes(""));
 
-        // UserOperation[] memory userOpCreateAccount =
-        //     _setupUserOpExecute(account, accountAdminPKey, initCode, address(0), 0, bytes(""));
+        // Expect that we will see an event containing the account and admin
+        vm.expectEmit(true, true, false, true);
+        emit AccountCreated(account2, accountAdmin);
 
-        // // Expect that we will see an event containing the account and admin
-        // vm.expectEmit(true, true, false, true);
-        // emit AccountCreated(account, accountAdmin);
+        entryPoint.handleOps(userOpCreateAccount, beneficiary);
 
-        // entryPoint.handleOps(userOpCreateAccount, beneficiary);
-
-        // // Make sure the smart account does have some code now
-        // assert(account.code.length > 0);
+        // Make sure the smart account does have some code now
+        assert(account2.code.length > 0);
 
         // Make sure the counterfactual address has not been altered
-        // assertEq(account, upgradeableOpenfortFactory.getAddress(accountAdmin));
+        assertEq(account2, upgradeableOpenfortFactory.getAddressWithNonce(accountAdmin, bytes32("2")));
     }
 
     /*
