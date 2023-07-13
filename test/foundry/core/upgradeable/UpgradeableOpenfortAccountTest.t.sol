@@ -8,6 +8,7 @@ import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
+import {OpenfortUpgradeableProxy} from "contracts/core/upgradeable/OpenfortUpgradeableProxy.sol";
 import {MockedV2UpgradeableOpenfortAccount} from "contracts/mock/MockedV2UpgradeableOpenfortAccount.sol";
 
 contract UpgradeableOpenfortAccountTest is Test {
@@ -988,6 +989,10 @@ contract UpgradeableOpenfortAccountTest is Test {
     function testUpgradeAccount() public {
         assertEq(UpgradeableOpenfortAccount(payable(account)).version(), 1);
         MockedV2UpgradeableOpenfortAccount newAccountImplementation = new MockedV2UpgradeableOpenfortAccount();
+        OpenfortUpgradeableProxy p = OpenfortUpgradeableProxy(payable(account));
+        // Printing account address and the implementation address
+        console.log(account);
+        console.log(p.implementation());
 
         vm.expectRevert("Ownable: caller is not the owner");
         UpgradeableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
@@ -997,6 +1002,10 @@ contract UpgradeableOpenfortAccountTest is Test {
 
         // Notice that, even though we bind the address to the old implementation, version() now returns 2
         assertEq(UpgradeableOpenfortAccount(payable(account)).version(), 2);
+
+        // Printing account address and the implementation address. Impl address should have changed
+        console.log(account);
+        console.log(p.implementation());
     }
 
     /*
