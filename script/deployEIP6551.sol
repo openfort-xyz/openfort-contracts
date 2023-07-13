@@ -21,8 +21,7 @@ contract EIP6551OpenfortDeploy is Script {
         EIP6551OpenfortAccount eip6551OpenfortAccount = new EIP6551OpenfortAccount{salt: versionSalt}();
 
         // Create a factory to deploy cloned accounts
-        ERC6551Registry erc6551Registry =
-            new ERC6551Registry{salt: versionSalt}();
+        ERC6551Registry erc6551Registry = new ERC6551Registry{salt: versionSalt}();
 
         uint256 chainId;
         assembly {
@@ -33,10 +32,9 @@ contract EIP6551OpenfortDeploy is Script {
         testToken = new VIPNFT();
 
         // The first call should create a new account, while the second will just return the corresponding account address
-        address account2 = erc6551Registry.createAccount(address(eip6551OpenfortAccount), chainId, address(testToken), 1, 1, "");
-        console.log(
-            "Registry at address %s has created an account at address %s", address(erc6551Registry), account2
-        );
+        address account2 =
+            erc6551Registry.createAccount(address(eip6551OpenfortAccount), chainId, address(testToken), 1, 1, "");
+        console.log("Registry at address %s has created an account at address %s", address(erc6551Registry), account2);
 
         vm.stopBroadcast();
     }
