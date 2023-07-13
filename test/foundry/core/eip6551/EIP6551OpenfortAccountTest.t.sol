@@ -223,7 +223,9 @@ contract EIP6551OpenfortAccountTest is Test {
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
-        emit AccountCreated(eip6551OpenfortAccountAddress2, address(eip6551OpenfortAccount), chainId, address(testToken), 1, 2);
+        emit AccountCreated(
+            eip6551OpenfortAccountAddress2, address(eip6551OpenfortAccount), chainId, address(testToken), 1, 2
+        );
 
         // Deploy a static account to the counterfactual address
         vm.prank(factoryAdmin);
@@ -241,7 +243,7 @@ contract EIP6551OpenfortAccountTest is Test {
         );
         assertNotEq(
             eip6551OpenfortAccountAddress2,
-            erc6551Registry.account(address(eip6551OpenfortAccount), chainId+1, address(testToken), 1, 2)
+            erc6551Registry.account(address(eip6551OpenfortAccount), chainId + 1, address(testToken), 1, 2)
         );
         assertNotEq(
             eip6551OpenfortAccountAddress2,
