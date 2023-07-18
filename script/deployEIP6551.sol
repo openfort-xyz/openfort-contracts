@@ -17,7 +17,7 @@ contract EIP6551OpenfortDeploy is Script {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
         vm.startBroadcast(deployPrivKey);
 
-        // Create an acccount to server as implementation
+        // Create an acccount to serve as implementation
         EIP6551OpenfortAccount eip6551OpenfortAccount = new EIP6551OpenfortAccount{salt: versionSalt}();
 
         // Create a factory to deploy cloned accounts
