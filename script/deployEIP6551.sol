@@ -32,8 +32,14 @@ contract EIP6551OpenfortDeploy is Script {
         testToken = new VIPNFT();
 
         // The first call should create a new account, while the second will just return the corresponding account address
-        address account2 =
-            erc6551Registry.createAccount(address(eip6551OpenfortAccount), chainId, address(testToken), 1, 1, "");
+        address account2 = erc6551Registry.createAccount(
+            address(eip6551OpenfortAccount),
+            chainId,
+            address(testToken),
+            1,
+            1,
+            abi.encodeWithSignature("initialize(address)", address(entryPoint))
+        );
         console.log("Registry at address %s has created an account at address %s", address(erc6551Registry), account2);
 
         vm.stopBroadcast();

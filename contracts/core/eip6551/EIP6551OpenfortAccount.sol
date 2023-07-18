@@ -16,11 +16,11 @@ import "account-abstraction/core/Helpers.sol" as Helpers;
 /**
  * @title EIP6551OpenfortAccount (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
- * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
+ * @notice Smart contract wallet with session keys following the ERC-4337 and EIP-6551 standards.
  * It inherits from:
  *  - BaseAccount to comply with ERC-4337
  *  - Initializable because accounts are meant to be created using Factories
- *  - IERC6551Account to have permissions using ERC-721
+ *  - IERC6551Account to have permissions using ERC-721 tokens
  *  - EIP712Upgradeable to use typed structured signatures EIP-712 (supporting ERC-5267 too)
  *  - IERC1271Upgradeable for Signature Validation (ERC-1271)
  *  - TokenCallbackHandler to support ERC-777, ERC-721 and ERC-1155

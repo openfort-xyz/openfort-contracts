@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {SigUtils} from "../../utils/SigUtils.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
+import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {VIPNFT} from "contracts/mock/VipNFT.sol";
 import {ERC6551Registry} from "contracts/core/eip6551/ERC6551Registry.sol";
 import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAccount.sol";
@@ -15,6 +15,7 @@ contract EIP6551OpenfortAccountTest is Test {
     EntryPoint public entryPoint;
     ERC6551Registry public erc6551Registry;
     EIP6551OpenfortAccount public eip6551OpenfortAccount;
+    EIP6551OpenfortAccount implEIP6551OpenfortAccount;
     address public account;
     VIPNFT testToken;
 
@@ -149,7 +150,7 @@ contract EIP6551OpenfortAccountTest is Test {
         // deploy a new VIPNFT collection
         testToken = new VIPNFT();
 
-        EIP6551OpenfortAccount implEIP6551OpenfortAccount = new EIP6551OpenfortAccount();
+        implEIP6551OpenfortAccount = new EIP6551OpenfortAccount();
 
         erc6551Registry = new ERC6551Registry();
 
@@ -162,6 +163,90 @@ contract EIP6551OpenfortAccountTest is Test {
         testToken.mint(eip6551OpenfortAccountAddress, 1);
 
         vm.stopPrank();
+    }
+
+    /*
+     * Test reinitialize. It should fail.
+     * 
+     */
+    function testFailReinitialize() public {
+        eip6551OpenfortAccount.initialize(address(entryPoint));
+    }
+
+    /*
+     * Test initialize implementation. It should fail.
+     */
+    function testFailInitializeImplementation() public {
+        implEIP6551OpenfortAccount.initialize(address(entryPoint));
+    }
+
+    /*
+     * Check implementation has not been initialized.
+     * EntryPoint address should be 0. Should pass.
+     */
+    function testImplementationNoEntryPointAddr() public {
+        IEntryPoint e = implEIP6551OpenfortAccount.entryPoint();
+        assertEq(address(e), address(0));
+    }
+
+    /*
+     * Create a 2nd account using the same technique than in setup with a new salt (2).
+     */
+    function testCreate2ndAcc() public {
+        uint256 chainId;
+        assembly {
+            chainId := chainid()
+        }
+        address eip6551OpenfortAccountAddress2 =
+            erc6551Registry.createAccount(address(implEIP6551OpenfortAccount), chainId, address(testToken), 1, 2, "");
+
+        EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
+        eip6551OpenfortAccount2.initialize(address(entryPoint));
+        IEntryPoint e = eip6551OpenfortAccount2.entryPoint();
+        assertEq(address(e), address(entryPoint));
+    }
+
+    /*
+     * Create a new account using createAccount() and the initializer.
+     */
+    function testCreateAccInitializer() public {
+        uint256 chainId;
+        assembly {
+            chainId := chainid()
+        }
+        address eip6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
+            address(implEIP6551OpenfortAccount),
+            chainId,
+            address(testToken),
+            1,
+            2,
+            abi.encodeWithSignature("initialize(address)", address(entryPoint))
+        );
+        EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
+        IEntryPoint e = eip6551OpenfortAccount2.entryPoint();
+        assertEq(address(e), address(entryPoint));
+    }
+
+    /*
+     * Create a new account using createAccount() and the initializer.
+     * Test initialize again should fail.
+     */
+    function testFailCreateAccInitializerNoReinit() public {
+        uint256 chainId;
+        assembly {
+            chainId := chainid()
+        }
+        address eip6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
+            address(implEIP6551OpenfortAccount),
+            chainId,
+            address(testToken),
+            1,
+            2,
+            abi.encodeWithSignature("initialize(address)", address(entryPoint))
+        );
+
+        EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
+        eip6551OpenfortAccount2.initialize(address(entryPoint));
     }
 
     /*
