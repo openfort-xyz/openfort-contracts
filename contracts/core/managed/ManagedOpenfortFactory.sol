@@ -10,6 +10,7 @@ import {OpenfortBeaconProxy} from "./OpenfortBeaconProxy.sol";
 
 // Interfaces
 import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
+import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 
 /**
  * @title ManagedOpenfortFactory (Non-upgradeable)
@@ -21,8 +22,11 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
  *  - UpgradeableBeacon to also work as the beacon
  */
 contract ManagedOpenfortFactory is IBaseOpenfortFactory, UpgradeableBeacon {
-    constructor(address _owner, address _implementation) UpgradeableBeacon(_implementation) {
+    address internal entrypointContract;
+
+    constructor(address _owner, address _entrypoint, address _implementation) UpgradeableBeacon(_implementation) {
         _transferOwnership(_owner);
+        entrypointContract = _entrypoint;
     }
 
     /*
@@ -63,5 +67,14 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory, UpgradeableBeacon {
 
     function accountImplementation() external view override returns (address) {
         return implementation();
+    }
+
+    /**
+     * Add stake for this factory.
+     * This method can also carry eth value to add to the current stake.
+     * @param unstakeDelaySec - the unstake delay for this factory. Can only be increased.
+     */
+    function addStake(uint32 unstakeDelaySec) external payable onlyOwner {
+        IEntryPoint(entrypointContract).addStake{value : msg.value}(unstakeDelaySec);
     }
 }
