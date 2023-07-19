@@ -8,6 +8,7 @@ import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
 import {ManagedOpenfortAccount} from "contracts/core/managed/ManagedOpenfortAccount.sol";
 import {ManagedOpenfortFactory} from "contracts/core/managed/ManagedOpenfortFactory.sol";
+import {OpenfortBeaconProxy} from "contracts/core/managed/OpenfortBeaconProxy.sol";
 import {MockedV2ManagedOpenfortAccount} from "contracts/mock/MockedV2ManagedOpenfortAccount.sol";
 
 contract ManagedOpenfortAccountTest is Test {
@@ -1056,6 +1057,11 @@ contract ManagedOpenfortAccountTest is Test {
         ManagedOpenfortAccount managedAccount = ManagedOpenfortAccount(accountOld);
         assertEq(managedAccount.version(), 1);
 
+        OpenfortBeaconProxy p = OpenfortBeaconProxy(payable(account));
+        // Printing account address and the implementation address
+        console.log(account);
+        console.log(p.implementation());
+
         // Deploy the new implementation
         MockedV2ManagedOpenfortAccount newImplementation = new MockedV2ManagedOpenfortAccount();
         address newImplementationAddress = address(newImplementation);
@@ -1077,6 +1083,10 @@ contract ManagedOpenfortAccountTest is Test {
         address payable account3 = payable(managedOpenfortFactory.createAccountWithNonce(accountAdmin, "3"));
         ManagedOpenfortAccount managedAccount3 = ManagedOpenfortAccount(account3);
         managedAccount3.version();
+
+        // Printing account address and the implementation address. Impl address should have changed
+        console.log(account);
+        console.log(p.implementation());
     }
 
     /*
