@@ -145,7 +145,7 @@ contract ManagedOpenfortAccountTest is Test {
         // deploy OpenfortBeacon
         // openfortBeacon = new OpenfortBeacon(address(managedOpenfortAccount)); // not needed anymore
         // deploy account factory (beacon)
-        managedOpenfortFactory = new ManagedOpenfortFactory(factoryAdmin, address(managedOpenfortAccount));
+        managedOpenfortFactory = new ManagedOpenfortFactory(factoryAdmin, address(entryPoint), address(managedOpenfortAccount));
         // Create an static account wallet and get its address
         account = managedOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
         // deploy a new TestCounter
@@ -1018,9 +1018,27 @@ contract ManagedOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+        
         // Expect the simulateValidation() to always revert
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
+
+        // Test addStake. Make sure it checks for owner and alue passed.
+        vm.expectRevert("Ownable: caller is not the owner");
+        managedOpenfortFactory.addStake{value: 10000000000000000}(99);
+        vm.prank(factoryAdmin);
+        vm.expectRevert("no stake specified");
+        managedOpenfortFactory.addStake(99);
+        vm.prank(factoryAdmin);
+        managedOpenfortFactory.addStake{value: 10000000000000000}(99);
+
+        // expectRevert as simulateValidation() always reverts
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        
+        // expectRevert as simulateHandleOp() always reverts
+        vm.expectRevert();
+        entryPoint.simulateHandleOp(userOp[0], address(0), "");
 
         // Verifiy that the counter has not increased
         assertEq(testCounter.counters(account), 0);
