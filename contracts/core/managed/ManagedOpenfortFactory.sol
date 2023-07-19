@@ -75,6 +75,6 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory, UpgradeableBeacon {
      * @param unstakeDelaySec - the unstake delay for this factory. Can only be increased.
      */
     function addStake(uint32 unstakeDelaySec) external payable onlyOwner {
-        IEntryPoint(entrypointContract).addStake{value : msg.value}(unstakeDelaySec);
+        IEntryPoint(entrypointContract).addStake{value: msg.value}(unstakeDelaySec);
     }
 }

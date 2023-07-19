@@ -145,7 +145,8 @@ contract ManagedOpenfortAccountTest is Test {
         // deploy OpenfortBeacon
         // openfortBeacon = new OpenfortBeacon(address(managedOpenfortAccount)); // not needed anymore
         // deploy account factory (beacon)
-        managedOpenfortFactory = new ManagedOpenfortFactory(factoryAdmin, address(entryPoint), address(managedOpenfortAccount));
+        managedOpenfortFactory =
+            new ManagedOpenfortFactory(factoryAdmin, address(entryPoint), address(managedOpenfortAccount));
         // Create an static account wallet and get its address
         account = managedOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
         // deploy a new TestCounter
@@ -1018,7 +1019,7 @@ contract ManagedOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
-        
+
         // Expect the simulateValidation() to always revert
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
@@ -1035,7 +1036,7 @@ contract ManagedOpenfortAccountTest is Test {
         // expectRevert as simulateValidation() always reverts
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
-        
+
         // expectRevert as simulateHandleOp() always reverts
         vm.expectRevert();
         entryPoint.simulateHandleOp(userOp[0], address(0), "");
