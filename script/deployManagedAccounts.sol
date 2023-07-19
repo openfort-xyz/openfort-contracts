@@ -23,7 +23,8 @@ contract ManagedOpenfortDeploy is Script {
 
         // Create a factory to deploy cloned accounts
         ManagedOpenfortFactory managedOpenfortFactory =
-            new ManagedOpenfortFactory{salt: versionSalt}(deployAddress, address(managedOpenfortAccount));
+            new ManagedOpenfortFactory{salt: versionSalt}(deployAddress, address(entryPoint), address(managedOpenfortAccount));
+        (managedOpenfortFactory);
         // address account1 = managedOpenfortFactory.accountImplementation();
 
         // The first call should create a new account, while the second will just return the corresponding account address
