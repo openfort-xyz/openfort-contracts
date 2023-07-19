@@ -25,9 +25,9 @@ LOG_FILE=script/deployments/$(date +%Y-%m-%d_%H:%M)"-deploymentAllChains.log"
 # echo "------ UpgradeableOpenfortDeploy ------ (Mumbai)"
 # forge script UpgradeableOpenfortDeploy --rpc-url $POLYGON_MUMBAI_RPC -vvvv --verify --broadcast --slow --legacy --etherscan-api-key $POLYGON_MUMBAI_KEY >> $LOG_FILE
 # sleep 3
-# echo "------ UpgradeableOpenfortDeploy ------ (Fuji)"
-# forge script UpgradeableOpenfortDeploy --rpc-url $AVALANCHE_FUJI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $FUJI_API_KEY >> $LOG_FILE
-# sleep 3
+echo "------ UpgradeableOpenfortDeploy ------ (Fuji)"
+forge script UpgradeableOpenfortDeploy --rpc-url $AVALANCHE_FUJI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $FUJI_API_KEY >> $LOG_FILE
+sleep 3
 # echo "------ UpgradeableOpenfortDeploy ------ (BSC testnet)"
 # forge script UpgradeableOpenfortDeploy --rpc-url $BSC_TESTNET_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $BSCSCAN_TESTNET_API_KEY >> $LOG_FILE
 # sleep 3
