@@ -20,7 +20,7 @@ LOG_FILE=script/deployments/$(date +%Y-%m-%d_%H:%M)"-deploymentAllChains.log"
 # sleep 3
 
 # echo "------ UpgradeableOpenfortDeploy ------ (Goerli)"
-# forge script UpgradeableOpenfortDeploy --rpc-url $GOERLI_RPC -vvvv --verify --broadcast --slow -g 150 --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
+# forge script UpgradeableOpenfortDeploy --rpc-url $GOERLI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
 # sleep 3
 # echo "------ UpgradeableOpenfortDeploy ------ (Mumbai)"
 # forge script UpgradeableOpenfortDeploy --rpc-url $POLYGON_MUMBAI_RPC -vvvv --verify --broadcast --slow --legacy --etherscan-api-key $POLYGON_MUMBAI_KEY >> $LOG_FILE
@@ -38,9 +38,9 @@ sleep 3
 # echo "------ ManagedOpenfortDeploy ------ (Goerli)"
 # forge script ManagedOpenfortDeploy --rpc-url $GOERLI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
 # sleep 3
-# echo "------ ManagedOpenfortDeploy ------ (Mumbai)"
-# forge script ManagedOpenfortDeploy --rpc-url $POLYGON_MUMBAI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $POLYGON_MUMBAI_KEY >> $LOG_FILE
-# sleep 3
+echo "------ ManagedOpenfortDeploy ------ (Mumbai)"
+forge script ManagedOpenfortDeploy --rpc-url $POLYGON_MUMBAI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $POLYGON_MUMBAI_KEY >> $LOG_FILE
+sleep 3
 # echo "------ ManagedOpenfortDeploy ------ (Fuji)"
 # forge script ManagedOpenfortDeploy --rpc-url $AVALANCHE_FUJI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $FUJI_API_KEY >> $LOG_FILE
 # sleep 3
