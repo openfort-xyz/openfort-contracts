@@ -68,8 +68,11 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     event GuardianAdded(address indexed guardian);
     event Locked(uint64 releaseAfter);
     event Unlocked();
+    event RecoveryExecuted(address indexed _recovery, uint64 executeAfter);
 
     error InsecurePeriod();
+    error NoOngoingRecovery();
+    error OngoingRecovery();
 
     /*
      * @notice Initialize the smart contract account.
@@ -226,11 +229,38 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
 
     /**
+     * Require the account to be in recovery or not according to the _isRecovery argument
+     */
+    function _requireRecovery(bool _isRecovery) internal view {
+        if (_isRecovery && guardianRecoveryConfig.executeAfter == 0) {
+            revert NoOngoingRecovery();
+        }
+        if (!_isRecovery && guardianRecoveryConfig.executeAfter > 0) {
+            revert OngoingRecovery();
+        }
+    }
+
+    /**
+     * @notice Lets the guardians start the execution of the recovery procedure.
+     * Once triggered the recovery is pending for the security period before it can be finalised.
+     * Must be confirmed by N guardians, where N = ceil(Nb Guardians / 2).
+     * @param _recovery The address to which ownership should be transferred.
+     */
+    function executeRecovery(address _recovery) external {
+        _requireRecovery(false);
+        require(!isGuardian(_recovery), "Recovery address cannot be a guardian");
+        uint64 executeAfter = uint64(block.timestamp + recoveryPeriod);
+        guardianRecoveryConfig = RecoveryConfig(_recovery, executeAfter, uint32(guardianRecoveryConfig.guardianCount));
+        _setLock(block.timestamp + lockPeriod, RecoverableOpenfortAccount.executeRecovery.selector);
+        emit RecoveryExecuted(_recovery, executeAfter);
+    }
+
+    /**
      * @notice Lets the owner initiate a transfer of the account ownership. It is a 2 step process
      * @param _newOwner The address to which ownership should be transferred.
      */
     function transferOwnership(address _newOwner) public override whenUnlocked {
-        require(!isGuardian(_newOwner), "new owner cannot be a guardian");
+        require(!isGuardian(_newOwner), "New owner cannot be a guardian");
         super.transferOwnership(_newOwner);
     }
 }
