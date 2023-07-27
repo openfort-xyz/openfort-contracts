@@ -2,13 +2,15 @@
 pragma solidity ^0.8.19;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
+import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+
 // Smart wallet implementation to use
 import {ManagedOpenfortAccount} from "./ManagedOpenfortAccount.sol";
-import {OpenfortBeacon} from "./OpenfortBeacon.sol";
 import {OpenfortBeaconProxy} from "./OpenfortBeaconProxy.sol";
 
 // Interfaces
 import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
+import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 
 /**
  * @title ManagedOpenfortFactory (Non-upgradeable)
@@ -17,15 +19,14 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
  * It uses OpenZeppelin's Create2 and OpenfortBeaconProxy libraries.
  * It inherits from:
  *  - IBaseOpenfortFactory
+ *  - UpgradeableBeacon to also work as the beacon
  */
-contract ManagedOpenfortFactory is IBaseOpenfortFactory {
-    address public immutable openfortBeacon;
+contract ManagedOpenfortFactory is IBaseOpenfortFactory, UpgradeableBeacon {
+    address internal entrypointContract;
 
-    constructor(address _openfortBeacon) {
-        if (_openfortBeacon == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
-        openfortBeacon = _openfortBeacon;
+    constructor(address _owner, address _entrypoint, address _implementation) UpgradeableBeacon(_implementation) {
+        _transferOwnership(_owner);
+        entrypointContract = _entrypoint;
     }
 
     /*
@@ -42,7 +43,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
         emit AccountCreated(account, _admin);
         account = address(
             new OpenfortBeaconProxy{salt: salt}(
-                openfortBeacon,
+                address(this),
                 abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin))
             )
         );
@@ -58,13 +59,22 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory {
             keccak256(
                 abi.encodePacked(
                     type(OpenfortBeaconProxy).creationCode,
-                    abi.encode(openfortBeacon, abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin)))
+                    abi.encode(address(this), abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin)))
                 )
             )
         );
     }
 
     function accountImplementation() external view override returns (address) {
-        return OpenfortBeacon(openfortBeacon).implementation();
+        return implementation();
+    }
+
+    /**
+     * Add stake for this factory.
+     * This method can also carry eth value to add to the current stake.
+     * @param unstakeDelaySec - the unstake delay for this factory. Can only be increased.
+     */
+    function addStake(uint32 unstakeDelaySec) external payable onlyOwner {
+        IEntryPoint(entrypointContract).addStake{value: msg.value}(unstakeDelaySec);
     }
 }

@@ -6,7 +6,6 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
-import {OpenfortBeacon} from "contracts/core/managed/OpenfortBeacon.sol";
 import {ManagedOpenfortAccount} from "contracts/core/managed/ManagedOpenfortAccount.sol";
 import {ManagedOpenfortFactory} from "contracts/core/managed/ManagedOpenfortFactory.sol";
 import {OpenfortBeaconProxy} from "contracts/core/managed/OpenfortBeaconProxy.sol";
@@ -16,7 +15,7 @@ contract ManagedOpenfortAccountTest is Test {
     using ECDSA for bytes32;
 
     EntryPoint public entryPoint;
-    OpenfortBeacon public openfortBeacon;
+    // OpenfortBeacon public openfortBeacon; // not needed anymore
     ManagedOpenfortAccount public managedOpenfortAccount;
     ManagedOpenfortFactory public managedOpenfortFactory;
     address public account;
@@ -117,7 +116,7 @@ contract ManagedOpenfortAccountTest is Test {
     /**
      * @notice Initialize the ManagedOpenfortAccount testing contract.
      * Scenario:
-     * - factoryAdmin is the deployer (and owner) of the openfortBeacon, managedOpenfortAccount and managedOpenfortFactory
+     * - factoryAdmin is the deployer (and owner) of the managedOpenfortAccount and managedOpenfortFactory/Beacon
      * - accountAdmin is the account used to deploy new managed accounts using the factory
      * - entryPoint is the singleton EntryPoint
      * - testCounter is the counter used to test userOps
@@ -145,9 +144,10 @@ contract ManagedOpenfortAccountTest is Test {
         // deploy account implementation
         managedOpenfortAccount = new ManagedOpenfortAccount();
         // deploy OpenfortBeacon
-        openfortBeacon = new OpenfortBeacon(address(managedOpenfortAccount));
-        // deploy account factory
-        managedOpenfortFactory = new ManagedOpenfortFactory(address(openfortBeacon));
+        // openfortBeacon = new OpenfortBeacon(address(managedOpenfortAccount)); // not needed anymore
+        // deploy account factory (beacon)
+        managedOpenfortFactory =
+            new ManagedOpenfortFactory(factoryAdmin, address(entryPoint), address(managedOpenfortAccount));
         // Create an static account wallet and get its address
         account = managedOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
         // deploy a new TestCounter
@@ -198,10 +198,12 @@ contract ManagedOpenfortAccountTest is Test {
         UserOperation[] memory userOpCreateAccount =
             _setupUserOpExecute(account2, accountAdminPKey, initCode, address(0), 0, bytes(""));
 
+        // vm.expectRevert();
+        // entryPoint.simulateValidation(userOpCreateAccount[0]);
+
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
         emit AccountCreated(account2, accountAdmin);
-
         entryPoint.handleOps(userOpCreateAccount, beneficiary);
 
         // Make sure the smart account does have some code now
@@ -1018,9 +1020,27 @@ contract ManagedOpenfortAccountTest is Test {
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
+
         // Expect the simulateValidation() to always revert
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
+
+        // Test addStake. Make sure it checks for owner and alue passed.
+        vm.expectRevert("Ownable: caller is not the owner");
+        managedOpenfortFactory.addStake{value: 10000000000000000}(99);
+        vm.prank(factoryAdmin);
+        vm.expectRevert("no stake specified");
+        managedOpenfortFactory.addStake(99);
+        vm.prank(factoryAdmin);
+        managedOpenfortFactory.addStake{value: 10000000000000000}(99);
+
+        // expectRevert as simulateValidation() always reverts
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+
+        // expectRevert as simulateHandleOp() always reverts
+        vm.expectRevert();
+        entryPoint.simulateHandleOp(userOp[0], address(0), "");
 
         // Verifiy that the counter has not increased
         assertEq(testCounter.counters(account), 0);
@@ -1047,12 +1067,13 @@ contract ManagedOpenfortAccountTest is Test {
         address newImplementationAddress = address(newImplementation);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        openfortBeacon.upgradeTo(newImplementationAddress);
+        managedOpenfortFactory.upgradeTo(newImplementationAddress);
 
         vm.prank(factoryAdmin);
-        openfortBeacon.upgradeTo(newImplementationAddress);
+        managedOpenfortFactory.upgradeTo(newImplementationAddress);
 
-        assertEq(openfortBeacon.implementation(), newImplementationAddress);
+        assertEq(managedOpenfortFactory.accountImplementation(), newImplementationAddress);
+        assertEq(managedOpenfortFactory.implementation(), newImplementationAddress); //redundant view call for now (due to factory being the Beacon now)
 
         // Notice that, even though we bind the address to the old implementation, version() now returns 2
         assertEq(managedAccount.version(), 2);
