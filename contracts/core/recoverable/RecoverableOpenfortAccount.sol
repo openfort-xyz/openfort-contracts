@@ -16,7 +16,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     address internal entrypointContract;
 
-    // Period during which the owner can cancel a guardian addition/revokation in seconds (7 days)
+    // Period during which the owner can cancel a guardian proposal/revokation in seconds (7 days)
     uint256 internal recoveryPeriod;
     // Lock period
     uint256 internal lockPeriod;
@@ -25,13 +25,6 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     uint256 internal securityPeriod;
     // The security window
     uint256 internal securityWindow;
-
-    struct Lock {
-        // Lock's release timestamp
-        uint64 release;
-        // Signature of the method that set the last lock
-        bytes4 lockerMethod;
-    }
 
     struct GuardianStorageConfig {
         // the list of guardians
@@ -47,29 +40,32 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         uint128 index;
     }
 
-    struct RecoveryConfig {
-        address recoveryAddress; // Address to which ownership should be transferred
-        uint64 executeAfter;
-        uint32 guardianCount;
-    }
-
     struct GuardianManagerConfig {
-        // The time at which a guardian addition or revokation will be confirmable by the owner
+        // The time at which a guardian proposal or revokation will be confirmable by the owner
         mapping(bytes32 => uint256) pending;
     }
 
-    Lock internal locker;
+    struct RecoveryConfig {
+        address recoveryAddress; // Address to which ownership should be transferred
+        uint64 executeAfter; //
+        uint32 guardianCount;
+    }
+
     GuardianStorageConfig internal guardiansConfig;
-    RecoveryConfig internal guardianRecoveryConfig;
     GuardianManagerConfig internal guardianManagerConfig;
+    RecoveryConfig internal guardianRecoveryConfig;
 
     event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
+    event Locked(bool isLocked);
+    event GuardianProposed(address indexed guardian, uint256 executeAfter);
     event GuardianAdded(address indexed guardian);
-    event Locked(uint64 releaseAfter);
-    event Unlocked();
     event RecoveryExecuted(address indexed _recovery, uint64 executeAfter);
 
+    error AccountLocked();
+    error AccountNotLocked();
+    error CannotUnlock();
     error InsecurePeriod();
+    error GuardianCannotBeOwner();
     error NoOngoingRecovery();
     error OngoingRecovery();
 
@@ -102,6 +98,8 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         securityPeriod = _securityPeriod;
 
         guardiansConfig.guardians.push(_openfortGuardian);
+        guardiansConfig.info[_openfortGuardian].exists = true;
+        guardiansConfig.info[_openfortGuardian].index = 0;
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
@@ -129,47 +127,39 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
 
     /**
-     * @notice Throws if the wallet is locked.
+     * @notice Helper method to check if a wallet is locked.
      */
-    modifier whenUnlocked() {
-        require(!_isLocked(), "Wallet locked");
-        _;
-    }
-
-    /**
-     * @notice Lets a guardian lock a wallet.
-     */
-    function lock() external onlyGuardian whenUnlocked {
-        _setLock(block.timestamp + lockPeriod, RecoverableOpenfortAccount.lock.selector);
-        emit Locked(uint64(block.timestamp + lockPeriod));
-    }
-
-    /**
-     * @notice Lets a guardian unlock a locked wallet.
-     */
-    function unlock() external onlyGuardian whenUnlocked {
-        require(locker.lockerMethod == RecoverableOpenfortAccount.lock.selector, "SM: cannot unlock");
-        _setLock(0, bytes4(0));
-        emit Unlocked();
-    }
-
-    function _setLock(uint256 _releaseAfter, bytes4 _locker) internal {
-        locker = Lock(SafeCastUpgradeable.toUint64(_releaseAfter), _locker);
+    function isLocked() public view returns (bool) {
+        return guardiansConfig.lock > block.timestamp;
     }
 
     /**
      * @notice Returns the release time of a wallet lock or 0 if the wallet is unlocked.
      * @return _releaseAfter The epoch time at which the lock will release (in seconds).
      */
-    function getLock() external view returns (uint64 _releaseAfter) {
-        return _isLocked() ? locker.release : 0;
+    function getLock() external view returns (uint256 _releaseAfter) {
+        return isLocked() ? guardiansConfig.lock : 0;
     }
 
     /**
-     * @notice Helper method to check if a wallet is locked.
+     * @notice Lets a guardian lock a wallet.
      */
-    function _isLocked() internal view returns (bool) {
-        return locker.release > uint64(block.timestamp);
+    function lock() external onlyGuardian {
+        if (isLocked()) revert AccountLocked();
+        _setLock(block.timestamp + lockPeriod);
+    }
+
+    /**
+     * @notice Lets a guardian unlock a locked wallet.
+     */
+    function unlock() external onlyGuardian {
+        if (!isLocked()) revert AccountNotLocked();
+        _setLock(0);
+    }
+
+    function _setLock(uint256 _releaseAfter) internal {
+        guardiansConfig.lock = _releaseAfter;
+        emit Locked(_releaseAfter != 0);
     }
 
     /**
@@ -199,15 +189,43 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     }
 
     /**
-     * @notice Confirms the pending addition of a guardian to an account.
+     * @notice Lets the owner add a guardian to its Openfort account.
+     * The first guardian is added immediately. All following proposals must be confirmed
+     * by calling the confirmGuardianProposal() method.
+     * @param _guardian The guardian to propose.
+     */
+    function proposeGuardian(address _guardian) external onlyOwner {
+        if (isLocked()) revert AccountLocked();
+        if (owner() == _guardian) revert();
+        if (isGuardian(_guardian)) revert();
+
+        // Guardians must either be an EOA or a contract with an owner()
+        // method that returns an address with a 25000 gas stipend.
+        // Note that this test is not meant to be strict and can be bypassed by custom malicious contracts.
+        (bool success,) = _guardian.call{gas: 25000}(abi.encodeWithSignature("owner()"));
+        require(success, "SM: must be EOA/Argent wallet");
+
+        bytes32 id = keccak256(abi.encodePacked(_guardian, "proposal"));
+        require(
+            guardianManagerConfig.pending[id] == 0
+                || block.timestamp > guardianManagerConfig.pending[id] + securityWindow,
+            "SM: duplicate pending proposal"
+        );
+        guardianManagerConfig.pending[id] = block.timestamp + securityPeriod;
+        emit GuardianProposed(_guardian, block.timestamp + securityPeriod);
+    }
+
+    /**
+     * @notice Confirms the pending proposal of a guardian to an account.
      * The method must be called during the confirmation window and can be called by anyone to enable orchestration.
      * @param _guardian The guardian.
      */
-    function confirmGuardianAddition(address _guardian) external whenUnlocked {
-        bytes32 id = keccak256(abi.encodePacked(_guardian, "addition"));
-        require(guardianManagerConfig.pending[id] > 0, "Unknown pending addition");
-        require(guardianManagerConfig.pending[id] < block.timestamp, "Pending addition not over");
-        require(block.timestamp < guardianManagerConfig.pending[id] + securityWindow, "Pending addition expired");
+    function confirmGuardianProposal(address _guardian) external {
+        if (isLocked()) revert AccountLocked();
+        bytes32 id = keccak256(abi.encodePacked(_guardian, "proposal"));
+        require(guardianManagerConfig.pending[id] > 0, "Unknown pending proposal");
+        require(guardianManagerConfig.pending[id] < block.timestamp, "Pending proposal not over");
+        require(block.timestamp < guardianManagerConfig.pending[id] + securityWindow, "Pending proposal expired");
         _addGuardian(_guardian);
         emit GuardianAdded(_guardian);
         delete guardianManagerConfig.pending[id];
@@ -218,9 +236,25 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * @param _guardian The guardian to add.
      */
     function _addGuardian(address _guardian) internal {
+        if (_guardian == address(0)) revert ZeroAddressNotAllowed();
         guardiansConfig.guardians.push(_guardian);
         guardiansConfig.info[_guardian].exists = true;
-        guardiansConfig.info[_guardian].index = uint128(guardiansConfig.guardians.length - 1);
+        guardiansConfig.info[_guardian].index = SafeCastUpgradeable.toUint128(guardiansConfig.guardians.length);
+    }
+
+    /**
+     * @notice Revoke a guardian from an Openfort account.
+     * @param _guardian The guardian to revoke.
+     */
+    function revokeGuardian(address _guardian) external {
+        address lastGuardian = guardiansConfig.guardians[guardiansConfig.guardians.length - 1];
+        if (_guardian != lastGuardian) {
+            uint128 targetIndex = guardiansConfig.info[_guardian].index;
+            guardiansConfig.guardians[targetIndex] = lastGuardian;
+            guardiansConfig.info[lastGuardian].index = targetIndex;
+        }
+        guardiansConfig.guardians.pop();
+        delete guardiansConfig.info[_guardian];
     }
 
     /**
@@ -250,7 +284,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         require(!isGuardian(_recovery), "Recovery address cannot be a guardian");
         uint64 executeAfter = uint64(block.timestamp + recoveryPeriod);
         guardianRecoveryConfig = RecoveryConfig(_recovery, executeAfter, uint32(guardianRecoveryConfig.guardianCount));
-        _setLock(block.timestamp + lockPeriod, RecoverableOpenfortAccount.executeRecovery.selector);
+        _setLock(block.timestamp + lockPeriod);
         emit RecoveryExecuted(_recovery, executeAfter);
     }
 
@@ -258,8 +292,9 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * @notice Lets the owner initiate a transfer of the account ownership. It is a 2 step process
      * @param _newOwner The address to which ownership should be transferred.
      */
-    function transferOwnership(address _newOwner) public override whenUnlocked {
-        require(!isGuardian(_newOwner), "New owner cannot be a guardian");
+    function transferOwnership(address _newOwner) public override {
+        if (isLocked()) revert AccountLocked();
+        if (isGuardian(_newOwner)) revert GuardianCannotBeOwner();
         super.transferOwnership(_newOwner);
     }
 }
