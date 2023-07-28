@@ -6,6 +6,7 @@ import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/acces
 import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
+import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 
 import {BaseAccount, UserOperation, IEntryPoint} from "account-abstraction/core/BaseAccount.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
@@ -149,7 +150,7 @@ abstract contract BaseOpenfortAccount is
                 return false;
             } // Limit of transactions per sessionKey reached
             unchecked {
-                sessionKey.limit = sessionKey.limit - uint48(toContracts.length);
+                sessionKey.limit = sessionKey.limit - SafeCastUpgradeable.toUint48(toContracts.length);
             }
 
             // Check if it is a masterSessionKey
