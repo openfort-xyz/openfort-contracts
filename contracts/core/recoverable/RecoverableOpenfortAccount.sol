@@ -54,8 +54,13 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     event Locked(bool isLocked);
     event GuardianProposed(address indexed guardian, uint256 executeAfter);
     event GuardianAdded(address indexed guardian);
-    event GuardianProposalCancelled(address _guardian);
+    event GuardianProposalCancelled(address indexed guardian);
+    event GuardianRevokationRequested(address indexed guardian, uint256 executeAfter);
+    event GuardianRevoked(address indexed guardian);
+    event GuardianRevokationCancelled(address indexed guardian);
     event RecoveryExecuted(address indexed _recovery, uint64 executeAfter);
+    event RecoveryFinalized(address indexed _recovery);
+    event RecoveryCanceled(address indexed _recovery);
 
     error AccountLocked();
     error AccountNotLocked();
@@ -246,18 +251,54 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     }
 
     /**
-     * @notice Revoke a guardian from an Openfort account.
+     * @notice Lets the owner revoke a guardian from its wallet.
+     * @dev Revokation must be confirmed by calling the confirmGuardianRevokation() method.
      * @param _guardian The guardian to revoke.
      */
-    function revokeGuardian(address _guardian) external {
+    function revokeGuardian(address _guardian) external onlyOwner {
+        require(isGuardian(_guardian), "Must be existing guardian");
+        require(
+            guardiansConfig.info[_guardian].pending == 0
+                || block.timestamp > guardiansConfig.info[_guardian].pending + securityWindow,
+            "Muplicate pending revoke"
+        ); // TODO need to allow if confirmation window passed
+        guardiansConfig.info[_guardian].pending = block.timestamp + securityPeriod;
+        emit GuardianRevokationRequested(_guardian, block.timestamp + securityPeriod);
+    }
+
+    /**
+     * @notice Confirms the pending revokation of a guardian to a wallet.
+     * The method must be called during the confirmation window and can be called by anyone to enable orchestration.
+     * @param _guardian The guardian to confirm the revocation.
+     */
+    function confirmGuardianRevokation(address _guardian) external {
+        require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending revoke");
+        require(guardiansConfig.info[_guardian].pending < block.timestamp, "Pending revoke not over");
+        require(block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow, "Pending revoke expired");
+
         address lastGuardian = guardiansConfig.guardians[guardiansConfig.guardians.length - 1];
         if (_guardian != lastGuardian) {
             uint256 targetIndex = guardiansConfig.info[_guardian].index;
             guardiansConfig.guardians[targetIndex] = lastGuardian;
             guardiansConfig.info[lastGuardian].index = targetIndex;
         }
-        guardiansConfig.guardians.pop();
+
+        guardiansConfig.guardians.pop(); // ALERT! beta: review this logic!
         delete guardiansConfig.info[_guardian];
+        delete guardiansConfig.info[_guardian].pending;
+
+        emit GuardianRevoked(_guardian);
+    }
+
+    /**
+     * @notice Lets the owner cancel a pending guardian revokation.
+     * @param _guardian The guardian.
+     */
+    function cancelGuardianRevokation(address _guardian) external onlyOwner {
+        if (!isLocked()) revert AccountLocked();
+        require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending revoke");
+        delete guardiansConfig.info[_guardian].pending;
+        emit GuardianRevokationCancelled(_guardian);
     }
 
     /**
@@ -289,6 +330,36 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         guardianRecoveryConfig = RecoveryConfig(_recovery, executeAfter, uint32(guardianRecoveryConfig.guardianCount));
         _setLock(block.timestamp + lockPeriod);
         emit RecoveryExecuted(_recovery, executeAfter);
+    }
+
+    /**
+     * @notice Finalizes an ongoing recovery procedure if the security period is over.
+     * The method is public and callable by anyone to enable orchestration.
+     */
+    function finalizeRecovery() external {
+        _requireRecovery(true);
+        require(uint64(block.timestamp) > guardianRecoveryConfig.executeAfter, "Ongoing recovery period");
+        address recoveryOwner = guardianRecoveryConfig.recoveryAddress;
+
+        // End sessions here?
+
+        _transferOwnership(recoveryOwner);
+        _setLock(0);
+
+        emit RecoveryFinalized(recoveryOwner);
+    }
+
+    /**
+     * @notice Lets the owner cancel an ongoing recovery procedure.
+     * Must be confirmed by N guardians, where N = ceil(Nb Guardian at executeRecovery + 1) / 2) - 1.
+     */
+    function cancelRecovery() external onlyOwner {
+        _requireRecovery(true);
+        address recoveryOwner = guardianRecoveryConfig.recoveryAddress;
+
+        _setLock(0);
+
+        emit RecoveryCanceled(recoveryOwner);
     }
 
     /**
