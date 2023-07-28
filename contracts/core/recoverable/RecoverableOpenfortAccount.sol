@@ -180,6 +180,31 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         _;
     }
 
+    /**
+     * @notice Returns the number of guardians for an Openfort account.
+     * @return the number of guardians.
+     */
+    function guardianCount() external view returns (uint256) {
+        return guardiansConfig.guardians.length;
+    }
+
+    /**
+     * @notice Gets the list of guaridans for an Openfort account.
+     * @return the list of guardians.
+     */
+    function getGuardians() external view returns (address[] memory) {
+        address[] memory guardians = new address[](guardiansConfig.guardians.length);
+        for (uint256 i = 0; i < guardiansConfig.guardians.length; i++) {
+            guardians[i] = guardiansConfig.guardians[i];
+        }
+        return guardians;
+    }
+
+    /**
+     * @notice Checks if an account is a guardian for an Openfort account.
+     * @param _guardian The account
+     * @return true if the account is a guardian for the account.
+     */
     function isGuardian(address _guardian) public view returns (bool) {
         return guardiansConfig.info[_guardian].exists;
     }
