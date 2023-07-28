@@ -26,6 +26,12 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     // The security window
     uint256 internal securityWindow;
 
+    struct GuardianInfo {
+        bool exists;
+        uint256 index;
+        uint256 pending;
+    }
+
     struct GuardianStorageConfig {
         // the list of guardians
         address[] guardians;
@@ -35,16 +41,6 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         uint256 lock;
     }
 
-    struct GuardianInfo {
-        bool exists;
-        uint128 index;
-    }
-
-    struct GuardianManagerConfig {
-        // The time at which a guardian proposal or revokation will be confirmable by the owner
-        mapping(bytes32 => uint256) pending;
-    }
-
     struct RecoveryConfig {
         address recoveryAddress; // Address to which ownership should be transferred
         uint64 executeAfter; //
@@ -52,19 +48,22 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     }
 
     GuardianStorageConfig internal guardiansConfig;
-    GuardianManagerConfig internal guardianManagerConfig;
     RecoveryConfig internal guardianRecoveryConfig;
 
     event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
     event Locked(bool isLocked);
     event GuardianProposed(address indexed guardian, uint256 executeAfter);
     event GuardianAdded(address indexed guardian);
+    event GuardianProposalCancelled(address _guardian);
     event RecoveryExecuted(address indexed _recovery, uint64 executeAfter);
 
     error AccountLocked();
     error AccountNotLocked();
     error CannotUnlock();
     error InsecurePeriod();
+    error MustBeGuardian();
+    error DuplicatedGuardian();
+    error DuplicatedProposal();
     error GuardianCannotBeOwner();
     error NoOngoingRecovery();
     error OngoingRecovery();
@@ -100,6 +99,8 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         guardiansConfig.guardians.push(_openfortGuardian);
         guardiansConfig.info[_openfortGuardian].exists = true;
         guardiansConfig.info[_openfortGuardian].index = 0;
+        guardiansConfig.info[_openfortGuardian].pending = 0;
+        emit GuardianAdded(_openfortGuardian);
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
@@ -170,7 +171,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * @notice Throws if the caller is not a guardian for the account.
      */
     modifier onlyGuardian() {
-        require(isGuardian(msg.sender), "Must be guardian");
+        if (!isGuardian(msg.sender)) revert MustBeGuardian();
         _;
     }
 
@@ -185,61 +186,63 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
     function isGuardianOrGuardianSigner(address _guardian) external pure returns (bool _isGuardian) {
         (_guardian);
-        _isGuardian = false; // ToDo
+        _isGuardian = false; // ToDo for smart contract wallets acting as guardians in the future
     }
 
     /**
-     * @notice Lets the owner add a guardian to its Openfort account.
-     * The first guardian is added immediately. All following proposals must be confirmed
-     * by calling the confirmGuardianProposal() method.
+     * @notice Lets the owner propose a guardian to its Openfort account.
+     * The first guardian is added immediately (see constructor). All following proposals must be confirmed
+     * by calling the confirmGuardianProposal() method. Only the owner can add guardians.
      * @param _guardian The guardian to propose.
      */
     function proposeGuardian(address _guardian) external onlyOwner {
         if (isLocked()) revert AccountLocked();
-        if (owner() == _guardian) revert();
-        if (isGuardian(_guardian)) revert();
+        if (owner() == _guardian) revert GuardianCannotBeOwner();
+        if (isGuardian(_guardian)) revert DuplicatedGuardian();
 
-        // Guardians must either be an EOA or a contract with an owner()
+        // Guardians must either be an EOA or a contract with an owner() (ERC-173)
         // method that returns an address with a 25000 gas stipend.
         // Note that this test is not meant to be strict and can be bypassed by custom malicious contracts.
         (bool success,) = _guardian.call{gas: 25000}(abi.encodeWithSignature("owner()"));
-        require(success, "SM: must be EOA/Argent wallet");
+        require(success, "Must be an EOA or an ownable wallet");
 
-        bytes32 id = keccak256(abi.encodePacked(_guardian, "proposal"));
-        require(
-            guardianManagerConfig.pending[id] == 0
-                || block.timestamp > guardianManagerConfig.pending[id] + securityWindow,
-            "SM: duplicate pending proposal"
-        );
-        guardianManagerConfig.pending[id] = block.timestamp + securityPeriod;
+        if (
+            !(guardiansConfig.info[_guardian].pending == 0)
+                || guardiansConfig.info[_guardian].pending < block.timestamp + securityPeriod
+        ) {
+            revert DuplicatedProposal();
+        }
+        guardiansConfig.info[_guardian].pending = block.timestamp + securityPeriod;
         emit GuardianProposed(_guardian, block.timestamp + securityPeriod);
     }
 
     /**
      * @notice Confirms the pending proposal of a guardian to an account.
      * The method must be called during the confirmation window and can be called by anyone to enable orchestration.
-     * @param _guardian The guardian.
+     * @param _guardian The guardian to be confirmed.
      */
     function confirmGuardianProposal(address _guardian) external {
         if (isLocked()) revert AccountLocked();
-        bytes32 id = keccak256(abi.encodePacked(_guardian, "proposal"));
-        require(guardianManagerConfig.pending[id] > 0, "Unknown pending proposal");
-        require(guardianManagerConfig.pending[id] < block.timestamp, "Pending proposal not over");
-        require(block.timestamp < guardianManagerConfig.pending[id] + securityWindow, "Pending proposal expired");
-        _addGuardian(_guardian);
+        require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending proposal");
+        require(guardiansConfig.info[_guardian].pending < block.timestamp, "Pending proposal not over");
+        require(block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow, "Pending proposal expired");
+
+        guardiansConfig.guardians.push(_guardian);
+        guardiansConfig.info[_guardian].exists = true;
+        guardiansConfig.info[_guardian].index = guardiansConfig.guardians.length;
+        delete guardiansConfig.info[_guardian].pending;
         emit GuardianAdded(_guardian);
-        delete guardianManagerConfig.pending[id];
     }
 
     /**
-     * @notice Add a guardian to the account.
-     * @param _guardian The guardian to add.
+     * @notice Lets the owner cancel a pending guardian addition.
+     * @param _guardian The guardian which proposal will be cancelled.
      */
-    function _addGuardian(address _guardian) internal {
-        if (_guardian == address(0)) revert ZeroAddressNotAllowed();
-        guardiansConfig.guardians.push(_guardian);
-        guardiansConfig.info[_guardian].exists = true;
-        guardiansConfig.info[_guardian].index = SafeCastUpgradeable.toUint128(guardiansConfig.guardians.length);
+    function cancelGuardianProposal(address _guardian) external onlyOwner {
+        if (isLocked()) revert AccountLocked();
+        require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending proposal");
+        delete guardiansConfig.info[_guardian].pending;
+        emit GuardianProposalCancelled(_guardian);
     }
 
     /**
@@ -249,7 +252,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     function revokeGuardian(address _guardian) external {
         address lastGuardian = guardiansConfig.guardians[guardiansConfig.guardians.length - 1];
         if (_guardian != lastGuardian) {
-            uint128 targetIndex = guardiansConfig.info[_guardian].index;
+            uint256 targetIndex = guardiansConfig.info[_guardian].index;
             guardiansConfig.guardians[targetIndex] = lastGuardian;
             guardiansConfig.info[lastGuardian].index = targetIndex;
         }
