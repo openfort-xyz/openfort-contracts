@@ -2,9 +2,8 @@
 pragma solidity ^0.8.19;
 
 // Base account contract to inherit from and EntryPoint interface
-import {BaseOpenfortAccount, IEntryPoint} from "../BaseOpenfortAccount.sol";
+import {BaseOpenfortAccount, IEntryPoint, SafeCastUpgradeable} from "../BaseOpenfortAccount.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 /**
  * @title RecoverableOpenfortAccount
@@ -155,7 +154,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     }
 
     function _setLock(uint256 _releaseAfter, bytes4 _locker) internal {
-        locker = Lock(SafeCast.toUint64(_releaseAfter), _locker);
+        locker = Lock(SafeCastUpgradeable.toUint64(_releaseAfter), _locker);
     }
 
     /**
