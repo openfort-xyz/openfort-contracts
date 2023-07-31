@@ -238,7 +238,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
 
         if (
             !(guardiansConfig.info[_guardian].pending == 0)
-                || guardiansConfig.info[_guardian].pending < block.timestamp + securityPeriod
+                && block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow
         ) {
             revert DuplicatedProposal();
         }
@@ -285,14 +285,14 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         require(
             guardiansConfig.info[_guardian].pending == 0
                 || block.timestamp > guardiansConfig.info[_guardian].pending + securityWindow,
-            "Muplicate pending revoke"
+            "Duplicate pending revoke"
         ); // TODO need to allow if confirmation window passed
         guardiansConfig.info[_guardian].pending = block.timestamp + securityPeriod;
         emit GuardianRevokationRequested(_guardian, block.timestamp + securityPeriod);
     }
 
     /**
-     * @notice Confirms the pending revokation of a guardian to a wallet.
+     * @notice Confirms the pending revokation of a guardian to an Openfrort account.
      * The method must be called during the confirmation window and can be called by anyone to enable orchestration.
      * @param _guardian The guardian to confirm the revocation.
      */
@@ -317,10 +317,10 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
 
     /**
      * @notice Lets the owner cancel a pending guardian revokation.
-     * @param _guardian The guardian.
+     * @param _guardian The guardian to cancel its revocation.
      */
     function cancelGuardianRevokation(address _guardian) external onlyOwner {
-        if (!isLocked()) revert AccountLocked();
+        if (isLocked()) revert AccountLocked();
         require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending revoke");
         delete guardiansConfig.info[_guardian].pending;
         emit GuardianRevokationCancelled(_guardian);
