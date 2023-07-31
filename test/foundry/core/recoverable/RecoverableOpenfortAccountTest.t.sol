@@ -42,6 +42,13 @@ contract RecoverableOpenfortAccountTest is Test {
     event GuardianRevokationRequested(address indexed guardian, uint256 executeAfter);
     event GuardianRevokationCancelled(address indexed guardian);
 
+    error ZeroAddressNotAllowed();
+    error AccountLocked();
+    error AccountNotLocked();
+    error MustBeGuardian();
+    error DuplicatedGuardian();
+    error GuardianCannotBeOwner();
+
     /*
      * Auxiliary function to generate a userOP
      */
@@ -187,6 +194,10 @@ contract RecoverableOpenfortAccountTest is Test {
         emit AccountCreated(accountAddress2, accountAdmin);
 
         // Deploy a upgradeable account to the counterfactual address
+        vm.prank(factoryAdmin);
+        recoverableOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
+
+        // Calling it again should just return the address and not create another account
         vm.prank(factoryAdmin);
         recoverableOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
 
@@ -1051,10 +1062,81 @@ contract RecoverableOpenfortAccountTest is Test {
         vm.expectRevert("Ownable: caller is not the owner");
         upgradeableAccount.updateEntryPoint(newEntryPoint);
 
+        vm.expectRevert(ZeroAddressNotAllowed.selector);
+        vm.prank(accountAdmin);
+        upgradeableAccount.updateEntryPoint(address(0));
+
         vm.prank(accountAdmin);
         upgradeableAccount.updateEntryPoint(newEntryPoint);
 
         assertEq(address(upgradeableAccount.entryPoint()), newEntryPoint);
+    }
+
+    /**
+     * Lock tests *
+     */
+
+    /*
+     * Test locking the Openfort account using the default guardian.
+     */
+    function testLockAccount() public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+
+        assertEq(recoverableOpenfortAccount.isLocked(), false);
+        assertEq(recoverableOpenfortAccount.getLock(), 0);
+
+        vm.expectRevert(MustBeGuardian.selector);
+        recoverableOpenfortAccount.lock();
+
+        vm.prank(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.lock();
+
+        assertEq(recoverableOpenfortAccount.isLocked(), true);
+        assertEq(recoverableOpenfortAccount.getLock(), LOCK_PERIOD + 1);
+
+        vm.expectRevert(AccountLocked.selector);
+        vm.prank(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.lock();
+
+        // Automatically unlock
+        skip(LOCK_PERIOD + 1);
+        assertEq(recoverableOpenfortAccount.isLocked(), false);
+        assertEq(recoverableOpenfortAccount.getLock(), 0);
+    }
+
+    /*
+     * Test unlocking the Openfort account using the default guardian.
+     */
+    function testUnlockAccount() public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+
+        assertEq(recoverableOpenfortAccount.isLocked(), false);
+        assertEq(recoverableOpenfortAccount.getLock(), 0);
+
+        vm.expectRevert(MustBeGuardian.selector);
+        recoverableOpenfortAccount.lock();
+
+        vm.prank(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.lock();
+
+        assertEq(recoverableOpenfortAccount.isLocked(), true);
+        assertEq(recoverableOpenfortAccount.getLock(), LOCK_PERIOD + 1);
+
+        skip(LOCK_PERIOD / 2);
+
+        vm.expectRevert(MustBeGuardian.selector);
+        recoverableOpenfortAccount.unlock();
+        assertEq(recoverableOpenfortAccount.isLocked(), true);
+
+        vm.prank(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.unlock();
+
+        assertEq(recoverableOpenfortAccount.isLocked(), false);
+        assertEq(recoverableOpenfortAccount.getLock(), 0);
+
+        vm.expectRevert(AccountNotLocked.selector);
+        vm.prank(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.unlock();
     }
 
     /**
@@ -1342,7 +1424,7 @@ contract RecoverableOpenfortAccountTest is Test {
         assertEq(recoverableOpenfortAccount.isGuardian(accountAdmin), false);
 
         // Expect revert because the default guardian cannot be proposed again
-        vm.expectRevert();
+        vm.expectRevert(DuplicatedGuardian.selector);
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.proposeGuardian(OPENFORT_GUARDIAN);
 
@@ -1793,5 +1875,47 @@ contract RecoverableOpenfortAccountTest is Test {
         skip(SECURITY_PERIOD);
         vm.expectRevert("Unknown pending revoke");
         recoverableOpenfortAccount.confirmGuardianRevokation(friendAccount);
+    }
+
+    /**
+     * Recovery tests *
+     */
+
+    /**
+     * Transfer ownership tests *
+     */
+
+    /*
+     * Try to transfer ownership to a guardian.
+     * Should not be allowed.
+     */
+    function testTransferOwnerNotGuardian() public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        recoverableOpenfortAccount.proposeGuardian(friendAccount);
+
+        skip(1);
+        skip(SECURITY_PERIOD);
+        recoverableOpenfortAccount.confirmGuardianProposal(friendAccount);
+
+        // It should fail as friendAccount is already a guardian
+        vm.expectRevert(GuardianCannotBeOwner.selector);
+        recoverableOpenfortAccount.transferOwnership(friendAccount);
+    }
+
+    /*
+     * Temporal test function for coverage purposes showing
+     * that isGuardianOrGuardianSigner() always returns false.
+     */
+    function testStubFakeMockTempisGuardian(address _guardian) public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+        assertEq(recoverableOpenfortAccount.isGuardianOrGuardianSigner(_guardian), false);
     }
 }
