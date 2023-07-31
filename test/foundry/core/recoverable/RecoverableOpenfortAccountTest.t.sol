@@ -1881,6 +1881,19 @@ contract RecoverableOpenfortAccountTest is Test {
      * Recovery tests *
      */
 
+    /*
+     * A
+     * 
+     */
+    function testExecuteRecovery() public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+
+        vm.expectRevert("Recovery address cannot be a guardian");
+        recoverableOpenfortAccount.executeRecovery(OPENFORT_GUARDIAN);
+
+        recoverableOpenfortAccount.executeRecovery(address(beneficiary));
+    }
+
     /**
      * Transfer ownership tests *
      */
