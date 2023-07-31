@@ -168,6 +168,10 @@ contract StaticOpenfortAccountTest is Test {
         vm.prank(factoryAdmin);
         staticOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
 
+        // Calling it again should just return the address and not create another account
+        vm.prank(factoryAdmin);
+        staticOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
+
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
         assertEq(accountAddress2, staticOpenfortFactory.getAddressWithNonce(accountAdmin, "2"));

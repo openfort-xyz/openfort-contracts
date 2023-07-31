@@ -310,7 +310,6 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
 
         guardiansConfig.guardians.pop(); // ALERT! beta: review this logic!
         delete guardiansConfig.info[_guardian];
-        delete guardiansConfig.info[_guardian].pending;
 
         emit GuardianRevoked(_guardian);
     }
@@ -346,15 +345,16 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * @notice Lets the guardians start the execution of the recovery procedure.
      * Once triggered the recovery is pending for the security period before it can be finalised.
      * Must be confirmed by N guardians, where N = ceil(Nb Guardians / 2).
-     * @param _recovery The address to which ownership should be transferred.
+     * @param _recoveryAddress The address to which ownership should be transferred.
      */
-    function executeRecovery(address _recovery) external {
+    function executeRecovery(address _recoveryAddress) external {
         _requireRecovery(false);
-        require(!isGuardian(_recovery), "Recovery address cannot be a guardian");
+        require(!isGuardian(_recoveryAddress), "Recovery address cannot be a guardian");
         uint64 executeAfter = uint64(block.timestamp + recoveryPeriod);
-        guardianRecoveryConfig = RecoveryConfig(_recovery, executeAfter, uint32(guardianRecoveryConfig.guardianCount));
+        guardianRecoveryConfig =
+            RecoveryConfig(_recoveryAddress, executeAfter, uint32(guardianRecoveryConfig.guardianCount));
         _setLock(block.timestamp + lockPeriod);
-        emit RecoveryExecuted(_recovery, executeAfter);
+        emit RecoveryExecuted(_recoveryAddress, executeAfter);
     }
 
     /**
@@ -376,7 +376,6 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
 
     /**
      * @notice Lets the owner cancel an ongoing recovery procedure.
-     * Must be confirmed by N guardians, where N = ceil(Nb Guardian at executeRecovery + 1) / 2) - 1.
      */
     function cancelRecovery() external onlyOwner {
         _requireRecovery(true);
