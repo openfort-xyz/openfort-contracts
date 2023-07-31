@@ -173,6 +173,10 @@ contract ManagedOpenfortAccountTest is Test {
         vm.prank(factoryAdmin);
         managedOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
 
+        // Calling it again should just return the address and not create another account
+        vm.prank(factoryAdmin);
+        managedOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
+
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
         assertEq(account2, managedOpenfortFactory.getAddressWithNonce(accountAdmin, "2"));
