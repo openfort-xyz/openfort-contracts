@@ -2,8 +2,9 @@
 pragma solidity ^0.8.19;
 
 // Base account contract to inherit from and EntryPoint interface
-import {BaseOpenfortAccount, IEntryPoint, SafeCastUpgradeable} from "../BaseOpenfortAccount.sol";
+import {BaseOpenfortAccount, IEntryPoint, SafeCastUpgradeable, ECDSAUpgradeable} from "../BaseOpenfortAccount.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title RecoverableOpenfortAccount
@@ -14,9 +15,11 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  *  - UUPSUpgradeable
  */
 contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
+    using ECDSAUpgradeable for bytes32;
+
     address internal entrypointContract;
 
-    // Period during which the owner can cancel a guardian proposal/revokation in seconds (7 days)
+    // Period during which the owner can cancel a guardian proposal/revocation in seconds (7 days)
     uint256 internal recoveryPeriod;
     // Lock period
     uint256 internal lockPeriod;
@@ -27,24 +30,21 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     uint256 internal securityWindow;
 
     struct GuardianInfo {
-        bool exists;
-        uint256 index;
-        uint256 pending;
+        bool exists; // Whether the guardian is active/exists or not
+        uint256 index; // Position of the guardian
+        uint256 pending; // Pending time until addition or removal
     }
 
     struct GuardianStorageConfig {
-        // the list of guardians
-        address[] guardians;
-        // the info about guardians
-        mapping(address => GuardianInfo) info;
-        // the lock's release timestamp
-        uint256 lock;
+        address[] guardians; // list of guardian addresses
+        mapping(address => GuardianInfo) info; // info about guardians
+        uint256 lock; // Lock's release timestamp
     }
 
     struct RecoveryConfig {
         address recoveryAddress; // Address to which ownership should be transferred
-        uint64 executeAfter; //
-        uint32 guardianCount;
+        uint64 executeAfter; // Timestamp after which the recovery process can be finalized
+        uint32 guardianCount; // NUmber of guardians required to recover
     }
 
     GuardianStorageConfig internal guardiansConfig;
@@ -55,12 +55,12 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     event GuardianProposed(address indexed guardian, uint256 executeAfter);
     event GuardianAdded(address indexed guardian);
     event GuardianProposalCancelled(address indexed guardian);
-    event GuardianRevokationRequested(address indexed guardian, uint256 executeAfter);
+    event GuardianRevocationRequested(address indexed guardian, uint256 executeAfter);
     event GuardianRevoked(address indexed guardian);
-    event GuardianRevokationCancelled(address indexed guardian);
-    event RecoveryExecuted(address indexed _recovery, uint64 executeAfter);
-    event RecoveryFinalized(address indexed _recovery);
-    event RecoveryCanceled(address indexed _recovery);
+    event GuardianRevocationCancelled(address indexed guardian);
+    event RecoveryExecuted(address indexed recoveryAddress, uint64 executeAfter);
+    event RecoveryCompleted(address indexed recoveryAddress);
+    event RecoveryCanceled(address indexed recoveryAddress);
 
     error AccountLocked();
     error AccountNotLocked();
@@ -72,6 +72,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     error GuardianCannotBeOwner();
     error NoOngoingRecovery();
     error OngoingRecovery();
+    error InvalidRecoverySignatures();
 
     /*
      * @notice Initialize the smart contract account.
@@ -184,7 +185,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * @notice Returns the number of guardians for an Openfort account.
      * @return the number of guardians.
      */
-    function guardianCount() external view returns (uint256) {
+    function guardianCount() public view returns (uint256) {
         return guardiansConfig.guardians.length;
     }
 
@@ -277,7 +278,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
 
     /**
      * @notice Lets the owner revoke a guardian from its wallet.
-     * @dev Revokation must be confirmed by calling the confirmGuardianRevokation() method.
+     * @dev Revocation must be confirmed by calling the confirmGuardianRevocation() method.
      * @param _guardian The guardian to revoke.
      */
     function revokeGuardian(address _guardian) external onlyOwner {
@@ -288,15 +289,15 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
             "Duplicate pending revoke"
         ); // TODO need to allow if confirmation window passed
         guardiansConfig.info[_guardian].pending = block.timestamp + securityPeriod;
-        emit GuardianRevokationRequested(_guardian, block.timestamp + securityPeriod);
+        emit GuardianRevocationRequested(_guardian, block.timestamp + securityPeriod);
     }
 
     /**
-     * @notice Confirms the pending revokation of a guardian to an Openfrort account.
+     * @notice Confirms the pending revocation of a guardian to an Openfrort account.
      * The method must be called during the confirmation window and can be called by anyone to enable orchestration.
      * @param _guardian The guardian to confirm the revocation.
      */
-    function confirmGuardianRevokation(address _guardian) external {
+    function confirmGuardianRevocation(address _guardian) external {
         require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending revoke");
         require(guardiansConfig.info[_guardian].pending < block.timestamp, "Pending revoke not over");
         require(block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow, "Pending revoke expired");
@@ -315,14 +316,14 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     }
 
     /**
-     * @notice Lets the owner cancel a pending guardian revokation.
+     * @notice Lets the owner cancel a pending guardian revocation.
      * @param _guardian The guardian to cancel its revocation.
      */
-    function cancelGuardianRevokation(address _guardian) external onlyOwner {
+    function cancelGuardianRevocation(address _guardian) external onlyOwner {
         if (isLocked()) revert AccountLocked();
         require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending revoke");
         delete guardiansConfig.info[_guardian].pending;
-        emit GuardianRevokationCancelled(_guardian);
+        emit GuardianRevocationCancelled(_guardian);
     }
 
     /**
@@ -347,31 +348,71 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * Must be confirmed by N guardians, where N = ceil(Nb Guardians / 2).
      * @param _recoveryAddress The address to which ownership should be transferred.
      */
-    function executeRecovery(address _recoveryAddress) external {
+    function startRecovery(address _recoveryAddress) external {
+        require(isGuardian(msg.sender), "Recovery can only be started by a guardian");
         _requireRecovery(false);
         require(!isGuardian(_recoveryAddress), "Recovery address cannot be a guardian");
         uint64 executeAfter = uint64(block.timestamp + recoveryPeriod);
         guardianRecoveryConfig =
-            RecoveryConfig(_recoveryAddress, executeAfter, uint32(guardianRecoveryConfig.guardianCount));
+            RecoveryConfig(_recoveryAddress, executeAfter, uint32(Math.ceilDiv(guardianCount(), 2)));
         _setLock(block.timestamp + lockPeriod);
         emit RecoveryExecuted(_recoveryAddress, executeAfter);
     }
 
     /**
-     * @notice Finalizes an ongoing recovery procedure if the security period is over.
-     * The method is public and callable by anyone to enable orchestration.
+     * @notice Finalizes an ongoing recovery procedure if the security period (executeAfter) is over.
+     * The method is public and callable by anyone.
+     * @param _hashes Array of signature hashes concatenated.
+     * @param _signatures Array of guardian signatures concatenated.
+     * @notice The arguments should be ordered by the address of the guardian signing the message
      */
-    function finalizeRecovery() external {
+    function completeRecovery(bytes32[] calldata _hashes, bytes[] calldata _signatures) external {
         _requireRecovery(true);
         require(uint64(block.timestamp) > guardianRecoveryConfig.executeAfter, "Ongoing recovery period");
+
+        require(guardianRecoveryConfig.guardianCount > 0, "No guardians set on wallet");
+        require(guardianRecoveryConfig.guardianCount == _signatures.length, "Wrong number of signatures");
+        require(_hashes.length == _signatures.length, "Wrong number of signatures and hashes");
+
+        if (!_validateSignatures(_hashes, _signatures)) revert InvalidRecoverySignatures();
+
         address recoveryOwner = guardianRecoveryConfig.recoveryAddress;
+        delete guardianRecoveryConfig;
 
         // End sessions here?
 
         _transferOwnership(recoveryOwner);
         _setLock(0);
 
-        emit RecoveryFinalized(recoveryOwner);
+        emit RecoveryCompleted(recoveryOwner);
+    }
+
+    /**
+     * @notice Validates the signatures provided
+     * @param _hashes The arra of hashes of the signed messages.
+     * @param _signatures The array signatures.
+     * @return A boolean indicating whether the signatures are valid and from the guardians.
+     */
+    function _validateSignatures(bytes32[] calldata _hashes, bytes[] calldata _signatures)
+        internal
+        view
+        returns (bool)
+    {
+        address lastSigner = _hashTypedDataV4(_hashes[0]).recover(_signatures[0]);
+        if (!isGuardian(lastSigner)) {
+            return false; // Signer must be a guardian
+        }
+        for (uint256 i = 1; i < _signatures.length; i++) {
+            address signer = _hashTypedDataV4(_hashes[0]).recover(_signatures[0]);
+            if (signer <= lastSigner) {
+                return false; // Signers must be different
+            }
+            if (!isGuardian(signer)) {
+                return false; // Signer must be a guardian
+            }
+            lastSigner = signer;
+        }
+        return true;
     }
 
     /**
@@ -380,10 +421,9 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     function cancelRecovery() external onlyOwner {
         _requireRecovery(true);
         address recoveryOwner = guardianRecoveryConfig.recoveryAddress;
-
-        _setLock(0);
-
         emit RecoveryCanceled(recoveryOwner);
+        delete guardianRecoveryConfig;
+        _setLock(0);
     }
 
     /**
