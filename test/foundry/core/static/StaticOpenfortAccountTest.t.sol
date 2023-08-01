@@ -899,6 +899,9 @@ contract StaticOpenfortAccountTest is Test {
         uint256 accountAdmin2PKey;
         (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
 
+        vm.expectRevert("Ownable: caller is not the owner");
+        StaticOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
+
         vm.prank(accountAdmin);
         StaticOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
         vm.prank(accountAdmin2);
@@ -1331,5 +1334,12 @@ contract StaticOpenfortAccountTest is Test {
         address signer = ecrecover(hash712, v, r, s);
         assertEq(sessionKey, signer); // Should [PASS]
         assertNotEq(accountAdmin, signer); // Should [PASS]
+    }
+
+    /*
+     * Test a complex type using EIP712 Typed Signatures using isValidSignature's (EIP-1271)
+     */
+    function testComplextypeEIP712Signature() public {
+        return true; // ToDo
     }
 }

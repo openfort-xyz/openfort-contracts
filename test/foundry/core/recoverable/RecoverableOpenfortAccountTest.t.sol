@@ -39,8 +39,8 @@ contract RecoverableOpenfortAccountTest is Test {
     event AccountCreated(address indexed account, address indexed accountAdmin);
     event GuardianProposed(address indexed guardian, uint256 executeAfter);
     event GuardianProposalCancelled(address indexed guardian);
-    event GuardianRevokationRequested(address indexed guardian, uint256 executeAfter);
-    event GuardianRevokationCancelled(address indexed guardian);
+    event GuardianRevocationRequested(address indexed guardian, uint256 executeAfter);
+    event GuardianRevocationCancelled(address indexed guardian);
 
     error ZeroAddressNotAllowed();
     error AccountLocked();
@@ -1174,6 +1174,9 @@ contract RecoverableOpenfortAccountTest is Test {
         // Friend account should not be a guardian yet
         assertEq(recoverableOpenfortAccount.isGuardian(friendAccount), false);
 
+        // Test if zero address is a guardian
+        assertEq(recoverableOpenfortAccount.isGuardian(address(0)), false);
+
         skip(1);
 
         vm.expectRevert("Pending proposal not over");
@@ -1526,18 +1529,18 @@ contract RecoverableOpenfortAccountTest is Test {
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevokationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
+        emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.revokeGuardian(friendAccount);
 
         // Anyone can confirm a revokation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert("Pending revoke not over");
-        recoverableOpenfortAccount.confirmGuardianRevokation(friendAccount);
+        recoverableOpenfortAccount.confirmGuardianRevocation(friendAccount);
 
         // Anyone can confirm a revokation after security period
         skip(SECURITY_PERIOD);
-        recoverableOpenfortAccount.confirmGuardianRevokation(friendAccount);
+        recoverableOpenfortAccount.confirmGuardianRevocation(friendAccount);
 
         // Friend account is not a guardian anymore
         assertEq(recoverableOpenfortAccount.isGuardian(friendAccount), false);
@@ -1582,18 +1585,18 @@ contract RecoverableOpenfortAccountTest is Test {
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevokationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
+        emit GuardianRevocationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
 
         // Anyone can confirm a revokation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert("Pending revoke not over");
-        recoverableOpenfortAccount.confirmGuardianRevokation(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
 
         // Anyone can confirm a revokation after security period
         skip(SECURITY_PERIOD);
-        recoverableOpenfortAccount.confirmGuardianRevokation(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
 
         // Default account is not a guardian anymore
         assertEq(recoverableOpenfortAccount.isGuardian(OPENFORT_GUARDIAN), false);
@@ -1641,18 +1644,18 @@ contract RecoverableOpenfortAccountTest is Test {
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevokationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
+        emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.revokeGuardian(friendAccount);
 
         // Anyone can confirm a revokation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert("Pending revoke not over");
-        recoverableOpenfortAccount.confirmGuardianRevokation(friendAccount);
+        recoverableOpenfortAccount.confirmGuardianRevocation(friendAccount);
 
         // Anyone can confirm a revokation after security period
         skip(SECURITY_PERIOD);
-        recoverableOpenfortAccount.confirmGuardianRevokation(friendAccount);
+        recoverableOpenfortAccount.confirmGuardianRevocation(friendAccount);
 
         // Friend account is not a guardian anymore
         assertEq(recoverableOpenfortAccount.isGuardian(friendAccount), false);
@@ -1661,18 +1664,18 @@ contract RecoverableOpenfortAccountTest is Test {
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevokationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
+        emit GuardianRevocationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
 
         // Anyone can confirm a revokation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert("Pending revoke not over");
-        recoverableOpenfortAccount.confirmGuardianRevokation(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
 
         // Anyone can confirm a revokation after security period
         skip(SECURITY_PERIOD);
-        recoverableOpenfortAccount.confirmGuardianRevokation(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
 
         // Default account is not a guardian anymore
         assertEq(recoverableOpenfortAccount.isGuardian(OPENFORT_GUARDIAN), false);
@@ -1705,14 +1708,14 @@ contract RecoverableOpenfortAccountTest is Test {
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevokationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
+        emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.revokeGuardian(friendAccount);
 
         skip(1);
         skip(SECURITY_PERIOD + SECURITY_WINDOW);
         vm.expectRevert("Pending revoke expired");
-        recoverableOpenfortAccount.confirmGuardianRevokation(friendAccount);
+        recoverableOpenfortAccount.confirmGuardianRevocation(friendAccount);
 
         // Verify that the number of guardians is still 2. No revocation took place
         assertEq(recoverableOpenfortAccount.guardianCount(), 2);
@@ -1751,7 +1754,7 @@ contract RecoverableOpenfortAccountTest is Test {
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevokationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
+        emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
         vm.prank(accountAdmin);
         // Now let's check that, even after the revert, it is possible to confirm the proposal (no DoS)
         recoverableOpenfortAccount.revokeGuardian(friendAccount);
@@ -1762,7 +1765,7 @@ contract RecoverableOpenfortAccountTest is Test {
         recoverableOpenfortAccount.revokeGuardian(friendAccount);
 
         skip(SECURITY_PERIOD);
-        recoverableOpenfortAccount.confirmGuardianRevokation(friendAccount);
+        recoverableOpenfortAccount.confirmGuardianRevocation(friendAccount);
 
         // Verify that the number of guardians is now 1
         assertEq(recoverableOpenfortAccount.guardianCount(), 1);
@@ -1781,13 +1784,13 @@ contract RecoverableOpenfortAccountTest is Test {
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevokationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
+        emit GuardianRevocationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
         vm.prank(accountAdmin);
         // Now let's check that, even after the revert, it is possible to confirm the proposal (no DoS)
         recoverableOpenfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
 
         skip(SECURITY_PERIOD + 1);
-        recoverableOpenfortAccount.confirmGuardianRevokation(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
 
         // Verify that the number of guardians is now 0
         assertEq(recoverableOpenfortAccount.guardianCount(), 0);
@@ -1848,23 +1851,23 @@ contract RecoverableOpenfortAccountTest is Test {
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevokationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
+        emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.revokeGuardian(friendAccount);
 
         // Anyone can confirm a revokation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert("Pending revoke not over");
-        recoverableOpenfortAccount.confirmGuardianRevokation(friendAccount);
+        recoverableOpenfortAccount.confirmGuardianRevocation(friendAccount);
 
         vm.expectRevert("Ownable: caller is not the owner");
-        recoverableOpenfortAccount.cancelGuardianRevokation(friendAccount);
+        recoverableOpenfortAccount.cancelGuardianRevocation(friendAccount);
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevokationCancelled(friendAccount);
+        emit GuardianRevocationCancelled(friendAccount);
         vm.prank(accountAdmin);
-        recoverableOpenfortAccount.cancelGuardianRevokation(friendAccount);
+        recoverableOpenfortAccount.cancelGuardianRevocation(friendAccount);
 
         // Friend account is not a guardian anymore
         assertEq(recoverableOpenfortAccount.isGuardian(friendAccount), true);
@@ -1874,7 +1877,7 @@ contract RecoverableOpenfortAccountTest is Test {
         // Cancelled revocation should not be able to be confirmed now
         skip(SECURITY_PERIOD);
         vm.expectRevert("Unknown pending revoke");
-        recoverableOpenfortAccount.confirmGuardianRevokation(friendAccount);
+        recoverableOpenfortAccount.confirmGuardianRevocation(friendAccount);
     }
 
     /**
@@ -1882,16 +1885,105 @@ contract RecoverableOpenfortAccountTest is Test {
      */
 
     /*
+     * Check the correct functionallity of startRecovery()
+     */
+    function testStartRecovery() public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+
+        vm.expectRevert("Recovery can only be started by a guardian");
+        recoverableOpenfortAccount.startRecovery(OPENFORT_GUARDIAN);
+
+        vm.prank(OPENFORT_GUARDIAN);
+        vm.expectRevert("Recovery address cannot be a guardian");
+        recoverableOpenfortAccount.startRecovery(OPENFORT_GUARDIAN);
+
+        vm.prank(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.startRecovery(address(beneficiary));
+
+        assertEq(recoverableOpenfortAccount.isLocked(), true);
+    }
+
+    /*
      * A
      * 
      */
-    function testExecuteRecovery() public {
+    function testBasicChecksCompleteRecovery() public {
         RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
 
-        vm.expectRevert("Recovery address cannot be a guardian");
-        recoverableOpenfortAccount.executeRecovery(OPENFORT_GUARDIAN);
+        vm.prank(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.startRecovery(address(beneficiary));
 
-        recoverableOpenfortAccount.executeRecovery(address(beneficiary));
+        assertEq(recoverableOpenfortAccount.isLocked(), true);
+
+        // The recovery time period has not passed. The user should wait to recover.
+        vm.expectRevert("Ongoing recovery period");
+        bytes32[] memory hashes = new bytes32[](1);
+        bytes[] memory signatures = new bytes[](1);
+        recoverableOpenfortAccount.completeRecovery(hashes, signatures);
+
+        // Providing an empty array when it is expecting one guardian
+        skip(RECOVERY_PERIOD + 1);
+        vm.expectRevert("Wrong number of signatures");
+        bytes32[] memory hashes_wrong_length = new bytes32[](3);
+        bytes[] memory signatures_wrong_length = new bytes[](3);
+        recoverableOpenfortAccount.completeRecovery(hashes_wrong_length, signatures_wrong_length);
+
+        // Right sig length, but different length between hashes and signatures
+        vm.expectRevert("Wrong number of signatures and hashes");
+        recoverableOpenfortAccount.completeRecovery(hashes_wrong_length, signatures);
+
+        // Since hashes and signatures are empty, it should return an ECDSA error
+        vm.expectRevert("ECDSA: invalid signature length");
+        recoverableOpenfortAccount.completeRecovery(hashes, signatures);
+    }
+
+    /*
+     * A
+     * 
+     */
+    function testBasicCompleteRecovery() public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+
+        // Default Openfort guardian starts a recovery process because the owner lost the PK
+        vm.prank(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.startRecovery(address(beneficiary));
+        assertEq(recoverableOpenfortAccount.isLocked(), true);
+
+        // keccak256("Recover(address recoveryAddress,uint64 executeAfter,uint32 guardianCount");
+        bytes32 recoverTypeHash = keccak256("Recover(address recoveryAddress,uint64 executeAfter,uint32 guardianCount");
+
+        bytes32 structHash = keccak256(
+                abi.encode(
+                    recoverTypeHash,
+                    address(beneficiary),
+                    _permit.spender,
+                    _permit.value,
+                )
+            );
+        
+        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+            recoverableOpenfortAccount.eip712Domain();
+        bytes32 _TYPE_HASH =
+            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+        bytes32 domainSeparator = keccak256(
+            abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
+        );
+        bytes32 hash712 = domainSeparator.toTypedDataHash(structHash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(OPENFORT_GUARDIAN_PKEY, hash712);
+        bytes memory signature721 = abi.encodePacked(r, s, v);
+
+        assertEq(ecrecover(hash712, v, r, s), OPENFORT_GUARDIAN);
+
+        bytes32[] memory hashes = new bytes32[](1);
+        bytes[] memory signatures = new bytes[](1);
+        hashes[0] = structHash;
+        signatures[0] = signature721;
+
+        skip(RECOVERY_PERIOD + 1);
+        recoverableOpenfortAccount.completeRecovery(hashes, signatures);
+
+        assertEq(recoverableOpenfortAccount.isLocked(), false);
+        assertEq(recoverableOpenfortAccount.owner(), address(beneficiary));
     }
 
     /**
@@ -1918,9 +2010,32 @@ contract RecoverableOpenfortAccountTest is Test {
         skip(SECURITY_PERIOD);
         recoverableOpenfortAccount.confirmGuardianProposal(friendAccount);
 
-        // It should fail as friendAccount is already a guardian
+        // It should fail as friendAccount is a guardian
         vm.expectRevert(GuardianCannotBeOwner.selector);
         recoverableOpenfortAccount.transferOwnership(friendAccount);
+    }
+
+    /*
+     * Try to transfer ownership to a valid account.
+     * Should be allowed.
+     */
+    function testTransferOwner() public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+
+        // Create a new owner EOA
+        address newOwner = makeAddr("newOwner");
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        recoverableOpenfortAccount.transferOwnership(newOwner);
+
+        vm.prank(accountAdmin);
+        recoverableOpenfortAccount.transferOwnership(newOwner);
+
+        vm.prank(newOwner);
+        recoverableOpenfortAccount.acceptOwnership();
+
+        // New owner should be now newOwner
+        assertEq(recoverableOpenfortAccount.owner(), address(newOwner));
     }
 
     /*

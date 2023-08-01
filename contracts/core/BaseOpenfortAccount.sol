@@ -45,7 +45,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
      * @param validAfter this sessionKey is valid only after this timestamp.
-     * @param validUntil this sessionKey is valid only after this timestamp.
+     * @param validUntil this sessionKey is valid only until this timestamp.
      * @param limit limit of uses remaining
      * @param masterSessionKey if set to true, the session key does not have any limitation other than the validity time
      * @param whitelising if set to true, the session key has to follow whitelisting rules
@@ -234,7 +234,7 @@ abstract contract BaseOpenfortAccount is
     }
 
     /**
-     * Deposit more funds for this account in the entryPoint
+     * Deposit more funds for this account in the EntryPoint
      */
     function addDeposit() public payable {
         entryPoint().depositTo{value: msg.value}(address(this));
@@ -242,19 +242,19 @@ abstract contract BaseOpenfortAccount is
 
     /**
      * Withdraw value from the account's deposit
-     * @param withdrawAddress target to send to
-     * @param amount to withdraw
+     * @param _withdrawAddress target to send to
+     * @param _amount to withdraw
      * @notice ONLY the owner can call this function (it's not using _requireFromEntryPointOrOwner())
      */
-    function withdrawDepositTo(address payable withdrawAddress, uint256 amount) public onlyOwner {
-        entryPoint().withdrawTo(withdrawAddress, amount);
+    function withdrawDepositTo(address payable _withdrawAddress, uint256 _amount) public onlyOwner {
+        entryPoint().withdrawTo(_withdrawAddress, _amount);
     }
 
     /**
      * @dev Call a target contract and reverts if it fails.
      */
-    function _call(address _target, uint256 value, bytes calldata _calldata) internal {
-        (bool success, bytes memory result) = _target.call{value: value}(_calldata);
+    function _call(address _target, uint256 _value, bytes calldata _calldata) internal {
+        (bool success, bytes memory result) = _target.call{value: _value}(_calldata);
         if (!success) {
             assembly {
                 revert(add(result, 32), mload(result))
