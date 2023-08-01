@@ -7,20 +7,26 @@ import {OpenfortPaymaster} from "../contracts/paymaster/OpenfortPaymaster.sol";
 
 contract CheckDeposits is Script {
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
-    OpenfortPaymaster openfortPaymaster = OpenfortPaymaster((payable(vm.envAddress("PAYMASTER_ADDRESS"))));
-    address internal openfortPatron = vm.envAddress("PATRON_ADDRESS");
+    OpenfortPaymaster openfortPaymasterTestnet = OpenfortPaymaster((payable(vm.envAddress("PAYMASTER_ADDRESS_TESTNET"))));
+    OpenfortPaymaster openfortPaymasterMainnet = OpenfortPaymaster((payable(vm.envAddress("PAYMASTER_ADDRESS_MAINNET"))));
+    address internal openfortPaymasterOwnerTestnet = vm.envAddress("PAYMASTER_OWNER_TESTNET");
+    address internal openfortPaymasterOwnerMainnet = vm.envAddress("PAYMASTER_OWNER_MAINNET");
 
     uint256 internal goerliFork = vm.createFork(vm.envString("GOERLI_RPC"));
     uint256 internal mumbaiFork = vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
     uint256 internal fujiFork = vm.createFork(vm.envString("AVALANCHE_FUJI_RPC"));
     uint256 internal bscFork = vm.createFork(vm.envString("BSC_TESTNET_RPC"));
     uint256 internal arbitrumFork = vm.createFork(vm.envString("ARBITRUM_GOERLI_RPC"));
+    uint256 internal chiadoFork = vm.createFork(vm.envString("GNOSIS_CHIADO_RPC"));
 
-    function checkPaymasterDeposit(uint256 fork_id) internal {
+    uint256 internal polygonFork = vm.createFork(vm.envString("POLYGON_RPC"));
+    uint256 internal avalancheFork = vm.createFork(vm.envString("AVALANCHE_RPC"));
+
+    function checkPaymasterDeposit(uint256 fork_id, OpenfortPaymaster _paymaster) internal {
         vm.selectFork(fork_id);
 
-        console.log("\tPaymaster at address %s", address(openfortPaymaster));
-        uint256 paymasterDeposit = openfortPaymaster.getDeposit();
+        console.log("\tPaymaster at address %s", address(_paymaster));
+        uint256 paymasterDeposit = _paymaster.getDeposit();
         console.log(
             "\tDeposit on chain ID %s is: %s wei (%s ETH)\n",
             block.chainid,
@@ -33,47 +39,68 @@ contract CheckDeposits is Script {
         }
     }
 
-    function checkPatronBalance(uint256 fork_id) internal {
+    function checkPaymasterOwnerBalance(uint256 fork_id, address _paymasterOwnerAddress) internal {
         vm.selectFork(fork_id);
 
-        console.log("\tPatron at address %s", openfortPatron);
-        uint256 patronBalance = openfortPatron.balance;
+        console.log("\tPaymasterOwner at address %s", _paymasterOwnerAddress);
+        uint256 paymasterOwnerBalance = _paymasterOwnerAddress.balance;
         console.log(
-            "\tBalance of patron on chain ID %s is: %s wei (%s ETH)\n",
+            "\tBalance of paymasterOwner on chain ID %s is: %s wei (%s ETH)\n",
             block.chainid,
-            patronBalance,
-            patronBalance / 10 ** 18
+            paymasterOwnerBalance,
+            paymasterOwnerBalance / 10 ** 18
         );
 
-        if (patronBalance < 2 ether) {
-            console.log("ALERT: balance of Patron too low on chain ID %s! Deposit: %s\n", block.chainid, patronBalance);
+        if (paymasterOwnerBalance < 2 ether) {
+            console.log("ALERT: balance of PaymasterOwner too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterOwnerBalance);
         }
     }
 
     function run() public {
         console.log("EntryPoint adress: %s\n", address(entryPoint));
-        console.log("Paymaster adress: %s\n", address(openfortPaymaster));
-        console.log("Patron adress: %s\n", openfortPatron);
-        console.log("---------------");
+        console.log("----------------");
+        console.log("----Testnets----");
+        console.log("----------------");
+        console.log("Paymaster adress: %s", address(openfortPaymasterTestnet));
+        console.log("PaymasterOwner adress: %s\n", openfortPaymasterOwnerTestnet);
 
-        console.log("Checking Paymaster and Patron on Goerli:");
-        checkPaymasterDeposit(goerliFork);
-        checkPatronBalance(goerliFork);
+        console.log("Checking Paymaster and PaymasterOwner on Goerli:");
+        checkPaymasterDeposit(goerliFork, openfortPaymasterTestnet);
+        checkPaymasterOwnerBalance(goerliFork, openfortPaymasterOwnerTestnet);
 
-        console.log("Checking Paymaster and Patron on Mumbai:");
-        checkPaymasterDeposit(mumbaiFork);
-        checkPatronBalance(mumbaiFork);
+        console.log("Checking Paymaster and PaymasterOwner on Mumbai:");
+        checkPaymasterDeposit(mumbaiFork, openfortPaymasterTestnet);
+        checkPaymasterOwnerBalance(mumbaiFork, openfortPaymasterOwnerTestnet);
 
-        console.log("Checking Paymaster and Patron on Fuji:");
-        checkPaymasterDeposit(fujiFork);
-        checkPatronBalance(fujiFork);
+        console.log("Checking Paymaster and PaymasterOwner on Fuji:");
+        checkPaymasterDeposit(fujiFork, openfortPaymasterTestnet);
+        checkPaymasterOwnerBalance(fujiFork, openfortPaymasterOwnerTestnet);
 
-        console.log("Checking Paymaster and Patron on BSC testnet:");
-        checkPaymasterDeposit(bscFork);
-        checkPatronBalance(bscFork);
+        console.log("Checking Paymaster and PaymasterOwner on BSC testnet:");
+        checkPaymasterDeposit(bscFork, openfortPaymasterTestnet);
+        checkPaymasterOwnerBalance(bscFork, openfortPaymasterOwnerTestnet);
 
-        console.log("Checking Paymaster and Patron on Arbirtum Goerli testnet:");
-        checkPaymasterDeposit(arbitrumFork);
-        checkPatronBalance(arbitrumFork);
+        console.log("Checking Paymaster and PaymasterOwner on Arbirtum Goerli testnet:");
+        checkPaymasterDeposit(arbitrumFork, openfortPaymasterTestnet);
+        checkPaymasterOwnerBalance(arbitrumFork, openfortPaymasterOwnerTestnet);
+
+        console.log("Checking Paymaster and PaymasterOwner on Gnosis Chiado testnet:");
+        checkPaymasterDeposit(chiadoFork, openfortPaymasterTestnet);
+        checkPaymasterOwnerBalance(chiadoFork, openfortPaymasterOwnerTestnet);
+
+        console.log("----------------");
+        console.log("----Mainnets----");
+        console.log("----------------");
+
+        console.log("Paymaster adress: %s", address(openfortPaymasterMainnet));
+        console.log("PaymasterOwner adress: %s\n", openfortPaymasterOwnerMainnet);
+
+        console.log("Checking Paymaster and PaymasterOwner on Polygon:");
+        checkPaymasterDeposit(polygonFork, openfortPaymasterMainnet);
+        checkPaymasterOwnerBalance(polygonFork, openfortPaymasterOwnerMainnet);
+
+        console.log("Checking Paymaster and PaymasterOwner on Avalanche:");
+        checkPaymasterDeposit(avalancheFork, openfortPaymasterMainnet);
+        checkPaymasterOwnerBalance(avalancheFork, openfortPaymasterOwnerMainnet);
     }
 }
