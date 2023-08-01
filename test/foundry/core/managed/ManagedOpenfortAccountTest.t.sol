@@ -906,6 +906,9 @@ contract ManagedOpenfortAccountTest is Test {
         uint256 accountAdmin2PKey;
         (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
 
+        vm.expectRevert("Ownable: caller is not the owner");
+        ManagedOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
+
         vm.prank(accountAdmin);
         ManagedOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
         vm.prank(accountAdmin2);
