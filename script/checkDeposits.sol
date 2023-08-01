@@ -7,8 +7,10 @@ import {OpenfortPaymaster} from "../contracts/paymaster/OpenfortPaymaster.sol";
 
 contract CheckDeposits is Script {
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
-    OpenfortPaymaster openfortPaymasterTestnet = OpenfortPaymaster((payable(vm.envAddress("PAYMASTER_ADDRESS_TESTNET"))));
-    OpenfortPaymaster openfortPaymasterMainnet = OpenfortPaymaster((payable(vm.envAddress("PAYMASTER_ADDRESS_MAINNET"))));
+    OpenfortPaymaster openfortPaymasterTestnet =
+        OpenfortPaymaster((payable(vm.envAddress("PAYMASTER_ADDRESS_TESTNET"))));
+    OpenfortPaymaster openfortPaymasterMainnet =
+        OpenfortPaymaster((payable(vm.envAddress("PAYMASTER_ADDRESS_MAINNET"))));
     address internal openfortPaymasterOwnerTestnet = vm.envAddress("PAYMASTER_OWNER_TESTNET");
     address internal openfortPaymasterOwnerMainnet = vm.envAddress("PAYMASTER_OWNER_MAINNET");
 
@@ -52,7 +54,11 @@ contract CheckDeposits is Script {
         );
 
         if (paymasterOwnerBalance < 2 ether) {
-            console.log("ALERT: balance of PaymasterOwner too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterOwnerBalance);
+            console.log(
+                "ALERT: balance of PaymasterOwner too low on chain ID %s! Deposit: %s\n",
+                block.chainid,
+                paymasterOwnerBalance
+            );
         }
     }
 
