@@ -51,12 +51,15 @@ contract RecoverableOpenfortAccountTest is Test {
     error UnknownProposal();
     error PendingProposalNotOver();
     error PendingProposalExpired();
+    error DuplicatedRevoke();
+    error UnknownRevoke();
     error PendingRevokeNotOver();
     error PendingRevokeExpired();
     error GuardianCannotBeOwner();
     error NoOngoingRecovery();
     error OngoingRecovery();
     error InvalidRecoverySignatures();
+    error InvalidSignatureAmount();
 
     // keccak256("Recover(address recoveryAddress,uint64 executeAfter,uint32 guardiansRequired"));
     bytes32 RECOVER_TYPEHASH = 0x601b3fa0ae18d2a4c446b40cd6b8e0e911bbbb5dd66b248922e3d91efafa0969;
@@ -1570,7 +1573,7 @@ contract RecoverableOpenfortAccountTest is Test {
         recoverableOpenfortAccount.revokeGuardian(friendAccount);
 
         // Trying to revoke a non-existen guardian (random beneficiary address)
-        vm.expectRevert("Must be existing guardian");
+        vm.expectRevert(MustBeGuardian.selector);
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.revokeGuardian(beneficiary);
 
@@ -1685,7 +1688,7 @@ contract RecoverableOpenfortAccountTest is Test {
         recoverableOpenfortAccount.revokeGuardian(friendAccount);
 
         // Trying to revoke a non-existen guardian (random beneficiary address)
-        vm.expectRevert("Must be existing guardian");
+        vm.expectRevert(MustBeGuardian.selector);
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.revokeGuardian(beneficiary);
 
@@ -1806,7 +1809,7 @@ contract RecoverableOpenfortAccountTest is Test {
         // Now let's check that, even after the revert, it is possible to confirm the proposal (no DoS)
         recoverableOpenfortAccount.revokeGuardian(friendAccount);
 
-        vm.expectRevert("Duplicate pending revoke");
+        vm.expectRevert(DuplicatedRevoke.selector);
         skip(1);
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.revokeGuardian(friendAccount);
@@ -1892,7 +1895,7 @@ contract RecoverableOpenfortAccountTest is Test {
         recoverableOpenfortAccount.revokeGuardian(friendAccount);
 
         // Trying to revoke a non-existen guardian (random beneficiary address)
-        vm.expectRevert("Must be existing guardian");
+        vm.expectRevert(MustBeGuardian.selector);
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.revokeGuardian(beneficiary);
 
@@ -1923,7 +1926,7 @@ contract RecoverableOpenfortAccountTest is Test {
 
         // Cancelled revocation should not be able to be confirmed now
         skip(SECURITY_PERIOD);
-        vm.expectRevert("Unknown pending revoke");
+        vm.expectRevert(UnknownRevoke.selector);
         recoverableOpenfortAccount.confirmGuardianRevocation(friendAccount);
     }
 
@@ -1950,12 +1953,12 @@ contract RecoverableOpenfortAccountTest is Test {
 
         skip(SECURITY_PERIOD + 1);
         recoverableOpenfortAccount.confirmGuardianProposal(friendAccount);
-        vm.expectRevert("Unknown guardian");
+        vm.expectRevert(MustBeGuardian.selector);
         recoverableOpenfortAccount.confirmGuardianRevocation(friendAccount2); // Notice this tries to confirm a non-existent revocation!
-        vm.expectRevert("Unknown pending revoke");
+        vm.expectRevert(UnknownRevoke.selector);
         recoverableOpenfortAccount.confirmGuardianRevocation(friendAccount); // Notice this tries to confirm a non-existent revocation!
         vm.prank(accountAdmin);
-        vm.expectRevert("Must be existing guardian");
+        vm.expectRevert(MustBeGuardian.selector);
         recoverableOpenfortAccount.revokeGuardian(friendAccount2); // Notice this tries to revoke a non-existent guardian!
         vm.expectRevert(DuplicatedGuardian.selector);
         vm.prank(accountAdmin);
@@ -1981,7 +1984,7 @@ contract RecoverableOpenfortAccountTest is Test {
         recoverableOpenfortAccount.startRecovery(OPENFORT_GUARDIAN);
 
         vm.prank(OPENFORT_GUARDIAN);
-        vm.expectRevert("Recovery address cannot be a guardian");
+        vm.expectRevert(GuardianCannotBeOwner.selector);
         recoverableOpenfortAccount.startRecovery(OPENFORT_GUARDIAN);
 
         vm.prank(OPENFORT_GUARDIAN);
@@ -2008,7 +2011,7 @@ contract RecoverableOpenfortAccountTest is Test {
 
         // Providing an empty array when it is expecting one guardian
         skip(RECOVERY_PERIOD + 1);
-        vm.expectRevert("Wrong number of signatures");
+        vm.expectRevert(InvalidSignatureAmount.selector);
         bytes[] memory signatures_wrong_length = new bytes[](3);
         recoverableOpenfortAccount.completeRecovery(signatures_wrong_length);
 
