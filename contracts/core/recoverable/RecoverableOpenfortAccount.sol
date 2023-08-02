@@ -31,7 +31,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     struct GuardianInfo {
         bool exists; // Whether the guardian is active/exists or not
         uint256 index; // Position of the guardian
-        uint256 pending; // Timestamp when the addition or removal can take place
+        uint256 pending; // Timestamp when the addition or removal of a guardian can take place
     }
 
     struct GuardiansConfig {
@@ -75,11 +75,14 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     error UnknownProposal();
     error PendingProposalNotOver();
     error PendingProposalExpired();
+    error DuplicatedRevoke();
+    error UnknownRevoke();
     error PendingRevokeNotOver();
     error PendingRevokeExpired();
     error NoOngoingRecovery();
     error OngoingRecovery();
     error InvalidRecoverySignatures();
+    error InvalidSignatureAmount();
 
     /*
      * @notice Initialize the smart contract account.
@@ -285,14 +288,14 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * @param _guardian The guardian to revoke.
      */
     function revokeGuardian(address _guardian) external onlyOwner {
-        require(isGuardian(_guardian), "Must be existing guardian");
-        require(
-            guardiansConfig.info[_guardian].pending == 0
-                || block.timestamp > guardiansConfig.info[_guardian].pending + securityWindow,
-            "Duplicate pending revoke"
-        ); // TODO need to allow if confirmation window passed
+        if (!isGuardian(_guardian)) revert MustBeGuardian();
+        if (
+            guardiansConfig.info[_guardian].pending > 0
+                && block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow
+        ) revert DuplicatedRevoke();
+        // TODO need to allow if confirmation window passed
         guardiansConfig.info[_guardian].pending = block.timestamp + securityPeriod;
-        emit GuardianRevocationRequested(_guardian, block.timestamp + securityPeriod);
+        emit GuardianRevocationRequested(_guardian, guardiansConfig.info[_guardian].pending);
     }
 
     /**
@@ -301,8 +304,8 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * @param _guardian The guardian to confirm the revocation.
      */
     function confirmGuardianRevocation(address _guardian) external {
-        require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending revoke");
-        require(isGuardian(_guardian), "Unknown guardian");
+        if (guardiansConfig.info[_guardian].pending == 0) revert UnknownRevoke();
+        if (!isGuardian(_guardian)) revert MustBeGuardian();
         if (guardiansConfig.info[_guardian].pending > block.timestamp) revert PendingRevokeNotOver();
         if (block.timestamp > guardiansConfig.info[_guardian].pending + securityWindow) revert PendingRevokeExpired();
 
@@ -325,7 +328,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
     function cancelGuardianRevocation(address _guardian) external onlyOwner {
         if (isLocked()) revert AccountLocked();
-        require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending revoke");
+        if (guardiansConfig.info[_guardian].pending == 0) revert UnknownRevoke();
         delete guardiansConfig.info[_guardian].pending;
         emit GuardianRevocationCancelled(_guardian);
     }
@@ -355,7 +358,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     function startRecovery(address _recoveryAddress) external {
         if (!isGuardian(msg.sender)) revert MustBeGuardian();
         _requireRecovery(false);
-        require(!isGuardian(_recoveryAddress), "Recovery address cannot be a guardian");
+        if (isGuardian(_recoveryAddress)) revert GuardianCannotBeOwner();
         uint64 executeAfter = uint64(block.timestamp + recoveryPeriod);
         recoveryDetails = RecoveryConfig(_recoveryAddress, executeAfter, uint32(Math.ceilDiv(guardianCount(), 2)));
         _setLock(block.timestamp + lockPeriod);
@@ -373,7 +376,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         require(uint64(block.timestamp) > recoveryDetails.executeAfter, "Ongoing recovery period");
 
         require(recoveryDetails.guardiansRequired > 0, "No guardians set on wallet");
-        require(recoveryDetails.guardiansRequired == _signatures.length, "Wrong number of signatures");
+        if (recoveryDetails.guardiansRequired != _signatures.length) revert InvalidSignatureAmount();
 
         if (!_validateSignatures(_signatures)) revert InvalidRecoverySignatures();
 
