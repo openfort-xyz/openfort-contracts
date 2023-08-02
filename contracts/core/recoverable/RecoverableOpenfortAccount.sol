@@ -249,7 +249,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
             revert DuplicatedProposal();
         }
         guardiansConfig.info[_guardian].pending = block.timestamp + securityPeriod;
-        emit GuardianProposed(_guardian, block.timestamp + securityPeriod);
+        emit GuardianProposed(_guardian, guardiansConfig.info[_guardian].pending);
     }
 
     /**
@@ -267,7 +267,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         guardiansConfig.guardians.push(_guardian);
         guardiansConfig.info[_guardian].exists = true;
         guardiansConfig.info[_guardian].index = guardiansConfig.guardians.length;
-        delete guardiansConfig.info[_guardian].pending;
+        guardiansConfig.info[_guardian].pending = 0;
         emit GuardianAdded(_guardian);
     }
 
@@ -278,7 +278,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     function cancelGuardianProposal(address _guardian) external onlyOwner {
         if (isLocked()) revert AccountLocked();
         if (guardiansConfig.info[_guardian].pending == 0) revert UnknownProposal();
-        delete guardiansConfig.info[_guardian].pending;
+        guardiansConfig.info[_guardian].pending = 0;
         emit GuardianProposalCancelled(_guardian);
     }
 
@@ -329,7 +329,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     function cancelGuardianRevocation(address _guardian) external onlyOwner {
         if (isLocked()) revert AccountLocked();
         if (guardiansConfig.info[_guardian].pending == 0) revert UnknownRevoke();
-        delete guardiansConfig.info[_guardian].pending;
+        guardiansConfig.info[_guardian].pending = 0;
         emit GuardianRevocationCancelled(_guardian);
     }
 
