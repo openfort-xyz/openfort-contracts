@@ -1,0 +1,518 @@
+
+Running 1 test for test/foundry/4337/Specific4337Tests.t.sol:Specific4337Tests
+[32m[PASS][0m testToken():(address) (gas: 2404)
+Test result: [32mok[0m. 1 passed; 0 failed; 0 skipped; finished in 2.91ms
+
+Test result: [32mok[0m. 0 passed; 0 failed; 0 skipped; finished in 2.96ms
+
+Running 10 tests for test/foundry/core/eip6551/EIP6551OpenfortAccountTest.t.sol:EIP6551OpenfortAccountTest
+[32m[PASS][0m testCreate2ndAcc() (gas: 187819)
+[32m[PASS][0m testCreateAccInitializer() (gas: 188248)
+[32m[PASS][0m testCreateAccountWithNonceViaRegistry() (gas: 105979)
+[32m[PASS][0m testFailCreateAccInitializerNoReinit() (gas: 188625)
+[32m[PASS][0m testFailInitializeImplementation() (gas: 10259)
+[32m[PASS][0m testFailReinitialize() (gas: 12963)
+[32m[PASS][0m testGetDeposit() (gas: 69465)
+[32m[PASS][0m testImplementationNoEntryPointAddr() (gas: 7741)
+[32m[PASS][0m testNotOwner() (gas: 59702)
+[32m[PASS][0m testOwner() (gas: 23145)
+Test result: [32mok[0m. 10 passed; 0 failed; 0 skipped; finished in 8.57ms
+
+Running 14 tests for test/foundry/paymaster/OpenfortPaymasterTest.t.sol:OpenfortPaymasterTest
+[32m[PASS][0m testEntryPointDepositToPaymaster() (gas: 45343)
+[32m[PASS][0m testFailPaymasterUserOpERC20ValidSigExecBatchInsufficientERC20() (gas: 339363)
+[32m[PASS][0m testFailPaymasterUserOpERC20ValidSigSmallApprove() (gas: 299357)
+[32m[PASS][0m testInitialParameters() (gas: 13804)
+[32m[PASS][0m testParsePaymasterDataERC20() (gas: 35479)
+[32m[PASS][0m testParsePaymasterDataNative() (gas: 33235)
+[32m[PASS][0m testPaymasterAddStake() (gas: 47319)
+[32m[PASS][0m testPaymasterUserOpERC20ValidSig() (gas: 322508)
+[32m[PASS][0m testPaymasterUserOpERC20ValidSigExecBatch() (gas: 363297)
+[32m[PASS][0m testPaymasterUserOpNativeValidSig() (gas: 252819)
+[32m[PASS][0m testPaymasterUserOpNativeValidSigExecBatch() (gas: 295212)
+[32m[PASS][0m testPaymasterUserOpWrongSig() (gas: 134827)
+[32m[PASS][0m testPaymasterUserOpWrongSigLength() (gas: 105174)
+[32m[PASS][0m testToken():(address) (gas: 2405)
+Test result: [32mok[0m. 14 passed; 0 failed; 0 skipped; finished in 20.73ms
+
+Running 29 tests for test/foundry/core/managed/ManagedOpenfortAccountTest.t.sol:ManagedOpenfortAccountTest
+[32m[PASS][0m testChangeOwnershipAndCountDirect() (gas: 82618)
+[32m[PASS][0m testChangeOwnershipAndCountEntryPoint() (gas: 241865)
+[32m[PASS][0m testCreateAccountViaEntryPoint() (gas: 398747)
+[32m[PASS][0m testCreateAccountWithNonceViaFactory() (gas: 301434)
+[32m[PASS][0m testFailAttackRegisterSessionKeyViaEntrypoint2ndKey() (gas: 440533)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyNotregistered() (gas: 211233)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyReachLimit() (gas: 332068)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyReachLimitBatching() (gas: 236729)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyRevoked() (gas: 58603)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingBatch() (gas: 294310)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingBatchWrongAddress() (gas: 260035)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingTooBig() (gas: 34620)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingWrongAddress() (gas: 251500)
+[32m[PASS][0m testFailRevokeSessionKeyInvalidUser() (gas: 61147)
+[32m[PASS][0m testIncrementCounterDirect() (gas: 53500)
+[32m[PASS][0m testIncrementCounterViaEntrypoint() (gas: 242381)
+[32m[PASS][0m testIncrementCounterViaEntrypointBatching() (gas: 254643)
+[32m[PASS][0m testIncrementCounterViaSessionKey() (gas: 258608)
+[32m[PASS][0m testIncrementCounterViaSessionKeyExpired() (gas: 224377)
+[32m[PASS][0m testIncrementCounterViaSessionKeyWhitelisting() (gas: 284192)
+[32m[PASS][0m testIncrementCounterViaSessionKeyWhitelistingBatch() (gas: 308521)
+[32m[PASS][0m testMintTokenAccount() (gas: 271016)
+[32m[PASS][0m testReceiveNativeToken() (gas: 27506)
+[32m[PASS][0m testRegisterSessionKeyViaEntrypoint() (gas: 357889)
+[32m[PASS][0m testRegisterSessionKeyViaEntrypoint2ndKey() (gas: 472453)
+[32m[PASS][0m testSimulateValidation() (gas: 375756)
+[32m[PASS][0m testToken():(address) (gas: 2448)
+[32m[PASS][0m testTransferOutNativeToken() (gas: 160900)
+[32m[PASS][0m testUpgradeTo() (gas: 2644194)
+Test result: [32mok[0m. 29 passed; 0 failed; 0 skipped; finished in 31.20ms
+
+Running 59 tests for test/foundry/core/recoverable/RecoverableOpenfortAccountTest.t.sol:RecoverableOpenfortAccountTest
+[32m[PASS][0m test3GuardiansCompleteRecovery() (gas: 283890)
+[32m[PASS][0m test3GuardiansFailCompleteRecovery() (gas: 308458)
+[32m[PASS][0m test3GuardiansUnorderedCompleteRecovery() (gas: 310909)
+[32m[PASS][0m test4GuardiansNoDefaultCompleteRecovery() (gas: 480292)
+[32m[PASS][0m testAddEOAGuardian() (gas: 133481)
+[32m[PASS][0m testAddEOAGuardianCancel() (gas: 64111)
+[32m[PASS][0m testAddEOAGuardianDuplicatedPorposal() (gas: 124647)
+[32m[PASS][0m testAddEOAGuardianExpired() (gas: 76222)
+[32m[PASS][0m testAddEOAGuardianExpiredThenReAdd() (gas: 143965)
+[32m[PASS][0m testAddMultipleEOAGuardians() (gas: 461932)
+[32m[PASS][0m testAddOwnerAsGuardianNotAllowed() (gas: 49966)
+[32m[PASS][0m testBasicChecksCompleteRecovery() (gas: 95722)
+[32m[PASS][0m testBasicCompleteRecovery() (gas: 97016)
+[32m[PASS][0m testCancelRecovery() (gas: 91960)
+[32m[PASS][0m testCancelRevokeGuardian() (gas: 146079)
+[32m[PASS][0m testChangeOwnershipAndCountDirect() (gas: 68881)
+[32m[PASS][0m testChangeOwnershipAndCountEntryPoint() (gas: 242916)
+[32m[PASS][0m testCreateAccountViaEntryPoint() (gas: 545131)
+[32m[PASS][0m testCreateAccountWithNonceViaFactory() (gas: 448649)
+[32m[PASS][0m testCreateWrongAccount() (gas: 103029)
+[32m[PASS][0m testCreateWrongFactory() (gas: 48880)
+[32m[PASS][0m testFailAttackRegisterSessionKeyViaEntrypoint2ndKey() (gas: 430473)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyNotregistered() (gas: 205313)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyReachLimit() (gas: 326678)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyReachLimitBatching() (gas: 232839)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyRevoked() (gas: 54948)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingBatchWrongAddress() (gas: 256078)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingTooBig() (gas: 31617)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingWrongAddress() (gas: 247448)
+[32m[PASS][0m testFailRevokeSessionKeyInvalidUser() (gas: 57492)
+[32m[PASS][0m testIncrementCounterDirect() (gas: 50478)
+[32m[PASS][0m testIncrementCounterViaEntrypoint() (gas: 235933)
+[32m[PASS][0m testIncrementCounterViaEntrypointBatching() (gas: 248093)
+[32m[PASS][0m testIncrementCounterViaSessionKey() (gas: 254031)
+[32m[PASS][0m testIncrementCounterViaSessionKeyExpired() (gas: 220389)
+[32m[PASS][0m testIncrementCounterViaSessionKeyWhitelisting() (gas: 279707)
+[32m[PASS][0m testIncrementCounterViaSessionKeyWhitelistingBatch() (gas: 303249)
+[32m[PASS][0m testLockAccount() (gas: 57961)
+[32m[PASS][0m testMessingUpWithGuardianRegister() (gas: 179620)
+[32m[PASS][0m testMintTokenAccount() (gas: 264590)
+[32m[PASS][0m testReceiveNativeToken() (gas: 22295)
+[32m[PASS][0m testRegisterSessionKeyViaEntrypoint() (gas: 349518)
+[32m[PASS][0m testRegisterSessionKeyViaEntrypoint2ndKey() (gas: 461850)
+[32m[PASS][0m testRevokeAllGuardians() (gas: 186514)
+[32m[PASS][0m testRevokeDefaultGuardian() (gas: 151888)
+[32m[PASS][0m testRevokeDefaultGuardianAndAddBack() (gas: 105253)
+[32m[PASS][0m testRevokeEOAGuardianDuplicatedPorposal() (gas: 134931)
+[32m[PASS][0m testRevokeEOAGuardianExpired() (gas: 145785)
+[32m[PASS][0m testRevokeGuardian() (gas: 141226)
+[32m[PASS][0m testSimulateValidation() (gas: 129081)
+[32m[PASS][0m testStartRecovery() (gas: 97969)
+[32m[PASS][0m testStartRecoveryTwice() (gas: 87296)
+[32m[PASS][0m testStubFakeMockTempisGuardian() (gas: 12888)
+[32m[PASS][0m testToken():(address) (gas: 2426)
+[32m[PASS][0m testTransferOutNativeToken() (gas: 156739)
+[32m[PASS][0m testTransferOwner() (gas: 50400)
+[32m[PASS][0m testTransferOwnerNotGuardian() (gas: 113523)
+[32m[PASS][0m testUnlockAccount() (gas: 48624)
+[32m[PASS][0m testUpdateEntryPoint() (gas: 1124085)
+Test result: [32mok[0m. 59 passed; 0 failed; 0 skipped; finished in 31.38ms
+
+Running 38 tests for test/foundry/core/static/StaticOpenfortAccountTest.t.sol:StaticOpenfortAccountTest
+[32m[PASS][0m testChangeOwnershipAndCountDirect() (gas: 67684)
+[32m[PASS][0m testChangeOwnershipAndCountEntryPoint() (gas: 234816)
+[32m[PASS][0m testComplextypeEIP712Signature() (gas: 302)
+[32m[PASS][0m testCreateAccountViaEntryPoint() (gas: 296478)
+[32m[PASS][0m testCreateAccountWithNonceViaFactory() (gas: 194351)
+[32m[PASS][0m testEIP191Signature() (gas: 35366)
+[32m[PASS][0m testEIP712Signature() (gas: 56082)
+[32m[PASS][0m testFailAttackRegisterSessionKeyViaEntrypoint2ndKey() (gas: 423112)
+[32m[PASS][0m testFailEIP712Signature() (gas: 51864)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyNotregistered() (gas: 200580)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyReachLimit() (gas: 322619)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyReachLimitBatching() (gas: 229837)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyRevoked() (gas: 52416)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingBatch() (gas: 286338)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingBatchWrongAddress() (gas: 252968)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingTooBig() (gas: 29231)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingWrongAddress() (gas: 244473)
+[32m[PASS][0m testFailRevokeSessionKeyInvalidUser() (gas: 54960)
+[32m[PASS][0m testFailSessionKeySignatureExpired() (gas: 79916)
+[32m[PASS][0m testFailSessionKeySignatureInvalid() (gas: 83291)
+[32m[PASS][0m testFailSessionKeySignatureNotYet() (gas: 79801)
+[32m[PASS][0m testIncrementCounterDirect() (gas: 48105)
+[32m[PASS][0m testIncrementCounterViaEntrypoint() (gas: 230871)
+[32m[PASS][0m testIncrementCounterViaEntrypointBatching() (gas: 243135)
+[32m[PASS][0m testIncrementCounterViaSessionKey() (gas: 250816)
+[32m[PASS][0m testIncrementCounterViaSessionKeyExpired() (gas: 217435)
+[32m[PASS][0m testIncrementCounterViaSessionKeyWhitelisting() (gas: 276338)
+[32m[PASS][0m testIncrementCounterViaSessionKeyWhitelistingBatch() (gas: 299656)
+[32m[PASS][0m testMintTokenAccount() (gas: 259638)
+[32m[PASS][0m testReceiveNativeToken() (gas: 20053)
+[32m[PASS][0m testRegisterSessionKeyViaEntrypoint() (gas: 343109)
+[32m[PASS][0m testRegisterSessionKeyViaEntrypoint2ndKey() (gas: 454314)
+[32m[PASS][0m testRegularSignature() (gas: 31316)
+[32m[PASS][0m testSessionKeySignature() (gas: 83615)
+[32m[PASS][0m testSimulateValidation() (gas: 126700)
+[32m[PASS][0m testToken():(address) (gas: 2405)
+[32m[PASS][0m testTransferOutNativeToken() (gas: 153765)
+[32m[PASS][0m testUpdateEntryPoint() (gas: 432147)
+Test result: [32mok[0m. 38 passed; 0 failed; 0 skipped; finished in 31.68ms
+
+Running 29 tests for test/foundry/core/upgradeable/UpgradeableOpenfortAccountTest.t.sol:UpgradeableOpenfortAccountTest
+[32m[PASS][0m testChangeOwnershipAndCountDirect() (gas: 72971)
+[32m[PASS][0m testChangeOwnershipAndCountEntryPoint() (gas: 238302)
+[32m[PASS][0m testCreateAccountViaEntryPoint() (gas: 379902)
+[32m[PASS][0m testCreateAccountWithNonceViaFactory() (gas: 282563)
+[32m[PASS][0m testFailAttackRegisterSessionKeyViaEntrypoint2ndKey() (gas: 429856)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyNotregistered() (gas: 205159)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyReachLimit() (gas: 326281)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyReachLimitBatching() (gas: 232567)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyRevoked() (gas: 54924)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingBatchWrongAddress() (gas: 255851)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingTooBig() (gas: 31583)
+[32m[PASS][0m testFailIncrementCounterViaSessionKeyWhitelistingWrongAddress() (gas: 247316)
+[32m[PASS][0m testFailRevokeSessionKeyInvalidUser() (gas: 57468)
+[32m[PASS][0m testIncrementCounterDirect() (gas: 50456)
+[32m[PASS][0m testIncrementCounterViaEntrypoint() (gas: 235712)
+[32m[PASS][0m testIncrementCounterViaEntrypointBatching() (gas: 247952)
+[32m[PASS][0m testIncrementCounterViaSessionKey() (gas: 253899)
+[32m[PASS][0m testIncrementCounterViaSessionKeyExpired() (gas: 220190)
+[32m[PASS][0m testIncrementCounterViaSessionKeyWhitelisting() (gas: 279464)
+[32m[PASS][0m testIncrementCounterViaSessionKeyWhitelistingBatch() (gas: 303021)
+[32m[PASS][0m testMintTokenAccount() (gas: 264369)
+[32m[PASS][0m testReceiveNativeToken() (gas: 22294)
+[32m[PASS][0m testRegisterSessionKeyViaEntrypoint() (gas: 349033)
+[32m[PASS][0m testRegisterSessionKeyViaEntrypoint2ndKey() (gas: 461277)
+[32m[PASS][0m testSimulateValidation() (gas: 128949)
+[32m[PASS][0m testToken():(address) (gas: 2426)
+[32m[PASS][0m testTransferOutNativeToken() (gas: 156585)
+[32m[PASS][0m testUpdateEntryPoint() (gas: 810677)
+[32m[PASS][0m testUpgradeAccount() (gas: 2584424)
+Test result: [32mok[0m. 29 passed; 0 failed; 0 skipped; finished in 30.83ms
+| EntryPoint contract |                 |       |        |       |         |
+|---------------------|-----------------|-------|--------|-------|---------|
+| Deployment Cost     | Deployment Size |       |        |       |         |
+| 0                   | 0               |       |        |       |         |
+| Function Name       | min             | avg   | median | max   | # calls |
+| balanceOf           | 652             | 1318  | 652    | 2652  | 3       |
+| depositTo           | 2680            | 12630 | 12630  | 22580 | 2       |
+
+
+| contracts/core/eip6551/EIP6551OpenfortAccount.sol:EIP6551OpenfortAccount contract |                 |       |        |       |         |
+|-----------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
+| Deployment Cost                                                                   | Deployment Size |       |        |       |         |
+| 2320493                                                                           | 11753           |       |        |       |         |
+| Function Name                                                                     | min             | avg   | median | max   | # calls |
+| addDeposit                                                                        | 10047           | 10047 | 10047  | 10047 | 1       |
+| entryPoint                                                                        | 398             | 1064  | 398    | 2398  | 3       |
+| getDeposit                                                                        | 1435            | 3601  | 1435   | 7935  | 3       |
+| initialize                                                                        | 942             | 79951 | 97877  | 97877 | 16      |
+| onERC721Received                                                                  | 862             | 862   | 862    | 862   | 10      |
+| owner                                                                             | 3291            | 4191  | 3291   | 7791  | 5       |
+| token                                                                             | 1306            | 1306  | 1306   | 1306  | 5       |
+
+
+| contracts/core/eip6551/ERC6551Registry.sol:ERC6551Registry contract |                 |       |        |        |         |
+|---------------------------------------------------------------------|-----------------|-------|--------|--------|---------|
+| Deployment Cost                                                     | Deployment Size |       |        |        |         |
+| 282724                                                              | 1444            |       |        |        |         |
+| Function Name                                                       | min             | avg   | median | max    | # calls |
+| account                                                             | 1650            | 1650  | 1650   | 1650   | 5       |
+| createAccount                                                       | 73860           | 88268 | 73860  | 174720 | 14      |
+
+
+| contracts/core/managed/ManagedOpenfortAccount.sol:ManagedOpenfortAccount contract |                 |        |        |        |         |
+|-----------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                                                                   | Deployment Size |        |        |        |         |
+| 2202553                                                                           | 11164           |        |        |        |         |
+| Function Name                                                                     | min             | avg    | median | max    | # calls |
+| acceptOwnership                                                                   | 4236            | 4236   | 4236   | 4236   | 2       |
+| execute                                                                           | 3590            | 21510  | 21564  | 32790  | 18      |
+| executeBatch                                                                      | 25603           | 25603  | 25603  | 25603  | 2       |
+| initialize                                                                        | 100230          | 100230 | 100230 | 100230 | 32      |
+| receive                                                                           | 55              | 55     | 55     | 55     | 2       |
+| registerSessionKey(address,uint48,uint48)                                         | 24629           | 25765  | 26617  | 26617  | 7       |
+| registerSessionKey(address,uint48,uint48,uint48)                                  | 24379           | 25704  | 26367  | 26367  | 3       |
+| registerSessionKey(address,uint48,uint48,uint48,address[])                        | 3288            | 41642  | 49313  | 49313  | 6       |
+| revokeSessionKey                                                                  | 631             | 631    | 631    | 631    | 2       |
+| sessionKeys                                                                       | 832             | 832    | 832    | 832    | 3       |
+| transferOwnership                                                                 | 2627            | 18459  | 26375  | 26375  | 3       |
+| validateUserOp                                                                    | 5005            | 7861   | 7005   | 15510  | 51      |
+| version                                                                           | 259             | 259    | 259    | 259    | 1       |
+
+
+| contracts/core/managed/ManagedOpenfortFactory.sol:ManagedOpenfortFactory contract |                 |        |        |        |         |
+|-----------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                                                                   | Deployment Size |        |        |        |         |
+| 868245                                                                            | 4625            |        |        |        |         |
+| Function Name                                                                     | min             | avg    | median | max    | # calls |
+| accountImplementation                                                             | 402             | 402    | 402    | 402    | 1       |
+| addStake                                                                          | 2519            | 23742  | 9778   | 58930  | 3       |
+| createAccountWithNonce                                                            | 7453            | 248708 | 257197 | 261697 | 34      |
+| getAddressWithNonce                                                               | 7027            | 7027   | 7027   | 7027   | 4       |
+| implementation                                                                    | 319             | 763    | 319    | 2319   | 171     |
+| upgradeTo                                                                         | 2634            | 4783   | 4783   | 6933   | 2       |
+
+
+| contracts/core/managed/OpenfortBeaconProxy.sol:OpenfortBeaconProxy contract |                 |       |        |       |         |
+|-----------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
+| Deployment Cost                                                             | Deployment Size |       |        |       |         |
+| 162402                                                                      | 2010            |       |        |       |         |
+| Function Name                                                               | min             | avg   | median | max   | # calls |
+| acceptOwnership                                                             | 5169            | 5169  | 5169   | 5169  | 2       |
+| execute                                                                     | 4768            | 23198 | 22748  | 33968 | 18      |
+| executeBatch                                                                | 26883           | 26883 | 26883  | 26883 | 2       |
+| implementation                                                              | 1079            | 2079  | 2079   | 3079  | 2       |
+| receive                                                                     | 10188           | 10188 | 10188  | 10188 | 2       |
+| registerSessionKey(address,uint48,uint48)                                   | 25804           | 32082 | 36792  | 36792 | 7       |
+| registerSessionKey(address,uint48,uint48,uint48)                            | 25557           | 32882 | 36545  | 36545 | 3       |
+| registerSessionKey(address,uint48,uint48,uint48,address[])                  | 13557           | 51850 | 59509  | 59509 | 6       |
+| revokeSessionKey                                                            | 1804            | 1804  | 1804   | 1804  | 2       |
+| sessionKeys                                                                 | 2016            | 2016  | 2016   | 2016  | 3       |
+| transferOwnership                                                           | 12809           | 28632 | 36544  | 36544 | 3       |
+| validateUserOp                                                              | 6325            | 12117 | 10868  | 19822 | 51      |
+| version                                                                     | 1428            | 1428  | 1428   | 1428  | 3       |
+
+
+| contracts/core/recoverable/OpenfortRecoverableProxy.sol:OpenfortRecoverableProxy contract |                 |       |        |       |         |
+|-------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
+| Deployment Cost                                                                           | Deployment Size |       |        |       |         |
+| 364279                                                                                    | 1694            |       |        |       |         |
+| Function Name                                                                             | min             | avg   | median | max   | # calls |
+| acceptOwnership                                                                           | 4583            | 4583  | 4583   | 4583  | 3       |
+| cancelGuardianProposal                                                                    | 1102            | 1617  | 1617   | 2132  | 2       |
+| cancelGuardianRevocation                                                                  | 1168            | 1676  | 1676   | 2184  | 2       |
+| cancelRecovery                                                                            | 2992            | 3786  | 3786   | 4580  | 2       |
+| completeRecovery                                                                          | 1316            | 10809 | 10980  | 20214 | 9       |
+| confirmGuardianProposal                                                                   | 1263            | 43464 | 54442  | 59882 | 35      |
+| confirmGuardianRevocation                                                                 | 1159            | 4586  | 1605   | 15303 | 17      |
+| eip712Domain                                                                              | 3610            | 8410  | 11610  | 11610 | 10      |
+| entryPoint                                                                                | 899             | 899   | 899    | 899   | 2       |
+| execute                                                                                   | 4246            | 22532 | 22226  | 33446 | 17      |
+| executeBatch                                                                              | 26295           | 26295 | 26295  | 26295 | 2       |
+| getGuardians                                                                              | 10537           | 10537 | 10537  | 10537 | 4       |
+| getLock                                                                                   | 917             | 952   | 917    | 1022  | 6       |
+| guardianCount                                                                             | 860             | 2304  | 860    | 7360  | 45      |
+| isGuardian                                                                                | 1139            | 1326  | 1139   | 3139  | 32      |
+| isGuardianOrGuardianSigner                                                                | 5372            | 5372  | 5372   | 5372  | 1       |
+| isLocked                                                                                  | 861             | 1426  | 861    | 7361  | 23      |
+| lock                                                                                      | 1092            | 11935 | 2967   | 26325 | 5       |
+| owner                                                                                     | 867             | 1117  | 867    | 2867  | 8       |
+| proposeGuardian                                                                           | 1630            | 28077 | 30775  | 41275 | 39      |
+| receive                                                                                   | 4976            | 4976  | 4976   | 4976  | 2       |
+| registerSessionKey(address,uint48,uint48)                                                 | 25191           | 30041 | 33679  | 33679 | 7       |
+| registerSessionKey(address,uint48,uint48,uint48)                                          | 24991           | 30649 | 33479  | 33479 | 3       |
+| registerSessionKey(address,uint48,uint48,uint48,address[])                                | 10458           | 47210 | 56399  | 56399 | 5       |
+| revokeGuardian                                                                            | 1123            | 14294 | 23366  | 31366 | 19      |
+| revokeSessionKey                                                                          | 1210            | 1210  | 1210   | 1210  | 2       |
+| sessionKeys                                                                               | 1266            | 1266  | 1266   | 1266  | 2       |
+| startRecovery                                                                             | 1231            | 43048 | 55341  | 63941 | 13      |
+| transferOwnership                                                                         | 1229            | 24078 | 35726  | 35726 | 5       |
+| unlock                                                                                    | 1068            | 1931  | 1780   | 2946  | 3       |
+| updateEntryPoint                                                                          | 1109            | 1683  | 1146   | 2794  | 3       |
+| validateUserOp                                                                            | 5859            | 10638 | 9841   | 16844 | 47      |
+
+
+| contracts/core/recoverable/RecoverableOpenfortAccount.sol:RecoverableOpenfortAccount contract |                 |        |        |        |         |
+|-----------------------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                                                                               | Deployment Size |        |        |        |         |
+| 3947585                                                                                       | 19922           |        |        |        |         |
+| Function Name                                                                                 | min             | avg    | median | max    | # calls |
+| acceptOwnership                                                                               | 4220            | 4220   | 4220   | 4220   | 3       |
+| cancelGuardianProposal                                                                        | 629             | 1197   | 1197   | 1766   | 2       |
+| cancelGuardianRevocation                                                                      | 695             | 1257   | 1257   | 1819   | 2       |
+| cancelRecovery                                                                                | 2522            | 3369   | 3369   | 4216   | 2       |
+| completeRecovery                                                                              | 822             | 10337  | 10456  | 19798  | 9       |
+| confirmGuardianProposal                                                                       | 790             | 43073  | 54076  | 59516  | 35      |
+| confirmGuardianRevocation                                                                     | 686             | 4157   | 1132   | 14937  | 17      |
+| eip712Domain                                                                                  | 3093            | 7893   | 11093  | 11093  | 10      |
+| entryPoint                                                                                    | 442             | 442    | 442    | 442    | 2       |
+| execute                                                                                       | 3774            | 21785  | 21748  | 32974  | 17      |
+| executeBatch                                                                                  | 25721           | 25721  | 25721  | 25721  | 2       |
+| getGuardians                                                                                  | 5574            | 5574   | 5574   | 5574   | 4       |
+| getLock                                                                                       | 460             | 495    | 460    | 565    | 6       |
+| guardianCount                                                                                 | 403             | 847    | 403    | 2403   | 45      |
+| initialize                                                                                    | 23500           | 280774 | 284924 | 284924 | 63      |
+| isGuardian                                                                                    | 679             | 866    | 679    | 2679   | 32      |
+| isGuardianOrGuardianSigner                                                                    | 412             | 412    | 412    | 412    | 1       |
+| isLocked                                                                                      | 404             | 577    | 404    | 2404   | 23      |
+| lock                                                                                          | 634             | 11478  | 2509   | 25871  | 5       |
+| owner                                                                                         | 410             | 660    | 410    | 2410   | 8       |
+| proposeGuardian                                                                               | 1169            | 26926  | 30318  | 36318  | 39      |
+| receive                                                                                       | 55              | 55     | 55     | 55     | 2       |
+| registerSessionKey(address,uint48,uint48)                                                     | 24725           | 27003  | 28713  | 28713  | 7       |
+| registerSessionKey(address,uint48,uint48,uint48)                                              | 24519           | 27177  | 28507  | 28507  | 3       |
+| registerSessionKey(address,uint48,uint48,uint48,address[])                                    | 5395            | 42206  | 51409  | 51409  | 5       |
+| revokeGuardian                                                                                | 650             | 13829  | 22909  | 30909  | 19      |
+| revokeSessionKey                                                                              | 749             | 749    | 749    | 749    | 2       |
+| sessionKeys                                                                                   | 788             | 788    | 788    | 788    | 2       |
+| startRecovery                                                                                 | 752             | 40163  | 54884  | 58984  | 13      |
+| transferOwnership                                                                             | 768             | 20017  | 30769  | 30769  | 5       |
+| unlock                                                                                        | 610             | 1504   | 1416   | 2488   | 3       |
+| updateEntryPoint                                                                              | 648             | 1219   | 673    | 2337   | 3       |
+| validateUserOp                                                                                | 5233            | 8566   | 9233   | 12667  | 47      |
+
+
+| contracts/core/recoverable/RecoverableOpenfortFactory.sol:RecoverableOpenfortFactory contract |                 |        |        |        |         |
+|-----------------------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                                                                               | Deployment Size |        |        |        |         |
+| 660500                                                                                        | 4104            |        |        |        |         |
+| Function Name                                                                                 | min             | avg    | median | max    | # calls |
+| createAccountWithNonce                                                                        | 7232            | 400668 | 406934 | 409434 | 63      |
+| getAddressWithNonce                                                                           | 6785            | 6785   | 6785   | 6785   | 4       |
+
+
+| contracts/core/static/StaticOpenfortAccount.sol:StaticOpenfortAccount contract |                 |        |        |        |         |
+|--------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                                                                | Deployment Size |        |        |        |         |
+| 2268434                                                                        | 11493           |        |        |        |         |
+| Function Name                                                                  | min             | avg    | median | max    | # calls |
+| acceptOwnership                                                                | 4184            | 4184   | 4184   | 4184   | 2       |
+| eip712Domain                                                                   | 10961           | 10961  | 10961  | 10961  | 6       |
+| entryPoint                                                                     | 398             | 398    | 398    | 398    | 2       |
+| execute                                                                        | 3730            | 22333  | 22769  | 32930  | 20      |
+| executeBatch                                                                   | 25743           | 40742  | 48408  | 55408  | 5       |
+| initialize                                                                     | 124044          | 124044 | 124044 | 124044 | 55      |
+| isValidSignature                                                               | 6793            | 14732  | 15620  | 19298  | 8       |
+| owner                                                                          | 365             | 365    | 365    | 365    | 3       |
+| receive                                                                        | 55              | 55     | 55     | 55     | 2       |
+| registerSessionKey(address,uint48,uint48)                                      | 24769           | 27669  | 28757  | 28757  | 11      |
+| registerSessionKey(address,uint48,uint48,uint48)                               | 24497           | 27155  | 28485  | 28485  | 3       |
+| registerSessionKey(address,uint48,uint48,uint48,address[])                     | 5340            | 43694  | 51365  | 51365  | 6       |
+| revokeSessionKey                                                               | 771             | 771    | 771    | 771    | 2       |
+| sessionKeys                                                                    | 854             | 854    | 854    | 854    | 3       |
+| transferOwnership                                                              | 2627            | 18459  | 26375  | 26375  | 3       |
+| updateEntryPoint                                                               | 651             | 1483   | 1483   | 2315   | 2       |
+| validateUserOp                                                                 | 5145            | 8824   | 9145   | 15650  | 57      |
+
+
+| contracts/core/static/StaticOpenfortFactory.sol:StaticOpenfortFactory contract |                 |        |        |        |         |
+|--------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                                                                | Deployment Size |        |        |        |         |
+| 211175                                                                         | 1380            |        |        |        |         |
+| Function Name                                                                  | min             | avg    | median | max    | # calls |
+| createAccountWithNonce                                                         | 1008            | 167957 | 170902 | 173402 | 56      |
+| getAddressWithNonce                                                            | 786             | 786    | 786    | 786    | 4       |
+
+
+| contracts/core/upgradeable/OpenfortUpgradeableProxy.sol:OpenfortUpgradeableProxy contract |                 |       |        |       |         |
+|-------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
+| Deployment Cost                                                                           | Deployment Size |       |        |       |         |
+| 200167                                                                                    | 1534            |       |        |       |         |
+| Function Name                                                                             | min             | avg   | median | max   | # calls |
+| acceptOwnership                                                                           | 4583            | 4583  | 4583   | 4583  | 2       |
+| entryPoint                                                                                | 877             | 877   | 877    | 877   | 2       |
+| execute                                                                                   | 4224            | 22514 | 22204  | 33424 | 17      |
+| executeBatch                                                                              | 26317           | 26317 | 26317  | 26317 | 2       |
+| implementation                                                                            | 335             | 335   | 335    | 335   | 2       |
+| receive                                                                                   | 4976            | 4976  | 4976   | 4976  | 2       |
+| registerSessionKey(address,uint48,uint48)                                                 | 25213           | 30063 | 33701  | 33701 | 7       |
+| registerSessionKey(address,uint48,uint48,uint48)                                          | 24991           | 30649 | 33479  | 33479 | 3       |
+| registerSessionKey(address,uint48,uint48,uint48,address[])                                | 10469           | 47230 | 56421  | 56421 | 5       |
+| revokeSessionKey                                                                          | 1187            | 1187  | 1187   | 1187  | 2       |
+| sessionKeys                                                                               | 1266            | 1266  | 1266   | 1266  | 2       |
+| transferOwnership                                                                         | 7622            | 23443 | 31354  | 31354 | 3       |
+| updateEntryPoint                                                                          | 1102            | 1926  | 1926   | 2750  | 2       |
+| upgradeTo                                                                                 | 3363            | 7091  | 7091   | 10819 | 2       |
+| validateUserOp                                                                            | 5771            | 10550 | 9753   | 16756 | 47      |
+| version                                                                                   | 760             | 2977  | 2977   | 5195  | 2       |
+
+
+| contracts/core/upgradeable/UpgradeableOpenfortAccount.sol:UpgradeableOpenfortAccount contract |                 |        |        |        |         |
+|-----------------------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                                                                               | Deployment Size |        |        |        |         |
+| 2671592                                                                                       | 13550           |        |        |        |         |
+| Function Name                                                                                 | min             | avg    | median | max    | # calls |
+| acceptOwnership                                                                               | 4220            | 4220   | 4220   | 4220   | 2       |
+| entryPoint                                                                                    | 420             | 420    | 420    | 420    | 2       |
+| execute                                                                                       | 3752            | 21767  | 21726  | 32952  | 17      |
+| executeBatch                                                                                  | 25743           | 25743  | 25743  | 25743  | 2       |
+| initialize                                                                                    | 124044          | 124044 | 124044 | 124044 | 32      |
+| receive                                                                                       | 55              | 55     | 55     | 55     | 2       |
+| registerSessionKey(address,uint48,uint48)                                                     | 24747           | 27025  | 28735  | 28735  | 7       |
+| registerSessionKey(address,uint48,uint48,uint48)                                              | 24519           | 27177  | 28507  | 28507  | 3       |
+| registerSessionKey(address,uint48,uint48,uint48,address[])                                    | 5406            | 42226  | 51431  | 51431  | 5       |
+| revokeSessionKey                                                                              | 726             | 726    | 726    | 726    | 2       |
+| sessionKeys                                                                                   | 788             | 788    | 788    | 788    | 2       |
+| transferOwnership                                                                             | 2649            | 18481  | 26397  | 26397  | 3       |
+| updateEntryPoint                                                                              | 629             | 1461   | 1461   | 2293   | 2       |
+| upgradeTo                                                                                     | 2890            | 6626   | 6626   | 10362  | 2       |
+| validateUserOp                                                                                | 5145            | 8478   | 9145   | 12579  | 47      |
+| version                                                                                       | 238             | 238    | 238    | 238    | 1       |
+
+
+| contracts/core/upgradeable/UpgradeableOpenfortFactory.sol:UpgradeableOpenfortFactory contract |                 |        |        |        |         |
+|-----------------------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                                                                               | Deployment Size |        |        |        |         |
+| 515288                                                                                        | 2906            |        |        |        |         |
+| Function Name                                                                                 | min             | avg    | median | max    | # calls |
+| createAccountWithNonce                                                                        | 6266            | 236748 | 243795 | 246295 | 33      |
+| getAddressWithNonce                                                                           | 5817            | 5817   | 5817   | 5817   | 4       |
+
+
+| contracts/mock/MockedV2ManagedOpenfortAccount.sol:MockedV2ManagedOpenfortAccount contract |                 |       |        |       |         |
+|-------------------------------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
+| Deployment Cost                                                                           | Deployment Size |       |        |       |         |
+| 2094837                                                                                   | 10626           |       |        |       |         |
+| Function Name                                                                             | min             | avg   | median | max   | # calls |
+| initialize                                                                                | 50357           | 50357 | 50357  | 50357 | 1       |
+| version                                                                                   | 259             | 259   | 259    | 259   | 2       |
+
+
+| contracts/mock/MockedV2UpgradeableOpenfortAccount.sol:MockedV2UpgradeableOpenfortAccount contract |                 |     |        |     |         |
+|---------------------------------------------------------------------------------------------------|-----------------|-----|--------|-----|---------|
+| Deployment Cost                                                                                   | Deployment Size |     |        |     |         |
+| 2511603                                                                                           | 12751           |     |        |     |         |
+| Function Name                                                                                     | min             | avg | median | max | # calls |
+| proxiableUUID                                                                                     | 374             | 374 | 374    | 374 | 1       |
+| version                                                                                           | 303             | 303 | 303    | 303 | 1       |
+
+
+| contracts/mock/VipNFT.sol:VIPNFT contract |                 |       |        |       |         |
+|-------------------------------------------|-----------------|-------|--------|-------|---------|
+| Deployment Cost                           | Deployment Size |       |        |       |         |
+| 1019550                                   | 5353            |       |        |       |         |
+| Function Name                             | min             | avg   | median | max   | # calls |
+| mint                                      | 49422           | 49422 | 49422  | 49422 | 10      |
+| ownerOf                                   | 536             | 821   | 536    | 2536  | 7       |
+| transferFrom                              | 33314           | 33314 | 33314  | 33314 | 1       |
+
+
+| contracts/paymaster/OpenfortPaymaster.sol:OpenfortPaymaster contract |                 |       |        |       |         |
+|----------------------------------------------------------------------|-----------------|-------|--------|-------|---------|
+| Deployment Cost                                                      | Deployment Size |       |        |       |         |
+| 1215863                                                              | 6347            |       |        |       |         |
+| Function Name                                                        | min             | avg   | median | max   | # calls |
+| addStake                                                             | 520             | 30237 | 32925  | 32925 | 16      |
+| deposit                                                              | 9919            | 30359 | 31819  | 31819 | 15      |
+| entryPoint                                                           | 261             | 261   | 261    | 261   | 1       |
+| getDeposit                                                           | 1239            | 2162  | 1239   | 3239  | 13      |
+| getHash                                                              | 3462            | 5053  | 4998   | 6535  | 12      |
+| owner                                                                | 2365            | 2365  | 2365   | 2365  | 7       |
+| parsePaymasterAndData                                                | 1516            | 1516  | 1516   | 1516  | 2       |
+| postOp                                                               | 1433            | 12421 | 5583   | 30248 | 6       |
+| validatePaymasterUserOp                                              | 1694            | 26885 | 30289  | 31112 | 8       |
+
+
+| lib/account-abstraction/contracts/core/SenderCreator.sol:SenderCreator contract |                 |        |        |        |         |
+|---------------------------------------------------------------------------------|-----------------|--------|--------|--------|---------|
+| Deployment Cost                                                                 | Deployment Size |        |        |        |         |
+| 99947                                                                           | 531             |        |        |        |         |
+| Function Name                                                                   | min             | avg    | median | max    | # calls |
+| createSender                                                                    | 172055          | 271360 | 252649 | 408087 | 4       |
+
+
+
+Ran 8 test suites: 180 tests passed, 0 failed, 0 skipped (180 total tests)

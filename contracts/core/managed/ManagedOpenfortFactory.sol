@@ -24,7 +24,12 @@ import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 contract ManagedOpenfortFactory is IBaseOpenfortFactory, UpgradeableBeacon {
     address internal entrypointContract;
 
-    constructor(address _owner, address _entrypoint, address _implementation) UpgradeableBeacon(_implementation) {
+    constructor(address _owner, address _entrypoint, address _accountImplementation)
+        UpgradeableBeacon(_accountImplementation)
+    {
+        if (_owner == address(0) || _entrypoint == address(0) || _accountImplementation == address(0)) {
+            revert ZeroAddressNotAllowed();
+        }
         _transferOwnership(_owner);
         entrypointContract = _entrypoint;
     }
