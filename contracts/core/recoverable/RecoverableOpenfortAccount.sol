@@ -21,10 +21,9 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
 
     // Period during which the owner can cancel a guardian proposal/revocation in seconds (7 days)
     uint256 internal recoveryPeriod;
-    // Lock period
+    // Default lock period (cannot be modified)
     uint256 internal lockPeriod;
     // The security period to add/remove guardians
-    // Minimum period between the lock and an unlock. Must be greater or equal to the security period.
     uint256 internal securityPeriod;
     // The security window
     uint256 internal securityWindow;
@@ -32,10 +31,10 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     struct GuardianInfo {
         bool exists; // Whether the guardian is active/exists or not
         uint256 index; // Position of the guardian
-        uint256 pending; // Pending time until addition or removal
+        uint256 pending; // Timestamp when the addition or removal can take place
     }
 
-    struct GuardianStorageConfig {
+    struct GuardiansConfig {
         address[] guardians; // list of guardian addresses
         mapping(address => GuardianInfo) info; // info about guardians
         uint256 lock; // Lock's release timestamp
@@ -44,13 +43,13 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     struct RecoveryConfig {
         address recoveryAddress; // Address to which ownership should be transferred
         uint64 executeAfter; // Timestamp after which the recovery process can be finalized
-        uint32 guardianCount; // NUmber of guardians required to recover
+        uint32 guardiansRequired; // Number of guardian signatures needed to recover
     }
 
-    GuardianStorageConfig internal guardiansConfig;
-    RecoveryConfig internal guardianRecoveryConfig;
+    GuardiansConfig internal guardiansConfig;
+    RecoveryConfig internal recoveryDetails;
 
-    // bytes32 public constant RECOVER_TYPEHASH = keccak256("Recover(address recoveryAddress,uint64 executeAfter,uint32 guardianCount"));
+    // bytes32 public constant RECOVER_TYPEHASH = keccak256("Recover(address recoveryAddress,uint64 executeAfter,uint32 guardiansRequired"));
     bytes32 public constant RECOVER_TYPEHASH = 0x601b3fa0ae18d2a4c446b40cd6b8e0e911bbbb5dd66b248922e3d91efafa0969;
 
     event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
@@ -71,8 +70,13 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     error InsecurePeriod();
     error MustBeGuardian();
     error DuplicatedGuardian();
-    error DuplicatedProposal();
     error GuardianCannotBeOwner();
+    error DuplicatedProposal();
+    error UnknownProposal();
+    error PendingProposalNotOver();
+    error PendingProposalExpired();
+    error PendingRevokeNotOver();
+    error PendingRevokeExpired();
     error NoOngoingRecovery();
     error OngoingRecovery();
     error InvalidRecoverySignatures();
@@ -125,9 +129,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * Update the EntryPoint address
      */
     function updateEntryPoint(address _newEntrypoint) external onlyOwner {
-        if (_newEntrypoint == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
+        if (_newEntrypoint == address(0)) revert ZeroAddressNotAllowed();
         emit EntryPointUpdated(entrypointContract, _newEntrypoint);
         entrypointContract = _newEntrypoint;
     }
@@ -148,13 +150,14 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * @return _releaseAfter The epoch time at which the lock will release (in seconds).
      */
     function getLock() external view returns (uint256 _releaseAfter) {
-        return isLocked() ? guardiansConfig.lock : 0;
+        _releaseAfter = isLocked() ? guardiansConfig.lock : 0;
     }
 
     /**
      * @notice Lets a guardian lock a wallet.
      */
-    function lock() external onlyGuardian {
+    function lock() external {
+        if (!isGuardian(msg.sender)) revert MustBeGuardian();
         if (isLocked()) revert AccountLocked();
         _setLock(block.timestamp + lockPeriod);
     }
@@ -162,14 +165,15 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     /**
      * @notice Lets a guardian unlock a locked wallet.
      */
-    function unlock() external onlyGuardian {
+    function unlock() external {
+        if (!isGuardian(msg.sender)) revert MustBeGuardian();
         if (!isLocked()) revert AccountNotLocked();
         _setLock(0);
     }
 
     function _setLock(uint256 _releaseAfter) internal {
-        guardiansConfig.lock = _releaseAfter;
         emit Locked(_releaseAfter != 0);
+        guardiansConfig.lock = _releaseAfter;
     }
 
     /**
@@ -177,15 +181,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
 
     /**
-     * @notice Throws if the caller is not a guardian for the account.
-     */
-    modifier onlyGuardian() {
-        if (!isGuardian(msg.sender)) revert MustBeGuardian();
-        _;
-    }
-
-    /**
-     * @notice Returns the number of guardians for an Openfort account.
+     * @notice Returns the number of guardians for the Openfort account.
      * @return the number of guardians.
      */
     function guardianCount() public view returns (uint256) {
@@ -193,13 +189,16 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     }
 
     /**
-     * @notice Gets the list of guaridans for an Openfort account.
+     * @notice Gets the list of guaridans for the Openfort account.
      * @return the list of guardians.
      */
     function getGuardians() external view returns (address[] memory) {
         address[] memory guardians = new address[](guardiansConfig.guardians.length);
-        for (uint256 i = 0; i < guardiansConfig.guardians.length; i++) {
+        for (uint256 i = 0; i < guardiansConfig.guardians.length;) {
             guardians[i] = guardiansConfig.guardians[i];
+            unchecked {
+                ++i; // gas optimization
+            }
         }
         return guardians;
     }
@@ -241,7 +240,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         require(success, "Must be an EOA or an ownable wallet");
 
         if (
-            !(guardiansConfig.info[_guardian].pending == 0)
+            guardiansConfig.info[_guardian].pending != 0
                 && block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow
         ) {
             revert DuplicatedProposal();
@@ -257,10 +256,10 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
     function confirmGuardianProposal(address _guardian) external {
         if (isLocked()) revert AccountLocked();
-        require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending proposal");
-        require(guardiansConfig.info[_guardian].pending < block.timestamp, "Pending proposal not over");
-        require(block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow, "Pending proposal expired");
-        require(!isGuardian(_guardian), "Guardian already exists");
+        if (guardiansConfig.info[_guardian].pending == 0) revert UnknownProposal();
+        if (guardiansConfig.info[_guardian].pending > block.timestamp) revert PendingProposalNotOver();
+        if (block.timestamp > guardiansConfig.info[_guardian].pending + securityWindow) revert PendingProposalExpired();
+        if (isGuardian(_guardian)) revert DuplicatedGuardian();
 
         guardiansConfig.guardians.push(_guardian);
         guardiansConfig.info[_guardian].exists = true;
@@ -275,7 +274,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
     function cancelGuardianProposal(address _guardian) external onlyOwner {
         if (isLocked()) revert AccountLocked();
-        require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending proposal");
+        if (guardiansConfig.info[_guardian].pending == 0) revert UnknownProposal();
         delete guardiansConfig.info[_guardian].pending;
         emit GuardianProposalCancelled(_guardian);
     }
@@ -304,8 +303,8 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     function confirmGuardianRevocation(address _guardian) external {
         require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending revoke");
         require(isGuardian(_guardian), "Unknown guardian");
-        require(guardiansConfig.info[_guardian].pending < block.timestamp, "Pending revoke not over");
-        require(block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow, "Pending revoke expired");
+        if (guardiansConfig.info[_guardian].pending > block.timestamp) revert PendingRevokeNotOver();
+        if (block.timestamp > guardiansConfig.info[_guardian].pending + securityWindow) revert PendingRevokeExpired();
 
         address lastGuardian = guardiansConfig.guardians[guardiansConfig.guardians.length - 1];
         if (_guardian != lastGuardian) {
@@ -339,10 +338,10 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * Require the account to be in recovery or not according to the _isRecovery argument
      */
     function _requireRecovery(bool _isRecovery) internal view {
-        if (_isRecovery && guardianRecoveryConfig.executeAfter == 0) {
+        if (_isRecovery && recoveryDetails.executeAfter == 0) {
             revert NoOngoingRecovery();
         }
-        if (!_isRecovery && guardianRecoveryConfig.executeAfter > 0) {
+        if (!_isRecovery && recoveryDetails.executeAfter > 0) {
             revert OngoingRecovery();
         }
     }
@@ -354,12 +353,11 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * @param _recoveryAddress The address to which ownership should be transferred.
      */
     function startRecovery(address _recoveryAddress) external {
-        require(isGuardian(msg.sender), "Recovery can only be started by a guardian");
+        if (!isGuardian(msg.sender)) revert MustBeGuardian();
         _requireRecovery(false);
         require(!isGuardian(_recoveryAddress), "Recovery address cannot be a guardian");
         uint64 executeAfter = uint64(block.timestamp + recoveryPeriod);
-        guardianRecoveryConfig =
-            RecoveryConfig(_recoveryAddress, executeAfter, uint32(Math.ceilDiv(guardianCount(), 2)));
+        recoveryDetails = RecoveryConfig(_recoveryAddress, executeAfter, uint32(Math.ceilDiv(guardianCount(), 2)));
         _setLock(block.timestamp + lockPeriod);
         emit RecoveryExecuted(_recoveryAddress, executeAfter);
     }
@@ -372,15 +370,15 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
     function completeRecovery(bytes[] calldata _signatures) external {
         _requireRecovery(true);
-        require(uint64(block.timestamp) > guardianRecoveryConfig.executeAfter, "Ongoing recovery period");
+        require(uint64(block.timestamp) > recoveryDetails.executeAfter, "Ongoing recovery period");
 
-        require(guardianRecoveryConfig.guardianCount > 0, "No guardians set on wallet");
-        require(guardianRecoveryConfig.guardianCount == _signatures.length, "Wrong number of signatures");
+        require(recoveryDetails.guardiansRequired > 0, "No guardians set on wallet");
+        require(recoveryDetails.guardiansRequired == _signatures.length, "Wrong number of signatures");
 
         if (!_validateSignatures(_signatures)) revert InvalidRecoverySignatures();
 
-        address recoveryOwner = guardianRecoveryConfig.recoveryAddress;
-        delete guardianRecoveryConfig;
+        address recoveryOwner = recoveryDetails.recoveryAddress;
+        delete recoveryDetails;
 
         // End sessions here?
 
@@ -392,32 +390,29 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
 
     /**
      * @notice Validates the signatures provided
-     * @param _signatures The array signatures.
-     * @return A boolean indicating whether the signatures are valid and from the guardians.
+     * @param _signatures The array of signatures.
+     * @return A boolean indicating whether the signatures are valid, not repeated and from the guardians.
      */
     function _validateSignatures(bytes[] calldata _signatures) internal view returns (bool) {
         // We don't use a nonce here because the executeAfter serves as it
         bytes32 structHash = keccak256(
             abi.encode(
                 RECOVER_TYPEHASH,
-                guardianRecoveryConfig.recoveryAddress,
-                guardianRecoveryConfig.executeAfter,
-                guardianRecoveryConfig.guardianCount
+                recoveryDetails.recoveryAddress,
+                recoveryDetails.executeAfter,
+                recoveryDetails.guardiansRequired
             )
         );
         address lastSigner = _hashTypedDataV4(structHash).recover(_signatures[0]);
-        if (!isGuardian(lastSigner)) {
-            return false; // Signer must be a guardian
-        }
-        for (uint256 i = 1; i < _signatures.length; i++) {
+        if (!isGuardian(lastSigner)) return false; // Signer must be a guardian
+        for (uint256 i = 1; i < _signatures.length;) {
             address signer = _hashTypedDataV4(structHash).recover(_signatures[i]);
-            if (signer <= lastSigner) {
-                return false; // Signers must be different
-            }
-            if (!isGuardian(signer)) {
-                return false; // Signer must be a guardian
-            }
+            if (signer <= lastSigner) return false; // Signers must be different
+            if (!isGuardian(signer)) return false; // Signer must be a guardian
             lastSigner = signer;
+            unchecked {
+                ++i;
+            } // gas optimization
         }
         return true;
     }
@@ -427,15 +422,15 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
     function cancelRecovery() external onlyOwner {
         _requireRecovery(true);
-        address recoveryOwner = guardianRecoveryConfig.recoveryAddress;
+        address recoveryOwner = recoveryDetails.recoveryAddress;
         emit RecoveryCanceled(recoveryOwner);
-        delete guardianRecoveryConfig;
+        delete recoveryDetails;
         _setLock(0);
     }
 
     /**
      * @notice Lets the owner initiate a transfer of the account ownership. It is a 2 step process
-     * @param _newOwner The address to which ownership should be transferred.
+     * @param _newOwner The address to which ownership should be transferred. It cannot be a guardian
      */
     function transferOwnership(address _newOwner) public override {
         if (isLocked()) revert AccountLocked();
