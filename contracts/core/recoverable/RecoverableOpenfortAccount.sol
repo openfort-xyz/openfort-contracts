@@ -50,6 +50,9 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     GuardianStorageConfig internal guardiansConfig;
     RecoveryConfig internal guardianRecoveryConfig;
 
+    // bytes32 public constant RECOVER_TYPEHASH = keccak256("Recover(address recoveryAddress,uint64 executeAfter,uint32 guardianCount"));
+    bytes32 public constant RECOVER_TYPEHASH = 0x601b3fa0ae18d2a4c446b40cd6b8e0e911bbbb5dd66b248922e3d91efafa0969;
+
     event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
     event Locked(bool isLocked);
     event GuardianProposed(address indexed guardian, uint256 executeAfter);
@@ -257,6 +260,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending proposal");
         require(guardiansConfig.info[_guardian].pending < block.timestamp, "Pending proposal not over");
         require(block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow, "Pending proposal expired");
+        require(!isGuardian(_guardian), "Guardian already exists");
 
         guardiansConfig.guardians.push(_guardian);
         guardiansConfig.info[_guardian].exists = true;
@@ -299,6 +303,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
     function confirmGuardianRevocation(address _guardian) external {
         require(guardiansConfig.info[_guardian].pending > 0, "Unknown pending revoke");
+        require(isGuardian(_guardian), "Unknown guardian");
         require(guardiansConfig.info[_guardian].pending < block.timestamp, "Pending revoke not over");
         require(block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow, "Pending revoke expired");
 
@@ -362,19 +367,17 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     /**
      * @notice Finalizes an ongoing recovery procedure if the security period (executeAfter) is over.
      * The method is public and callable by anyone.
-     * @param _hashes Array of signature hashes concatenated.
      * @param _signatures Array of guardian signatures concatenated.
      * @notice The arguments should be ordered by the address of the guardian signing the message
      */
-    function completeRecovery(bytes32[] calldata _hashes, bytes[] calldata _signatures) external {
+    function completeRecovery(bytes[] calldata _signatures) external {
         _requireRecovery(true);
         require(uint64(block.timestamp) > guardianRecoveryConfig.executeAfter, "Ongoing recovery period");
 
         require(guardianRecoveryConfig.guardianCount > 0, "No guardians set on wallet");
         require(guardianRecoveryConfig.guardianCount == _signatures.length, "Wrong number of signatures");
-        require(_hashes.length == _signatures.length, "Wrong number of signatures and hashes");
 
-        if (!_validateSignatures(_hashes, _signatures)) revert InvalidRecoverySignatures();
+        if (!_validateSignatures(_signatures)) revert InvalidRecoverySignatures();
 
         address recoveryOwner = guardianRecoveryConfig.recoveryAddress;
         delete guardianRecoveryConfig;
@@ -389,21 +392,25 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
 
     /**
      * @notice Validates the signatures provided
-     * @param _hashes The arra of hashes of the signed messages.
      * @param _signatures The array signatures.
      * @return A boolean indicating whether the signatures are valid and from the guardians.
      */
-    function _validateSignatures(bytes32[] calldata _hashes, bytes[] calldata _signatures)
-        internal
-        view
-        returns (bool)
-    {
-        address lastSigner = _hashTypedDataV4(_hashes[0]).recover(_signatures[0]);
+    function _validateSignatures(bytes[] calldata _signatures) internal view returns (bool) {
+        // We don't use a nonce here because the executeAfter serves as it
+        bytes32 structHash = keccak256(
+            abi.encode(
+                RECOVER_TYPEHASH,
+                guardianRecoveryConfig.recoveryAddress,
+                guardianRecoveryConfig.executeAfter,
+                guardianRecoveryConfig.guardianCount
+            )
+        );
+        address lastSigner = _hashTypedDataV4(structHash).recover(_signatures[0]);
         if (!isGuardian(lastSigner)) {
             return false; // Signer must be a guardian
         }
         for (uint256 i = 1; i < _signatures.length; i++) {
-            address signer = _hashTypedDataV4(_hashes[0]).recover(_signatures[0]);
+            address signer = _hashTypedDataV4(structHash).recover(_signatures[i]);
             if (signer <= lastSigner) {
                 return false; // Signers must be different
             }
