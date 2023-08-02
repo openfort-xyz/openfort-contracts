@@ -192,7 +192,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     }
 
     /**
-     * @notice Gets the list of guaridans for the Openfort account.
+     * @notice Gets the list of guardians for the Openfort account.
      * @return the list of guardians.
      */
     function getGuardians() external view returns (address[] memory) {
@@ -299,7 +299,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     }
 
     /**
-     * @notice Confirms the pending revocation of a guardian to an Openfrort account.
+     * @notice Confirms the pending revocation of a guardian to an Openfort account.
      * The method must be called during the confirmation window and can be called by anyone to enable orchestration.
      * @param _guardian The guardian to confirm the revocation.
      */
