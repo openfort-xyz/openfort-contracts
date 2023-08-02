@@ -188,6 +188,41 @@ contract RecoverableOpenfortAccountTest is Test {
         vm.stopPrank();
     }
 
+    function testCreateWrongFactory() public {
+        vm.expectRevert(ZeroAddressNotAllowed.selector);
+        vm.prank(factoryAdmin);
+        recoverableOpenfortFactory = new RecoverableOpenfortFactory(
+            payable(address(entryPoint)), 
+            address(0),
+            RECOVERY_PERIOD,
+            SECURITY_PERIOD,
+            SECURITY_WINDOW,
+            LOCK_PERIOD,
+            OPENFORT_GUARDIAN
+        );
+    }
+
+    function testCreateWrongAccount() public {
+        vm.expectRevert(ZeroAddressNotAllowed.selector);
+        vm.prank(accountAdmin);
+        account = address(
+            new OpenfortRecoverableProxy{salt: 0}(
+                address(recoverableOpenfortAccountImpl),
+                abi.encodeCall(
+                    RecoverableOpenfortAccount.initialize,
+                    (
+                        address(0x0),
+                        address(entryPoint),
+                        RECOVERY_PERIOD,
+                        SECURITY_PERIOD,
+                        SECURITY_WINDOW,
+                        LOCK_PERIOD,
+                        OPENFORT_GUARDIAN)
+                    )
+                )
+        );
+    }
+
     /*
      * Create an account by directly calling the factory.
      */
@@ -2129,14 +2164,16 @@ contract RecoverableOpenfortAccountTest is Test {
         );
 
         bytes[] memory signatures = new bytes[](2);
-        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccountPK);   // Unsorted!
-        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK);
+        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccountPK); // Unsorted!
+        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccount2PK);
 
         skip(RECOVERY_PERIOD + 1);
+        vm.expectRevert(InvalidRecoverySignatures.selector);
         recoverableOpenfortAccount.completeRecovery(signatures);
 
-        assertEq(recoverableOpenfortAccount.isLocked(), false);
-        assertEq(recoverableOpenfortAccount.owner(), address(beneficiary));
+        // it should still be locked and the admin still be the same
+        assertEq(recoverableOpenfortAccount.isLocked(), true);
+        assertEq(recoverableOpenfortAccount.owner(), accountAdmin);
     }
 
     /*
@@ -2254,9 +2291,8 @@ contract RecoverableOpenfortAccountTest is Test {
         }
 
         // notice: wrong new oner!!!
-        bytes32 structHash = keccak256(
-            abi.encode(RECOVER_TYPEHASH, factoryAdmin, uint64(block.timestamp + RECOVERY_PERIOD), uint32(2))
-        );
+        bytes32 structHash =
+            keccak256(abi.encode(RECOVER_TYPEHASH, factoryAdmin, uint64(block.timestamp + RECOVERY_PERIOD), uint32(2)));
 
         bytes[] memory signatures = new bytes[](2);
         signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
@@ -2284,7 +2320,7 @@ contract RecoverableOpenfortAccountTest is Test {
 
         vm.expectRevert("Ownable: caller is not the owner");
         recoverableOpenfortAccount.cancelRecovery();
-        
+
         vm.prank(accountAdmin);
         recoverableOpenfortAccount.cancelRecovery();
 
@@ -2318,7 +2354,7 @@ contract RecoverableOpenfortAccountTest is Test {
         vm.expectRevert(OngoingRecovery.selector);
         vm.prank(OPENFORT_GUARDIAN);
         recoverableOpenfortAccount.startRecovery(address(beneficiary));
-        
+
         // The accounts should still be locked
         assertEq(recoverableOpenfortAccount.isLocked(), true);
         assertEq(recoverableOpenfortAccount.owner(), accountAdmin);
