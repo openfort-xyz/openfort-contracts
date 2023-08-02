@@ -1142,7 +1142,7 @@ contract RecoverableOpenfortAccountTest is Test {
         recoverableOpenfortAccount.lock();
 
         assertEq(recoverableOpenfortAccount.isLocked(), true);
-        assertEq(recoverableOpenfortAccount.getLock(), LOCK_PERIOD + 1);
+        assertEq(recoverableOpenfortAccount.getLock(), block.timestamp + LOCK_PERIOD);
 
         vm.expectRevert(AccountLocked.selector);
         vm.prank(OPENFORT_GUARDIAN);
@@ -1170,7 +1170,7 @@ contract RecoverableOpenfortAccountTest is Test {
         recoverableOpenfortAccount.lock();
 
         assertEq(recoverableOpenfortAccount.isLocked(), true);
-        assertEq(recoverableOpenfortAccount.getLock(), LOCK_PERIOD + 1);
+        assertEq(recoverableOpenfortAccount.getLock(), block.timestamp + LOCK_PERIOD);
 
         skip(LOCK_PERIOD / 2);
 
