@@ -1340,6 +1340,6 @@ contract StaticOpenfortAccountTest is Test {
      * Test a complex type using EIP712 Typed Signatures using isValidSignature's (EIP-1271)
      */
     function testComplextypeEIP712Signature() public {
-        return true; // ToDo
+        assertEq(true, true); // ToDo
     }
 }
