@@ -6,6 +6,7 @@ import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/crypto
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 
 import "./interfaces/IERC6551Account.sol";
 import "./utils/Bytecode.sol";
@@ -207,7 +208,7 @@ contract EIP6551OpenfortAccount is
                 return false;
             } // Limit of transactions per sessionKey reached
             unchecked {
-                sessionKey.limit = sessionKey.limit - uint48(toContracts.length);
+                sessionKey.limit = sessionKey.limit - SafeCastUpgradeable.toUint48(toContracts.length);
             }
 
             // Check if it is a masterSessionKey
