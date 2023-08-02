@@ -49,6 +49,9 @@ contract RecoverableOpenfortAccountTest is Test {
     error MustBeGuardian();
     error DuplicatedGuardian();
     error GuardianCannotBeOwner();
+    error NoOngoingRecovery();
+    error OngoingRecovery();
+    error InvalidRecoverySignatures();
 
     // keccak256("Recover(address recoveryAddress,uint64 executeAfter,uint32 guardianCount"));
     bytes32 RECOVER_TYPEHASH = 0x601b3fa0ae18d2a4c446b40cd6b8e0e911bbbb5dd66b248922e3d91efafa0969;
@@ -2080,6 +2083,63 @@ contract RecoverableOpenfortAccountTest is Test {
     }
 
     /*
+     * Case: User added 2 guardians and keeps the default (Openfort)
+     * The 2 added guardians (friends) are used to recover the account and transfer
+     * the ownership to beneficiary. Faild due to unsorted signatures
+     * @notice Remember that signatures need to be ordered by the guardian's address.
+     */
+    function test3GuardiansUnorderedCompleteRecovery() public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+
+        // Create two friends
+        address friendAccount;
+        uint256 friendAccountPK;
+        (friendAccount, friendAccountPK) = makeAddrAndKey("friend");
+
+        address friendAccount2;
+        uint256 friendAccount2PK;
+        (friendAccount2, friendAccount2PK) = makeAddrAndKey("friend2");
+
+        {
+            // Expect that we will see an event containing the friend account and security period
+            vm.expectEmit(true, true, false, true);
+            emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+            vm.prank(accountAdmin);
+            recoverableOpenfortAccount.proposeGuardian(friendAccount);
+            vm.expectEmit(true, true, false, true);
+            emit GuardianProposed(friendAccount2, block.timestamp + SECURITY_PERIOD);
+            vm.prank(accountAdmin);
+            recoverableOpenfortAccount.proposeGuardian(friendAccount2);
+
+            skip(1);
+            skip(SECURITY_PERIOD);
+            recoverableOpenfortAccount.confirmGuardianProposal(friendAccount);
+            recoverableOpenfortAccount.confirmGuardianProposal(friendAccount2);
+        }
+
+        {
+            // Default Openfort guardian starts a recovery process because the owner lost the PK
+            vm.prank(OPENFORT_GUARDIAN);
+            recoverableOpenfortAccount.startRecovery(address(beneficiary));
+            assertEq(recoverableOpenfortAccount.isLocked(), true);
+        }
+
+        bytes32 structHash = keccak256(
+            abi.encode(RECOVER_TYPEHASH, address(beneficiary), uint64(block.timestamp + RECOVERY_PERIOD), uint32(2))
+        );
+
+        bytes[] memory signatures = new bytes[](2);
+        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccountPK);   // Unsorted!
+        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK);
+
+        skip(RECOVERY_PERIOD + 1);
+        recoverableOpenfortAccount.completeRecovery(signatures);
+
+        assertEq(recoverableOpenfortAccount.isLocked(), false);
+        assertEq(recoverableOpenfortAccount.owner(), address(beneficiary));
+    }
+
+    /*
      * Case: User added 4 guardians and removes the default (Openfort)
      * One guardian (friend) is used to start a recovery process
      * The guardian that initiatied the recovery + another one are used to complete the flow.
@@ -2151,6 +2211,119 @@ contract RecoverableOpenfortAccountTest is Test {
         assertEq(recoverableOpenfortAccount.owner(), address(beneficiary));
     }
 
+    /*
+     * Case: User added 2 guardians and keeps the default (Openfort)
+     * The 2 added guardians (friends) are used to recover the account and transfer
+     * the ownership to beneficiary. Wrong signatures used
+     * @notice Remember that signatures need to be ordered by the guardian's address.
+     */
+    function test3GuardiansFailCompleteRecovery() public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+
+        // Create two friends
+        address friendAccount;
+        uint256 friendAccountPK;
+        (friendAccount, friendAccountPK) = makeAddrAndKey("friend");
+
+        address friendAccount2;
+        uint256 friendAccount2PK;
+        (friendAccount2, friendAccount2PK) = makeAddrAndKey("friend2");
+
+        {
+            // Expect that we will see an event containing the friend account and security period
+            vm.expectEmit(true, true, false, true);
+            emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+            vm.prank(accountAdmin);
+            recoverableOpenfortAccount.proposeGuardian(friendAccount);
+            vm.expectEmit(true, true, false, true);
+            emit GuardianProposed(friendAccount2, block.timestamp + SECURITY_PERIOD);
+            vm.prank(accountAdmin);
+            recoverableOpenfortAccount.proposeGuardian(friendAccount2);
+
+            skip(1);
+            skip(SECURITY_PERIOD);
+            recoverableOpenfortAccount.confirmGuardianProposal(friendAccount);
+            recoverableOpenfortAccount.confirmGuardianProposal(friendAccount2);
+        }
+
+        {
+            // Default Openfort guardian starts a recovery process because the owner lost the PK
+            vm.prank(OPENFORT_GUARDIAN);
+            recoverableOpenfortAccount.startRecovery(address(beneficiary));
+            assertEq(recoverableOpenfortAccount.isLocked(), true);
+        }
+
+        // notice: wrong new oner!!!
+        bytes32 structHash = keccak256(
+            abi.encode(RECOVER_TYPEHASH, factoryAdmin, uint64(block.timestamp + RECOVERY_PERIOD), uint32(2))
+        );
+
+        bytes[] memory signatures = new bytes[](2);
+        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
+        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccountPK);
+
+        skip(RECOVERY_PERIOD + 1);
+        vm.expectRevert(InvalidRecoverySignatures.selector);
+        recoverableOpenfortAccount.completeRecovery(signatures);
+
+        // it should still be locked and the admin still be the same
+        assertEq(recoverableOpenfortAccount.isLocked(), true);
+        assertEq(recoverableOpenfortAccount.owner(), accountAdmin);
+    }
+
+    /*
+     * Testing the functionality to cancel a recovery process
+     */
+    function testCancelRecovery() public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+
+        // Default Openfort guardian starts a recovery process because the owner lost the PK
+        vm.prank(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.startRecovery(address(beneficiary));
+        assertEq(recoverableOpenfortAccount.isLocked(), true);
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        recoverableOpenfortAccount.cancelRecovery();
+        
+        vm.prank(accountAdmin);
+        recoverableOpenfortAccount.cancelRecovery();
+
+        bytes32 structHash = keccak256(
+            abi.encode(RECOVER_TYPEHASH, address(beneficiary), uint64(block.timestamp + RECOVERY_PERIOD), uint32(1))
+        );
+
+        bytes[] memory signatures = new bytes[](1);
+        signatures[0] = getEIP712SignatureFrom(account, structHash, OPENFORT_GUARDIAN_PKEY);
+
+        skip(RECOVERY_PERIOD + 1);
+        vm.expectRevert(NoOngoingRecovery.selector);
+        recoverableOpenfortAccount.completeRecovery(signatures);
+
+        assertEq(recoverableOpenfortAccount.isLocked(), false);
+        assertEq(recoverableOpenfortAccount.owner(), address(accountAdmin));
+    }
+
+    /*
+     * Testing the startRecovery twice in a row
+     */
+    function testStartRecoveryTwice() public {
+        RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
+
+        // Default Openfort guardian starts a recovery process because the owner lost the PK
+        vm.prank(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.startRecovery(address(beneficiary));
+        assertEq(recoverableOpenfortAccount.isLocked(), true);
+
+        // Calling startRecovery() again should revert and have no effect
+        vm.expectRevert(OngoingRecovery.selector);
+        vm.prank(OPENFORT_GUARDIAN);
+        recoverableOpenfortAccount.startRecovery(address(beneficiary));
+        
+        // The accounts should still be locked
+        assertEq(recoverableOpenfortAccount.isLocked(), true);
+        assertEq(recoverableOpenfortAccount.owner(), accountAdmin);
+    }
+
     /**
      * Transfer ownership tests *
      */
@@ -2207,8 +2380,8 @@ contract RecoverableOpenfortAccountTest is Test {
      * Temporal test function for coverage purposes showing
      * that isGuardianOrGuardianSigner() always returns false.
      */
-    function testStubFakeMockTempisGuardian(address _guardian) public {
+    function testStubFakeMockTempisGuardian() public {
         RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
-        assertEq(recoverableOpenfortAccount.isGuardianOrGuardianSigner(_guardian), false);
+        assertEq(recoverableOpenfortAccount.isGuardianOrGuardianSigner(OPENFORT_GUARDIAN), false);
     }
 }
