@@ -208,7 +208,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
 
     /**
      * @notice Checks if an account is a guardian for an Openfort account.
-     * @param _guardian The account
+     * @param _guardian The guardian address to query
      * @return true if the account is a guardian for the account.
      */
     function isGuardian(address _guardian) public view returns (bool) {
