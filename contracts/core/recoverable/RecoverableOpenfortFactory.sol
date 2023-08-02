@@ -11,7 +11,7 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
 /**
  * @title RecoverableOpenfortFactory (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
- * @notice Contract to create an on-chain factory to deploy new UpgradeableOpenfortAccounts.
+ * @notice Contract to create an on-chain factory to deploy new RecoverableOpenfortAccounts.
  * It uses OpenZeppelin's Create2 and OpenfortRecoverableProxy libraries.
  * It inherits from:
  *  - IBaseOpenfortFactory
