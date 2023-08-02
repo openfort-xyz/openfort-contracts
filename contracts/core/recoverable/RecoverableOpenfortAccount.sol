@@ -174,6 +174,9 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         _setLock(0);
     }
 
+    /**
+     * @notice Internal function to modify the lock status.
+     */
     function _setLock(uint256 _releaseAfter) internal {
         emit Locked(_releaseAfter != 0);
         guardiansConfig.lock = _releaseAfter;
