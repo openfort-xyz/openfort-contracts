@@ -172,6 +172,10 @@ contract UpgradeableOpenfortAccountTest is Test {
         vm.prank(factoryAdmin);
         upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
 
+        // Calling it again should just return the address and not create another account
+        vm.prank(factoryAdmin);
+        upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
+
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
         assertEq(accountAddress2, upgradeableOpenfortFactory.getAddressWithNonce(accountAdmin, "2"));
@@ -854,6 +858,9 @@ contract UpgradeableOpenfortAccountTest is Test {
         address accountAdmin2;
         uint256 accountAdmin2PKey;
         (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        UpgradeableOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
 
         vm.prank(accountAdmin);
         UpgradeableOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);

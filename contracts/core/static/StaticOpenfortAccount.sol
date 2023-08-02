@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-// Base account contract to inherit from
+// Base account contract to inherit from and EntryPoint interface
 import {BaseOpenfortAccount, IEntryPoint} from "../BaseOpenfortAccount.sol";
 
 /**
