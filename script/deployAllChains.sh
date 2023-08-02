@@ -21,6 +21,9 @@ LOG_FILE=script/deployments/$(date +%Y-%m-%d_%H:%M)"-deploymentAllChains.log"
 # echo "------ StaticOpenfortDeploy ------ (Gnosis Chiado testnet)"
 # forge script StaticOpenfortDeploy --rpc-url $GNOSIS_CHIADO_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $GNOSIS_API_KEY_BLOCKSCOUT >> $LOG_FILE
 # sleep 3
+# echo "------ StaticOpenfortDeploy ------ (Base Goerli)"
+# forge script StaticOpenfortDeploy --rpc-url $BASE_TEST_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $BASE_API_KEY >> $LOG_FILE
+# sleep 3
 
 # echo "------ UpgradeableOpenfortDeploy ------ (Goerli)"
 # forge script UpgradeableOpenfortDeploy --rpc-url $GOERLI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
@@ -39,6 +42,9 @@ LOG_FILE=script/deployments/$(date +%Y-%m-%d_%H:%M)"-deploymentAllChains.log"
 # sleep 3
 # echo "------ UpgradeableOpenfortDeploy ------ (Gnosis Chiado testnet)"
 # forge script UpgradeableOpenfortDeploy --rpc-url $GNOSIS_CHIADO_RPC -vvvv --verify --broadcast --slow -g 200 --etherscan-api-key $GNOSIS_API_KEY_BLOCKSCOUT >> $LOG_FILE
+# sleep 3
+# echo "------ UpgradeableOpenfortDeploy ------ (Base Goerli)"
+# forge script UpgradeableOpenfortDeploy --rpc-url $BASE_TEST_RPC -vvvv --verify --broadcast --slow -g 200 --etherscan-api-key $BASE_API_KEY >> $LOG_FILE
 # sleep 3
 
 # echo "------ ManagedOpenfortDeploy ------ (Goerli)"
@@ -59,6 +65,9 @@ LOG_FILE=script/deployments/$(date +%Y-%m-%d_%H:%M)"-deploymentAllChains.log"
 # echo "------ ManagedOpenfortDeploy ------ (Gnosis Chiado testnet)"
 # forge script ManagedOpenfortDeploy --rpc-url $GNOSIS_CHIADO_RPC -vvvv --verify --broadcast --slow --verifier blockscout --etherscan-api-key $GNOSIS_API_KEY_BLOCKSCOUT >> $LOG_FILE
 # sleep 3
+# echo "------ ManagedOpenfortDeploy ------ (Base Goerli)"
+# forge script ManagedOpenfortDeploy --rpc-url $BASE_TEST_RPC -vvvv --verify --broadcast --slow --verifier blockscout --etherscan-api-key $BASE_API_KEY >> $LOG_FILE
+# sleep 3
 
 # echo "------ RecoverableOpenfortDeploy ------ (Goerli)"
 # forge script RecoverableOpenfortDeploy --rpc-url $GOERLI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
@@ -77,4 +86,7 @@ LOG_FILE=script/deployments/$(date +%Y-%m-%d_%H:%M)"-deploymentAllChains.log"
 # sleep 3
 # echo "------ RecoverableOpenfortDeploy ------ (Gnosis Chiado testnet)"
 # forge script RecoverableOpenfortDeploy --rpc-url $GNOSIS_CHIADO_RPC -vvvv --verify --broadcast --slow --verifier blockscout --etherscan-api-key $GNOSIS_API_KEY_BLOCKSCOUT >> $LOG_FILE
+# sleep 3
+# echo "------ RecoverableOpenfortDeploy ------ (Base Goerli)"
+# forge script RecoverableOpenfortDeploy --rpc-url $BASE_TEST_RPC -vvvv --verify --broadcast --slow --verifier blockscout --etherscan-api-key $BASE_API_KEY >> $LOG_FILE
 # sleep 3
