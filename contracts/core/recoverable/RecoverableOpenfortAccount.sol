@@ -254,7 +254,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
 
     /**
      * @notice Confirms the pending proposal of a guardian to an account.
-     * The method must be called during the confirmation window and can be called by anyone to enable orchestration.
+     * The method must be called during the confirmation window and can be called by anyone.
      * @param _guardian The guardian to be confirmed.
      */
     function confirmGuardianProposal(address _guardian) external {
@@ -300,7 +300,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
 
     /**
      * @notice Confirms the pending revocation of a guardian to an Openfort account.
-     * The method must be called during the confirmation window and can be called by anyone to enable orchestration.
+     * The method must be called during the confirmation window and can be called by anyone.
      * @param _guardian The guardian to confirm the revocation.
      */
     function confirmGuardianRevocation(address _guardian) external {
@@ -392,8 +392,8 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
     }
 
     /**
-     * @notice Validates the signatures provided
-     * @param _signatures The array of signatures.
+     * @notice Validates the array of signatures provided.
+     * @param _signatures The array of guardian signatures to perform the recovery.
      * @return A boolean indicating whether the signatures are valid, not repeated and from the guardians.
      */
     function _validateSignatures(bytes[] calldata _signatures) internal view returns (bool) {
