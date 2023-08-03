@@ -2021,15 +2021,15 @@ contract RecoverableOpenfortAccountTest is Test {
     }
 
     /*
-     * Auxiliary function to get a valid EIP712 signature using _eip721conrtact's domains separator,
+     * Auxiliary function to get a valid EIP712 signature using _eip721contract's domains separator,
      * a valid hash of the message to sign (_structHash) and a private key (_pk)
      */
-    function getEIP712SignatureFrom(address _eip721conrtact, bytes32 _structHash, uint256 _pk)
+    function getEIP712SignatureFrom(address _eip721contract, bytes32 _structHash, uint256 _pk)
         internal
         returns (bytes memory signature721)
     {
         (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
-            IERC5267(_eip721conrtact).eip712Domain();
+            IERC5267(_eip721contract).eip712Domain();
         bytes32 _TYPE_HASH =
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
         bytes32 domainSeparator = keccak256(
