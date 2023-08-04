@@ -20,6 +20,7 @@ contract CheckDeposits is Script {
     uint256 internal bscFork = vm.createFork(vm.envString("BSC_TESTNET_RPC"));
     uint256 internal arbitrumFork = vm.createFork(vm.envString("ARBITRUM_GOERLI_RPC"));
     uint256 internal chiadoFork = vm.createFork(vm.envString("GNOSIS_CHIADO_RPC"));
+    uint256 internal baseGoerliFork = vm.createFork(vm.envString("BASE_TEST_RPC"));
 
     uint256 internal polygonFork = vm.createFork(vm.envString("POLYGON_RPC"));
     uint256 internal avalancheFork = vm.createFork(vm.envString("AVALANCHE_RPC"));
@@ -93,6 +94,10 @@ contract CheckDeposits is Script {
         console.log("Checking Paymaster and PaymasterOwner on Gnosis Chiado testnet:");
         checkPaymasterDeposit(chiadoFork, openfortPaymasterTestnet);
         checkPaymasterOwnerBalance(chiadoFork, openfortPaymasterOwnerTestnet);
+
+        console.log("Checking Paymaster and PaymasterOwner on Base Goerli testnet:");
+        checkPaymasterDeposit(baseGoerliFork, openfortPaymasterTestnet);
+        checkPaymasterOwnerBalance(baseGoerliFork, openfortPaymasterOwnerTestnet);
 
         console.log("----------------");
         console.log("----Mainnets----");
