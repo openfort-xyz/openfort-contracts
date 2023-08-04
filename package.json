@@ -2,7 +2,7 @@
   "name": "@openfort/openfort-contracts",
   "version": "0.4.0",
   "description": "Official Contracts of the Openfort Project",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "scripts": {
     "build": "npm run clean-all && npm run compile",
     "clean-all": "npx hardhat clean && forge clean && rm -rf cache/ broadcast/",
