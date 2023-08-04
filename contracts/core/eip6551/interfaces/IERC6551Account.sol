@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.19;
 
 /// @dev the ERC-165 identifier for this interface is `0x400a0398`
