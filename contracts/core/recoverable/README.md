@@ -11,6 +11,16 @@ Observe the image below from the mentioned blog post to visualize how guardians 
 
 [guardians-image]: ../../../.github/img/guardiansDiagramVitalik.png
 
+## How do recoverable accounts work
+
+An owner can:
+    - Add a gaurdian
+    - Revoke a guardian
+
+A guaridan can:
+    - Start a recovery process
+
+
 ## More information:
  - https://vitalik.ca/general/2021/01/11/recovery.html
  - https://medium.com/nightlycrypto/smart-wallets-guardians-756d27a749c7
