@@ -15,12 +15,12 @@ Observe the image below from the mentioned blog post to visualize how guardians 
 
 An owner can:
 
-    - Add a gaurdian
-    - Revoke a guardian
+ - Add a gaurdian
+ - Revoke a guardian
 
 A guaridan can:
 
-    - Start a recovery process
+ - Start a recovery process
 
 
 ## More information:
