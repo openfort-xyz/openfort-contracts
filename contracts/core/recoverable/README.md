@@ -14,10 +14,12 @@ Observe the image below from the mentioned blog post to visualize how guardians 
 ## How do recoverable accounts work
 
 An owner can:
+
     - Add a gaurdian
     - Revoke a guardian
 
 A guaridan can:
+
     - Start a recovery process
 
 
