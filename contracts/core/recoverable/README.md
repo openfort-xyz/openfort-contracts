@@ -9,4 +9,4 @@ Observe the image below from the mentioned blog post to visualize how guardians 
 
 ![Guardians][guardians-image]
 
-[guardians-image]: .github/img/guardiansDiagramVitalik.png
+[guardians-image]: ../../github/img/guardiansDiagramVitalik.png
