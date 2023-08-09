@@ -17,7 +17,7 @@ If enough guardians confirm the recovery of an account, they can help the legiti
 ## How do Recoverable Accounts Work
 
 The owner can:
- - Propose a new gaurdian.
+ - Propose a new guardian.
  - Cancel the proposal of a new guardian.
  - Revoke a guardian.
  - Cancel the revocation of a new guardian.
@@ -31,7 +31,7 @@ A guardian can:
 Anyone can:
  - When a guardian has been proposed for enough time (`securityPeriod`), confirm its proposal.
  - When a guardian has been revoked for enough time (`securityPeriod`), confirm its revocation.
- - When in recovery mode, submit the list of needed signatures (from half of the gaurdians) to complete the recovery of the account.
+ - When in recovery mode, submit the list of needed signatures (from half of the guardians) to complete the recovery of the account.
 
 
 ## More Information
