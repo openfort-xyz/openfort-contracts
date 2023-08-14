@@ -20,13 +20,14 @@ contract CheckDeposits is Script {
     uint256 internal bscFork = vm.createFork(vm.envString("BSC_TESTNET_RPC"));
     uint256 internal arbitrumFork = vm.createFork(vm.envString("ARBITRUM_GOERLI_RPC"));
     uint256 internal chiadoFork = vm.createFork(vm.envString("GNOSIS_CHIADO_RPC"));
-    uint256 internal baseGoerliFork = vm.createFork(vm.envString("BASE_TEST_RPC"));
+    uint256 internal baseGoerliFork = vm.createFork(vm.envString("GOERLI_BASE_RPC"));
 
     uint256 internal polygonFork = vm.createFork(vm.envString("POLYGON_RPC"));
     uint256 internal avalancheFork = vm.createFork(vm.envString("AVALANCHE_RPC"));
+    uint256 internal baseFork = vm.createFork(vm.envString("MAINNET_BASE_RPC"));
 
-    function checkPaymasterDeposit(uint256 fork_id, OpenfortPaymaster _paymaster) internal {
-        vm.selectFork(fork_id);
+    function checkPaymasterDeposit(uint256 _forkId, OpenfortPaymaster _paymaster) internal {
+        vm.selectFork(_forkId);
 
         console.log("\tPaymaster at address %s", address(_paymaster));
         uint256 paymasterDeposit = _paymaster.getDeposit();
@@ -42,8 +43,8 @@ contract CheckDeposits is Script {
         }
     }
 
-    function checkPaymasterOwnerBalance(uint256 fork_id, address _paymasterOwnerAddress) internal {
-        vm.selectFork(fork_id);
+    function checkPaymasterOwnerBalance(uint256 _forkId, address _paymasterOwnerAddress) internal {
+        vm.selectFork(_forkId);
 
         console.log("\tPaymasterOwner at address %s", _paymasterOwnerAddress);
         uint256 paymasterOwnerBalance = _paymasterOwnerAddress.balance;
@@ -113,5 +114,9 @@ contract CheckDeposits is Script {
         console.log("Checking Paymaster and PaymasterOwner on Avalanche:");
         checkPaymasterDeposit(avalancheFork, openfortPaymasterMainnet);
         checkPaymasterOwnerBalance(avalancheFork, openfortPaymasterOwnerMainnet);
+
+        console.log("Checking Paymaster and PaymasterOwner on Base:");
+        checkPaymasterDeposit(baseFork, openfortPaymasterMainnet);
+        checkPaymasterOwnerBalance(baseFork, openfortPaymasterOwnerMainnet);
     }
 }
