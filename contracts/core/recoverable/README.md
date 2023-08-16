@@ -36,6 +36,7 @@ Anyone can:
 
 ## More Information
  - https://vitalik.ca/general/2021/01/11/recovery.html
+ - https://old.reddit.com/r/ethereum/comments/11tijiv/how_i_think_about_choosing_guardians_for_multisig/
  - https://medium.com/nightlycrypto/smart-wallets-guardians-756d27a749c7
  - https://www.makeuseof.com/what-is-crypto-social-recovery-wallet-how-does-it-work/
  - https://support.argent.xyz/hc/en-us/articles/360022631992-About-guardians
