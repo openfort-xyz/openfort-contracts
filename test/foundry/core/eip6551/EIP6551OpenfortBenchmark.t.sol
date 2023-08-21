@@ -39,15 +39,16 @@ contract EIP6551OpenfortBenchmark is Test {
     address private accountAdmin;
     uint256 private accountAdminPKey;
 
+    address public upgradeableOpenfortAddressComplex;
+    UpgradeableOpenfortAccount public upgradeableOpenfortAccountComplex;
+
+    address public eip6551OpenfortAddressComplex;
+    EIP6551OpenfortAccount public eip6551OpenfortAccountComplex;
+
     address payable private beneficiary = payable(makeAddr("beneficiary"));
 
     event AccountCreated(
-        address account,
-        address implementation,
-        uint256 chainId,
-        address tokenContract,
-        uint256 tokenId,
-        uint256 salt
+        address account, address implementation, uint256 chainId, address tokenContract, uint256 tokenId, uint256 salt
     );
 
     /*
@@ -106,15 +107,10 @@ contract EIP6551OpenfortBenchmark is Test {
         uint256 _value,
         bytes memory _callData
     ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
-            "execute(address,uint256,bytes)",
-            _target,
-            _value,
-            _callData
-        );
+        bytes memory callDataForEntrypoint =
+            abi.encodeWithSignature("execute(address,uint256,bytes)", _target, _value, _callData);
 
-        return
-            _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
+        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
 
     /*
@@ -129,15 +125,10 @@ contract EIP6551OpenfortBenchmark is Test {
         uint256[] memory _value,
         bytes[] memory _callData
     ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
-            "executeBatch(address[],uint256[],bytes[])",
-            _target,
-            _value,
-            _callData
-        );
+        bytes memory callDataForEntrypoint =
+            abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
 
-        return
-            _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
+        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
 
     /**
@@ -166,9 +157,7 @@ contract EIP6551OpenfortBenchmark is Test {
 
         // If we are in a fork
         if (vm.envAddress("ENTRY_POINT_ADDRESS").code.length > 0) {
-            entryPoint = EntryPoint(
-                payable(vm.envAddress("ENTRY_POINT_ADDRESS"))
-            );
+            entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
         }
         // If not a fork, deploy entryPoint (at correct address)
         else {
@@ -188,14 +177,9 @@ contract EIP6551OpenfortBenchmark is Test {
         );
 
         // Create an upgradeable account wallet and get its address
-        address upgradeableOpenfortAddress = upgradeableOpenfortFactory.createAccountWithNonce(
-            accountAdmin,
-            "1"
-        );
+        address upgradeableOpenfortAddress = upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
 
-        upgradeableOpenfortAccount = UpgradeableOpenfortAccount(
-            payable(upgradeableOpenfortAddress)
-        );
+        upgradeableOpenfortAccount = UpgradeableOpenfortAccount(payable(upgradeableOpenfortAddress));
 
         // deploy a new VIPNFT collection
         testToken = new VIPNFT();
@@ -204,24 +188,27 @@ contract EIP6551OpenfortBenchmark is Test {
 
         erc6551Registry = new ERC6551Registry();
 
-        address eip6551OpenfortAccountAddress = erc6551Registry.createAccount(
-            address(implEIP6551OpenfortAccount),
-            chainId,
-            address(testToken),
-            1,
-            1,
-            ""
-        );
+        address eip6551OpenfortAccountAddress =
+            erc6551Registry.createAccount(address(implEIP6551OpenfortAccount), chainId, address(testToken), 1, 1, "");
 
-        eip6551OpenfortAccount = EIP6551OpenfortAccount(
-            payable(eip6551OpenfortAccountAddress)
-        );
+        eip6551OpenfortAccount = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress));
         eip6551OpenfortAccount.initialize(address(entryPoint));
 
         testToken.mint(accountAdmin, 1);
 
         testUSDC = new USDC();
         testUSDC.mint(accountAdmin, 100 ether);
+
+        // Declarations for complex tests
+
+        upgradeableOpenfortAddressComplex = upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "complex");
+        upgradeableOpenfortAccountComplex = UpgradeableOpenfortAccount(payable(upgradeableOpenfortAddressComplex));
+
+        testToken.mint(upgradeableOpenfortAddressComplex, 2);
+
+        eip6551OpenfortAddressComplex =
+            erc6551Registry.createAccount(address(implEIP6551OpenfortAccount), chainId, address(testToken), 2, 2, "");
+        eip6551OpenfortAccountComplex = EIP6551OpenfortAccount(payable(eip6551OpenfortAddressComplex));
 
         vm.stopPrank();
     }
@@ -230,10 +217,10 @@ contract EIP6551OpenfortBenchmark is Test {
      * Create a 2nd Upgradeable account with accountAdmin as the owner
      */
     function test1CreateUpgradeableAccount() public {
-        address upgradeableOpenfortAccountAddress2 = upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
-        UpgradeableOpenfortAccount upgradeableOpenfortAccountAccount2 = UpgradeableOpenfortAccount(
-            payable(upgradeableOpenfortAccountAddress2)
-        );
+        address upgradeableOpenfortAccountAddress2 =
+            upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
+        UpgradeableOpenfortAccount upgradeableOpenfortAccountAccount2 =
+            UpgradeableOpenfortAccount(payable(upgradeableOpenfortAccountAddress2));
         IEntryPoint e = upgradeableOpenfortAccountAccount2.entryPoint();
         assertEq(address(e), address(entryPoint));
     }
@@ -242,18 +229,10 @@ contract EIP6551OpenfortBenchmark is Test {
      * Create a 2nd EIP6551 account with testToken as the owner and initialize later
      */
     function test1CreateEIP6551AccountInitAfter() public {
-        address eip6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
-            address(implEIP6551OpenfortAccount),
-            chainId,
-            address(testToken),
-            1,
-            2,
-            ""
-        );
+        address eip6551OpenfortAccountAddress2 =
+            erc6551Registry.createAccount(address(implEIP6551OpenfortAccount), chainId, address(testToken), 1, 2, "");
 
-        EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(
-            payable(eip6551OpenfortAccountAddress2)
-        );
+        EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
         eip6551OpenfortAccount2.initialize(address(entryPoint));
         IEntryPoint e = eip6551OpenfortAccount2.entryPoint();
         assertEq(address(e), address(entryPoint));
@@ -267,13 +246,11 @@ contract EIP6551OpenfortBenchmark is Test {
             address(implEIP6551OpenfortAccount),
             chainId,
             address(testToken),
+            3,
             1,
-            2,
             abi.encodeWithSignature("initialize(address)", address(entryPoint))
         );
-        EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(
-            payable(eip6551OpenfortAccountAddress2)
-        );
+        EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
         IEntryPoint e = eip6551OpenfortAccount2.entryPoint();
         assertEq(address(e), address(entryPoint));
     }
@@ -328,7 +305,7 @@ contract EIP6551OpenfortBenchmark is Test {
      * Test transfer funds using upgradeable accounts.
      */
     function test4TransferFundsUpgradeable() public {
-        address upgradeableOpenfortAddress =  payable(address((upgradeableOpenfortAccount)));
+        address upgradeableOpenfortAddress = payable(address((upgradeableOpenfortAccount)));
         console.log("Admin balance: ", accountAdmin.balance);
         console.log("Upgradeable Openfort Account balance: ", upgradeableOpenfortAddress.balance);
 
@@ -349,7 +326,7 @@ contract EIP6551OpenfortBenchmark is Test {
      * Test transfer funds function using EIP6551 accounts.
      */
     function test4TransferFundsEIP6551() public {
-        address eip6551OpenfortAddress =  payable(address((eip6551OpenfortAccount)));
+        address eip6551OpenfortAddress = payable(address((eip6551OpenfortAccount)));
         console.log("Admin balance: ", accountAdmin.balance);
         console.log("EIP6551 Openfort Account balance: ", eip6551OpenfortAddress.balance);
 
@@ -370,7 +347,7 @@ contract EIP6551OpenfortBenchmark is Test {
      * Test transfer ERC20 using upgradeable accounts.
      */
     function test5TransferERC20Upgradeable() public {
-        address upgradeableOpenfortAddress =  payable(address((upgradeableOpenfortAccount)));
+        address upgradeableOpenfortAddress = payable(address((upgradeableOpenfortAccount)));
         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
         console.log("Upgradeable Openfort Account balance: ", testUSDC.balanceOf(upgradeableOpenfortAddress));
 
@@ -380,7 +357,9 @@ contract EIP6551OpenfortBenchmark is Test {
         console.log("Upgradeable Openfort Account balance: ", testUSDC.balanceOf(upgradeableOpenfortAddress));
 
         vm.prank(accountAdmin);
-        upgradeableOpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 50 ether));
+        upgradeableOpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 50 ether)
+        );
         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
         console.log("Upgradeable Openfort Account balance: ", testUSDC.balanceOf(upgradeableOpenfortAddress));
     }
@@ -389,7 +368,7 @@ contract EIP6551OpenfortBenchmark is Test {
      * Test transfer ERC20 function using EIP6551 accounts.
      */
     function test5TransferERC20EIP6551() public {
-        address eip6551OpenfortAddress =  payable(address((eip6551OpenfortAccount)));
+        address eip6551OpenfortAddress = payable(address((eip6551OpenfortAccount)));
         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
         console.log("Upgradeable Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
 
@@ -399,7 +378,9 @@ contract EIP6551OpenfortBenchmark is Test {
         console.log("EIP6551 Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
 
         vm.prank(accountAdmin);
-        eip6551OpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 50 ether));
+        eip6551OpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 50 ether)
+        );
         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
         console.log("EIP6551 Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
     }
@@ -408,7 +389,7 @@ contract EIP6551OpenfortBenchmark is Test {
      * Test multiple transfers ERC20 using upgradeable accounts.
      */
     function test6TransferMultipleERC20Upgradeable() public {
-        address upgradeableOpenfortAddress =  payable(address((upgradeableOpenfortAccount)));
+        address upgradeableOpenfortAddress = payable(address((upgradeableOpenfortAccount)));
         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
         console.log("Upgradeable Openfort Account balance: ", testUSDC.balanceOf(upgradeableOpenfortAddress));
 
@@ -418,16 +399,36 @@ contract EIP6551OpenfortBenchmark is Test {
         console.log("Upgradeable Openfort Account balance: ", testUSDC.balanceOf(upgradeableOpenfortAddress));
 
         vm.startPrank(accountAdmin);
-        upgradeableOpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        upgradeableOpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        upgradeableOpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        upgradeableOpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        upgradeableOpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        upgradeableOpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        upgradeableOpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        upgradeableOpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        upgradeableOpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        upgradeableOpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
+        upgradeableOpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        upgradeableOpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        upgradeableOpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        upgradeableOpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        upgradeableOpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        upgradeableOpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        upgradeableOpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        upgradeableOpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        upgradeableOpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        upgradeableOpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
         vm.stopPrank();
 
         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
@@ -438,7 +439,7 @@ contract EIP6551OpenfortBenchmark is Test {
      * Test multiple transfers ERC20 function using EIP6551 accounts.
      */
     function test6TransferMultipleERC20EIP6551() public {
-        address eip6551OpenfortAddress =  payable(address((eip6551OpenfortAccount)));
+        address eip6551OpenfortAddress = payable(address((eip6551OpenfortAccount)));
         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
         console.log("Upgradeable Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
 
@@ -448,18 +449,84 @@ contract EIP6551OpenfortBenchmark is Test {
         console.log("EIP6551 Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
 
         vm.startPrank(accountAdmin);
-        eip6551OpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        eip6551OpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        eip6551OpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        eip6551OpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        eip6551OpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        eip6551OpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        eip6551OpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        eip6551OpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        eip6551OpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
-        eip6551OpenfortAccount.execute(address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether));
+        eip6551OpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        eip6551OpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        eip6551OpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        eip6551OpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        eip6551OpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        eip6551OpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        eip6551OpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        eip6551OpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        eip6551OpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
+        eip6551OpenfortAccount.execute(
+            address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
+        );
         vm.stopPrank();
         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
         console.log("EIP6551 Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
+    }
+
+    /*
+     * Test owner() function.
+     * Check that the owner of the eip6551 account is the owner of the NFT
+     */
+    function test7ComplexOwner() public {
+        assertEq(eip6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
+    }
+
+    /*
+     * Test transferOwnership() function using upgradeable account that have EIP6551 accounts.
+     */
+    function test8TransferOwner4337Complex() public {
+        assertEq(upgradeableOpenfortAccountComplex.owner(), accountAdmin);
+
+        vm.prank(accountAdmin);
+        upgradeableOpenfortAccountComplex.transferOwnership(factoryAdmin);
+
+        assertEq(upgradeableOpenfortAccountComplex.owner(), accountAdmin);
+        assertEq(upgradeableOpenfortAccountComplex.pendingOwner(), factoryAdmin);
+
+        vm.prank(factoryAdmin);
+        upgradeableOpenfortAccountComplex.acceptOwnership();
+
+        assertEq(upgradeableOpenfortAccountComplex.owner(), factoryAdmin);
+    }
+
+    /*
+     * Test transferOwnership() function using upgradeable account that have EIP6551 accounts.
+     */
+    function test9TransferOwnerEIP6551Complex() public {
+        // The EOA is the owner of the Upgradeable account
+        assertEq(upgradeableOpenfortAccountComplex.owner(), accountAdmin);
+        // The upgradeable account is the owner of the EIP6551 accounts because it holds the NFT
+        assertEq(eip6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
+        assertEq(testToken.ownerOf(2), upgradeableOpenfortAddressComplex);
+
+        vm.prank(accountAdmin);
+        upgradeableOpenfortAccountComplex.execute(
+            address(testToken),
+            0,
+            abi.encodeWithSignature(
+                "transferFrom(address,address,uint256)", upgradeableOpenfortAddressComplex, factoryAdmin, 2
+            )
+        );
     }
 }
