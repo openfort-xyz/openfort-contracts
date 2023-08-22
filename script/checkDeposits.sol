@@ -17,14 +17,21 @@ contract CheckDeposits is Script {
     uint256 internal goerliFork = vm.createFork(vm.envString("GOERLI_RPC"));
     uint256 internal mumbaiFork = vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
     uint256 internal fujiFork = vm.createFork(vm.envString("AVALANCHE_FUJI_RPC"));
-    uint256 internal bscFork = vm.createFork(vm.envString("BSC_TESTNET_RPC"));
-    uint256 internal arbitrumFork = vm.createFork(vm.envString("ARBITRUM_GOERLI_RPC"));
-    uint256 internal chiadoFork = vm.createFork(vm.envString("GNOSIS_CHIADO_RPC"));
+    uint256 internal bscTestFork = vm.createFork(vm.envString("BSC_TESTNET_RPC"));
+    uint256 internal arbitrumTestFork = vm.createFork(vm.envString("ARBITRUM_GOERLI_RPC"));
     uint256 internal baseGoerliFork = vm.createFork(vm.envString("GOERLI_BASE_RPC"));
+    uint256 internal beamTestnetFork = vm.createFork(vm.envString("BEAM_TESTNET_RPC"));
+    uint256 internal chiadoFork = vm.createFork(vm.envString("GNOSIS_CHIADO_RPC"));
 
     uint256 internal polygonFork = vm.createFork(vm.envString("POLYGON_RPC"));
     uint256 internal avalancheFork = vm.createFork(vm.envString("AVALANCHE_RPC"));
+    uint256 internal bscFork = vm.createFork(vm.envString("BSC_RPC"));
+    uint256 internal arbitrumFork = vm.createFork(vm.envString("ARBITRUM_ONE_RPC"));
     uint256 internal baseFork = vm.createFork(vm.envString("MAINNET_BASE_RPC"));
+    uint256 internal beamFork = vm.createFork(vm.envString("BEAM_RPC"));
+
+    uint256 internal constant BASE_MAIN = 8453;
+    uint256 internal constant ARBITRUM_MAIN = 42161;
 
     function checkPaymasterDeposit(uint256 _forkId, OpenfortPaymaster _paymaster) internal {
         vm.selectFork(_forkId);
@@ -38,8 +45,14 @@ contract CheckDeposits is Script {
             paymasterDeposit / 10 ** 18
         );
 
-        if (paymasterDeposit < 2 ether) {
-            console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
+        if (block.chainid == BASE_MAIN || block.chainid == ARBITRUM_MAIN) {
+            if (paymasterDeposit < 0.15 ether) {
+                console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
+            }
+        } else {
+            if (paymasterDeposit < 1.5 ether) {
+                console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
+            }
         }
     }
 
@@ -55,12 +68,22 @@ contract CheckDeposits is Script {
             paymasterOwnerBalance / 10 ** 18
         );
 
-        if (paymasterOwnerBalance < 2 ether) {
-            console.log(
-                "ALERT: balance of PaymasterOwner too low on chain ID %s! Deposit: %s\n",
-                block.chainid,
-                paymasterOwnerBalance
-            );
+        if (block.chainid == BASE_MAIN || block.chainid == ARBITRUM_MAIN) {
+            if (paymasterOwnerBalance < 0.15 ether) {
+                console.log(
+                    "ALERT: balance of PaymasterOwner too low on chain ID %s! Deposit: %s\n",
+                    block.chainid,
+                    paymasterOwnerBalance
+                );
+            }
+        } else {
+            if (paymasterOwnerBalance < 1.5 ether) {
+                console.log(
+                    "ALERT: balance of PaymasterOwner too low on chain ID %s! Deposit: %s\n",
+                    block.chainid,
+                    paymasterOwnerBalance
+                );
+            }
         }
     }
 
@@ -85,20 +108,24 @@ contract CheckDeposits is Script {
         checkPaymasterOwnerBalance(fujiFork, openfortPaymasterOwnerTestnet);
 
         console.log("Checking Paymaster and PaymasterOwner on BSC testnet:");
-        checkPaymasterDeposit(bscFork, openfortPaymasterTestnet);
-        checkPaymasterOwnerBalance(bscFork, openfortPaymasterOwnerTestnet);
+        checkPaymasterDeposit(bscTestFork, openfortPaymasterTestnet);
+        checkPaymasterOwnerBalance(bscTestFork, openfortPaymasterOwnerTestnet);
 
         console.log("Checking Paymaster and PaymasterOwner on Arbirtum Goerli testnet:");
-        checkPaymasterDeposit(arbitrumFork, openfortPaymasterTestnet);
-        checkPaymasterOwnerBalance(arbitrumFork, openfortPaymasterOwnerTestnet);
-
-        console.log("Checking Paymaster and PaymasterOwner on Gnosis Chiado testnet:");
-        checkPaymasterDeposit(chiadoFork, openfortPaymasterTestnet);
-        checkPaymasterOwnerBalance(chiadoFork, openfortPaymasterOwnerTestnet);
+        checkPaymasterDeposit(arbitrumTestFork, openfortPaymasterTestnet);
+        checkPaymasterOwnerBalance(arbitrumTestFork, openfortPaymasterOwnerTestnet);
 
         console.log("Checking Paymaster and PaymasterOwner on Base Goerli testnet:");
         checkPaymasterDeposit(baseGoerliFork, openfortPaymasterTestnet);
         checkPaymasterOwnerBalance(baseGoerliFork, openfortPaymasterOwnerTestnet);
+
+        console.log("Checking Paymaster and PaymasterOwner on Beam testnet:");
+        checkPaymasterDeposit(beamTestnetFork, openfortPaymasterTestnet);
+        checkPaymasterOwnerBalance(beamTestnetFork, openfortPaymasterOwnerTestnet);
+
+        console.log("Checking Paymaster and PaymasterOwner on Gnosis Chiado testnet:");
+        checkPaymasterDeposit(chiadoFork, openfortPaymasterTestnet);
+        checkPaymasterOwnerBalance(chiadoFork, openfortPaymasterOwnerTestnet);
 
         console.log("----------------");
         console.log("----Mainnets----");
@@ -115,8 +142,20 @@ contract CheckDeposits is Script {
         checkPaymasterDeposit(avalancheFork, openfortPaymasterMainnet);
         checkPaymasterOwnerBalance(avalancheFork, openfortPaymasterOwnerMainnet);
 
+        console.log("Checking Paymaster and PaymasterOwner on BSC:");
+        checkPaymasterDeposit(bscFork, openfortPaymasterMainnet);
+        checkPaymasterOwnerBalance(bscFork, openfortPaymasterOwnerMainnet);
+
+        console.log("Checking Paymaster and PaymasterOwner on Arbitrum:");
+        checkPaymasterDeposit(arbitrumFork, openfortPaymasterMainnet);
+        checkPaymasterOwnerBalance(arbitrumFork, openfortPaymasterOwnerMainnet);
+
         console.log("Checking Paymaster and PaymasterOwner on Base:");
         checkPaymasterDeposit(baseFork, openfortPaymasterMainnet);
         checkPaymasterOwnerBalance(baseFork, openfortPaymasterOwnerMainnet);
+
+        console.log("Checking Paymaster and PaymasterOwner on Beam:");
+        checkPaymasterDeposit(beamFork, openfortPaymasterMainnet);
+        checkPaymasterOwnerBalance(beamFork, openfortPaymasterOwnerMainnet);
     }
 }
