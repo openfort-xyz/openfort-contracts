@@ -12,6 +12,12 @@ The table below represents the difference of gas needed to perform a set of acti
 |   Transfer ERC20s   |   54,796   |   57,338   |   4.6% increase   |
 |   Transfer 10 ERC20s   |   110,193   |   137,043   |   24.3% increase   |
 
+Further "complex" tests were perfomed like the `test9TransferOwnerEIP6551Complex`.
+This represents a transfer of an EIP6551 account owned by an Openfort Upgradeable account.
+For that, an NFT owned by the EOA (that is also the owner of the Upgradeable account) is transferred to another EOA.
+This costs 83,248 gas (compared to 41,224 of the upgradeable and 64,059 gas of the simple EIP6551 account).
+This is an increase of 102% in relation to the upgradeable accont and 29.96%.
+
 
 ## How to reproduce it
 
