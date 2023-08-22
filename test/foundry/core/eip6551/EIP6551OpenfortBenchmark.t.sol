@@ -302,6 +302,36 @@ contract EIP6551OpenfortBenchmark is Test {
     }
 
     /*
+     * Test transferOwnership() function using EIP6551 account with a userOp
+     * It will fail because the msg.sender doing the transferFrom() is the EntryPoint
+     * the user should do it with a regular TX or approving the EntryPoint to spend
+     */
+    function testFailTransferOwnerEIP6551UserOp() public {
+        assertEq(eip6551OpenfortAccount.owner(), accountAdmin);
+
+        address _target = address(testToken);
+        bytes memory _callData =
+            abi.encodeWithSignature("transferFrom(address,address,uint256)", accountAdmin, factoryAdmin, 1);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            address(eip6551OpenfortAccount),
+            accountAdminPKey,
+            bytes(""),
+            address(testToken),
+            0,
+            abi.encodeWithSignature("execute(address,uint256,bytes)", _target, 0, _callData)
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(address(eip6551OpenfortAccount));
+
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        assertEq(eip6551OpenfortAccount.owner(), factoryAdmin);
+    }
+
+    /*
      * Test transfer funds using upgradeable accounts.
      */
     function test4TransferFundsUpgradeable() public {
@@ -494,9 +524,15 @@ contract EIP6551OpenfortBenchmark is Test {
 
     /*
      * Test transferOwnership() function using upgradeable account that have EIP6551 accounts.
+     * Scenario: a complex account changes the ownership; all NFTs are managable by the new owner
      */
     function test8TransferOwner4337Complex() public {
+        // The EOA is the owner of the Upgradeable account
         assertEq(upgradeableOpenfortAccountComplex.owner(), accountAdmin);
+
+        // The upgradeable account is the owner of the EIP6551 accounts because it holds the NFT
+        assertEq(eip6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
+        assertEq(testToken.ownerOf(2), upgradeableOpenfortAddressComplex);
 
         vm.prank(accountAdmin);
         upgradeableOpenfortAccountComplex.transferOwnership(factoryAdmin);
@@ -508,10 +544,13 @@ contract EIP6551OpenfortBenchmark is Test {
         upgradeableOpenfortAccountComplex.acceptOwnership();
 
         assertEq(upgradeableOpenfortAccountComplex.owner(), factoryAdmin);
+        assertEq(eip6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
+        assertEq(testToken.ownerOf(2), upgradeableOpenfortAddressComplex);
     }
 
     /*
      * Test transferOwnership() function using upgradeable account that have EIP6551 accounts.
+     * Scenario: a complex account transfer an NFT to send an EIP6551 account to another user
      */
     function test9TransferOwnerEIP6551Complex() public {
         // The EOA is the owner of the Upgradeable account
@@ -528,5 +567,37 @@ contract EIP6551OpenfortBenchmark is Test {
                 "transferFrom(address,address,uint256)", upgradeableOpenfortAddressComplex, factoryAdmin, 2
             )
         );
+        assertEq(testToken.ownerOf(2), factoryAdmin);
+        assertEq(eip6551OpenfortAccountComplex.owner(), factoryAdmin);
+    }
+
+    /*
+     * Test transferOwnership() function using upgradeable account that have EIP6551 accounts.
+     */
+    function test9TransferOwnerEIP6551ComplexUserOp() public {
+        // The EOA is the owner of the Upgradeable account
+        assertEq(upgradeableOpenfortAccountComplex.owner(), accountAdmin);
+        // The upgradeable account is the owner of the EIP6551 accounts because it holds the NFT
+        assertEq(eip6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
+        assertEq(testToken.ownerOf(2), upgradeableOpenfortAddressComplex);
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            upgradeableOpenfortAddressComplex,
+            accountAdminPKey,
+            bytes(""),
+            address(testToken),
+            0,
+            abi.encodeWithSignature(
+                "safeTransferFrom(address,address,uint256)", upgradeableOpenfortAddressComplex, factoryAdmin, 2
+            )
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(upgradeableOpenfortAddressComplex);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        assertEq(testToken.ownerOf(2), factoryAdmin);
+        assertEq(eip6551OpenfortAccountComplex.owner(), factoryAdmin);
     }
 }
