@@ -27,8 +27,8 @@ jobs:
           ENTRY_POINT_ADDRESS: ${{ vars.ENTRY_POINT_ADDRESS }}
         run: forge test --force -vvv --match-test test
 
-      - name: Fork tests (Mumbai)
+      - name: Fork tests (Goerli)
         env: # Or as an environment variable
           ENTRY_POINT_ADDRESS: ${{ vars.ENTRY_POINT_ADDRESS }}
-          POLYGON_MUMBAI_RPC: ${{ secrets.POLYGON_MUMBAI_RPC }}
-        run: forge test --force -vvv --match-test test --fork-url $POLYGON_MUMBAI_RPC
+          GOERLI_RPC: ${{ secrets.GOERLI_RPC }}
+        run: forge test --force -vvv --match-test test --fork-url $GOERLI_RPC
