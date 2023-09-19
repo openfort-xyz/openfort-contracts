@@ -10,7 +10,9 @@ import {BasePaymaster} from "account-abstraction/core/BasePaymaster.sol";
 import "account-abstraction/core/Helpers.sol" as Helpers;
 
 /**
- * A paymaster inspired in the VerifyingPaymaster samples from eth-infinitism and Stackups' modification.
+ * @title OpenfortPaymaster (Non-upgradeable)
+ * @author Eloi<eloi@openfort.xyz>
+ * @notice A paymaster inspired in the VerifyingPaymaster samples from eth-infinitism and Stackups' modification.
  */
 contract OpenfortPaymaster is BasePaymaster {
     using ECDSA for bytes32;
@@ -83,7 +85,7 @@ contract OpenfortPaymaster is BasePaymaster {
     }
 
     /**
-     * Verify paymaster owner signed this request.
+     * Verify that the paymaster owner has signed this request.
      * The "paymasterAndData" is expected to be the paymaster and a signature over the entire request params
      * paymasterAndData[:20]: address(this)
      * paymasterAndData[20:148]: abi.encode(validUntil, validAfter, strategy) // 20+48+48+64
@@ -119,7 +121,7 @@ contract OpenfortPaymaster is BasePaymaster {
     }
 
     /*
-     * For ERC20 modes, transfer the right amount of tokens from the sender to the designated recipient
+     * For ERC20 modes (DynamicRate and FixedRate), transfer the right amount of tokens from the sender to the designated recipient
      */
     function _postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) internal override {
         (
