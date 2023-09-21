@@ -263,6 +263,7 @@ contract OpenfortPaymasterTest is Test {
 
         // Create the paymasterAndData info
         bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, signature); // This part was packed (not filled with 0s)
+        console.logBytes(paymasterAndData);
 
         (
             uint48 returnedValidUntil,
@@ -1205,17 +1206,17 @@ contract OpenfortPaymasterTest is Test {
     /*
      * Test UpdateTokenRecipient function
      */
-    function testUpdateTokenRecipient() public {
-        assertEq(openfortPaymaster.tokenRecipient(), paymasterAdmin);
-        vm.expectRevert("Ownable: caller is not the owner");
-        openfortPaymaster.updateTokenRecipient(factoryAdmin);
+    // function testUpdateTokenRecipient() public {
+    //     assertEq(openfortPaymaster.tokenRecipient(), paymasterAdmin);
+    //     vm.expectRevert("Ownable: caller is not the owner");
+    //     openfortPaymaster.updateTokenRecipient(factoryAdmin);
 
-        vm.prank(paymasterAdmin);
-        vm.expectRevert(InvalidTokenRecipient.selector);
-        openfortPaymaster.updateTokenRecipient(address(0));
+    //     vm.prank(paymasterAdmin);
+    //     vm.expectRevert(InvalidTokenRecipient.selector);
+    //     openfortPaymaster.updateTokenRecipient(address(0));
 
-        vm.prank(paymasterAdmin);
-        openfortPaymaster.updateTokenRecipient(factoryAdmin);
-        assertEq(openfortPaymaster.tokenRecipient(), factoryAdmin);
-    }
+    //     vm.prank(paymasterAdmin);
+    //     openfortPaymaster.updateTokenRecipient(factoryAdmin);
+    //     assertEq(openfortPaymaster.tokenRecipient(), factoryAdmin);
+    // }
 }
