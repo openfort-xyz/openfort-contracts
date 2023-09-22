@@ -8,16 +8,15 @@ import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
 import {StaticOpenfortFactory} from "contracts/core/static/StaticOpenfortFactory.sol";
 import {StaticOpenfortAccount} from "contracts/core/static/StaticOpenfortAccount.sol";
-import {OpenfortErrorsAndEvents} from "contracts/interfaces/OpenfortErrorsAndEvents.sol";
-import {OpenfortPaymaster} from "contracts/paymaster/OpenfortPaymaster.sol";
+import {OpenfortPaymasterV2} from "contracts/paymaster/OpenfortPaymasterV2.sol";
 
-contract OpenfortPaymasterTest is Test {
+contract OpenfortPaymasterV2Test is Test {
     using ECDSA for bytes32;
 
     EntryPoint public entryPoint;
     StaticOpenfortAccount public staticOpenfortAccount;
     StaticOpenfortFactory public staticOpenfortFactory;
-    OpenfortPaymaster public openfortPaymaster;
+    OpenfortPaymasterV2 public openfortPaymaster;
     address public account;
     TestCounter public testCounter;
     TestToken public testToken;
@@ -124,9 +123,10 @@ contract OpenfortPaymasterTest is Test {
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint, paymasterAndData);
     }
 
-    function mockedPaymasterDataNative() internal pure returns (bytes memory dataEncoded) {
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.PayForUser;
+    function mockedPaymasterDataNative() internal view returns (bytes memory dataEncoded) {
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
+        strategy.depositor = address(paymasterAdmin);
         strategy.erc20Token = address(0);
         strategy.exchangeRate = EXCHANGERATE;
         // Looking at the source code, I've found this part was not Packed (filled with 0s)
@@ -134,8 +134,9 @@ contract OpenfortPaymasterTest is Test {
     }
 
     function mockedPaymasterDataERC20Dynamic() internal view returns (bytes memory dataEncoded) {
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.DynamicRate;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
+        strategy.depositor = address(paymasterAdmin);
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
         // Looking at the source code, I've found this part was not Packed (filled with 0s)
@@ -147,8 +148,9 @@ contract OpenfortPaymasterTest is Test {
         view
         returns (bytes memory dataEncoded)
     {
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.FixedRate;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.FixedRate;
+        strategy.depositor = address(paymasterAdmin);
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = pricePerTransaction;
         // Looking at the source code, I've found this part was not Packed (filled with 0s)
@@ -186,11 +188,11 @@ contract OpenfortPaymasterTest is Test {
             entryPoint = EntryPoint(payable(targetAddr));
         }
         vm.prank(paymasterAdmin);
-        openfortPaymaster = new OpenfortPaymaster(IEntryPoint(payable(address(entryPoint))), paymasterAdmin);
+        openfortPaymaster = new OpenfortPaymasterV2(IEntryPoint(payable(address(entryPoint))), paymasterAdmin);
         // Fund the paymaster with 100 ETH
         vm.deal(address(openfortPaymaster), 100 ether);
         // Paymaster deposits 50 ETH to EntryPoint
-        openfortPaymaster.deposit{value: 50 ether}();
+        openfortPaymaster.depositFor{value: 50 ether}(paymasterAdmin);
         // Paymaster stakes 25 ETH
         vm.prank(paymasterAdmin);
         openfortPaymaster.addStake{value: 25 ether}(1);
@@ -221,6 +223,14 @@ contract OpenfortPaymasterTest is Test {
         assertEq(address(openfortPaymaster.owner()), paymasterAdmin);
     }
 
+    /**
+     * Deposit should fail
+     */
+    function testFailDeposit() public {
+        vm.prank(factoryAdmin);
+        openfortPaymaster.deposit{value: 50 ether}();
+    }
+
     /*
      * Test parsePaymasterAndData() when using the native token
      * 
@@ -240,7 +250,7 @@ contract OpenfortPaymasterTest is Test {
         (
             uint48 returnedValidUntil,
             uint48 returnedValidAfter,
-            OpenfortPaymaster.PolicyStrategy memory strategy,
+            OpenfortPaymasterV2.PolicyStrategy memory strategy,
             bytes memory returnedSignature
         ) = openfortPaymaster.parsePaymasterAndData(paymasterAndData);
         assertEq(returnedValidUntil, VALIDUNTIL);
@@ -270,7 +280,7 @@ contract OpenfortPaymasterTest is Test {
         (
             uint48 returnedValidUntil,
             uint48 returnedValidAfter,
-            OpenfortPaymaster.PolicyStrategy memory strategy,
+            OpenfortPaymasterV2.PolicyStrategy memory strategy,
             bytes memory returnedSignature
         ) = openfortPaymaster.parsePaymasterAndData(paymasterAndData);
         assertEq(returnedValidUntil, VALIDUNTIL);
@@ -306,8 +316,10 @@ contract OpenfortPaymasterTest is Test {
         assert(entryPoint.balanceOf(address(openfortPaymaster)) == 51 ether);
 
         // Paymaster deposits 1 ETH to EntryPoint
-        openfortPaymaster.deposit{value: 1 ether}();
+        openfortPaymaster.depositFor{value: 1 ether}(address(factoryAdmin));
         assert(openfortPaymaster.getDeposit() == 52 ether);
+        assert(openfortPaymaster.getDepositFor(address(openfortPaymaster)) == 0 ether);
+        assert(openfortPaymaster.getDepositFor(address(factoryAdmin)) == 1 ether);
     }
 
     /*
@@ -381,8 +393,8 @@ contract OpenfortPaymasterTest is Test {
             abi.encodeWithSignature("count()"),
             paymasterAndData
         );
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.PayForUser;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
         strategy.erc20Token = address(0);
         strategy.exchangeRate = EXCHANGERATE;
         bytes32 hash;
@@ -448,8 +460,8 @@ contract OpenfortPaymasterTest is Test {
             abi.encodeWithSignature("count()"),
             paymasterAndData
         );
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.PayForUser;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
         strategy.erc20Token = address(0);
         strategy.exchangeRate = EXCHANGERATE;
         bytes32 hash;
@@ -523,8 +535,8 @@ contract OpenfortPaymasterTest is Test {
         );
 
         userOps[0].maxPriorityFeePerGas += 1;
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.DynamicRate;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -595,8 +607,8 @@ contract OpenfortPaymasterTest is Test {
             paymasterAndData
         );
 
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.DynamicRate;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -668,8 +680,9 @@ contract OpenfortPaymasterTest is Test {
             paymasterAndData
         );
 
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.FixedRate;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.FixedRate;
+        strategy.depositor = address(paymasterAdmin);
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = pricePerTransaction;
 
@@ -748,8 +761,9 @@ contract OpenfortPaymasterTest is Test {
         UserOperation[] memory userOps =
             _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
 
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.DynamicRate;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
+        strategy.depositor = address(paymasterAdmin);
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -831,8 +845,9 @@ contract OpenfortPaymasterTest is Test {
         UserOperation[] memory userOps =
             _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
 
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.FixedRate;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.FixedRate;
+        strategy.depositor = address(paymasterAdmin);
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = pricePerTransaction;
 
@@ -914,8 +929,9 @@ contract OpenfortPaymasterTest is Test {
         UserOperation[] memory userOps =
             _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
 
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.FixedRate;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.FixedRate;
+        strategy.depositor = address(paymasterAdmin);
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = pricePerTransaction;
 
@@ -989,8 +1005,9 @@ contract OpenfortPaymasterTest is Test {
         UserOperation[] memory userOps =
             _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
 
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.PayForUser;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
+        strategy.depositor = address(paymasterAdmin);
         strategy.erc20Token = address(0);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -1071,8 +1088,9 @@ contract OpenfortPaymasterTest is Test {
         UserOperation[] memory userOps =
             _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
 
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.DynamicRate;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
+        strategy.depositor = address(paymasterAdmin);
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -1150,8 +1168,9 @@ contract OpenfortPaymasterTest is Test {
             paymasterAndData
         );
 
-        OpenfortPaymaster.PolicyStrategy memory strategy;
-        strategy.paymasterMode = OpenfortPaymaster.Mode.DynamicRate;
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
+        strategy.depositor = address(paymasterAdmin);
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -1203,22 +1222,5 @@ contract OpenfortPaymasterTest is Test {
         // 1- That the paymaster has spent some of its deposit
         // 2- That the smart account could not perform the desired actions, but still has all testTokens
         // An attacker could DoS the paymaster to drain its deposit
-    }
-
-    /*
-     * Test UpdateTokenRecipient function
-     */
-    function testUpdateTokenRecipient() public {
-        assertEq(openfortPaymaster.tokenRecipient(), paymasterAdmin);
-        vm.expectRevert("Ownable: caller is not the owner");
-        openfortPaymaster.updateTokenRecipient(factoryAdmin);
-
-        vm.prank(paymasterAdmin);
-        vm.expectRevert(OpenfortErrorsAndEvents.ZeroValueNotAllowed.selector);
-        openfortPaymaster.updateTokenRecipient(address(0));
-
-        vm.prank(paymasterAdmin);
-        openfortPaymaster.updateTokenRecipient(factoryAdmin);
-        assertEq(openfortPaymaster.tokenRecipient(), factoryAdmin);
     }
 }

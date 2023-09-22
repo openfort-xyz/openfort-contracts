@@ -12,15 +12,21 @@ import {OpenfortErrorsAndEvents} from "../interfaces/OpenfortErrorsAndEvents.sol
 /**
  * Helper class for creating a paymaster.
  * Provides helper methods for staking.
- * Validates that the postOp is called only by the entryPoint
+ * Validates that the postOp is called only by the EntryPoint
  */
 abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
+    uint256 private constant INIT_POST_OP_GAS = 35_000; // Initial value for postOpGas
     IEntryPoint public immutable entryPoint;
+    uint256 internal postOpGas; // Reference value for gas used by the EntryPoint._handlePostOp() method.
+
+    /// @notice When the paymaster owner updates the postOpGas variable
+    event PostOpGasUpdated(uint256 oldPostOpGas, uint256 _newPostOpGas);
 
     constructor(IEntryPoint _entryPoint, address _owner) {
-        if (address(_entryPoint) == address(0)) revert OpenfortErrorsAndEvents.ZeroAddressNotAllowed();
+        if (address(_entryPoint) == address(0)) revert OpenfortErrorsAndEvents.ZeroValueNotAllowed();
         entryPoint = _entryPoint;
         _transferOwnership(_owner);
+        postOpGas = INIT_POST_OP_GAS;
     }
 
     /**
@@ -72,11 +78,11 @@ abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
     function deposit() public payable virtual;
 
     /**
-     * Withdraw value from the deposit
-     * @param withdrawAddress target to send to
-     * @param amount to withdraw
+     * Withdraw value from the deposit.
+     * @param _withdrawAddress - Target to send to
+     * @param _amount          - Amount to withdraw
      */
-    function withdrawTo(address payable withdrawAddress, uint256 amount) public virtual;
+    function withdrawTo(address payable _withdrawAddress, uint256 _amount) public virtual;
 
     /**
      * Add stake for this paymaster.
@@ -89,7 +95,7 @@ abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
     }
 
     /**
-     * Return current paymaster's deposit on the entryPoint.
+     * Return current paymaster's deposit on the EntryPoint.
      */
     function getDeposit() public view returns (uint256) {
         return entryPoint.balanceOf(address(this));
@@ -117,5 +123,15 @@ abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
      */
     function _requireFromEntryPoint() internal virtual {
         require(msg.sender == address(entryPoint), "Sender not EntryPoint");
+    }
+
+    /**
+     * @dev Updates the reference value for gas used by the EntryPoint._handlePostOp() method.
+     * @param _newPostOpGas The new postOpGas value.
+     */
+    function setPostOpGas(uint256 _newPostOpGas) external onlyOwner {
+        if (_newPostOpGas == 0) revert OpenfortErrorsAndEvents.ZeroValueNotAllowed();
+        emit PostOpGasUpdated(postOpGas, _newPostOpGas);
+        postOpGas = _newPostOpGas;
     }
 }
