@@ -8,6 +8,9 @@ interface OpenfortErrorsAndEvents {
     /// @notice Error when a function requires msg.value to be different than 0
     error MustSendNativeToken();
 
+    /// @notice Error when a function requires msg.value to be different than owner()
+    error OwnerNotAllowed();
+
     // Paymaster specifics
 
     /**
