@@ -15,7 +15,7 @@ import {OpenfortErrorsAndEvents} from "../interfaces/OpenfortErrorsAndEvents.sol
  * Validates that the postOp is called only by the EntryPoint
  */
 abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
-    uint256 private constant INIT_POST_OP_GAS = 35_000; // Initial value for postOpGas
+    uint256 private constant INIT_POST_OP_GAS = 40_000; // Initial value for postOpGas
     IEntryPoint public immutable entryPoint;
     uint256 internal postOpGas; // Reference value for gas used by the EntryPoint._handlePostOp() method.
 

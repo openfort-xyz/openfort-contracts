@@ -96,7 +96,7 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
      * Owner deposit is all deposited funds that are not part of other depositors.
      */
     function getDepositFor(address _depositor) external view returns (uint256) {
-        if (_depositor == owner()) return entryPoint.balanceOf(address(this)) - totalDepositorBalances;
+        if (_depositor == owner()) return (entryPoint.balanceOf(address(this)) - totalDepositorBalances);
         return depositorBalances[_depositor];
     }
 
@@ -123,7 +123,7 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
             return ("", Helpers._packValidationData(true, validUntil, validAfter));
         }
 
-        if (requiredPreFund > depositorBalances[strategy.depositor]) {
+        if (strategy.depositor != owner() && requiredPreFund > depositorBalances[strategy.depositor]) {
             revert OpenfortErrorsAndEvents.InsufficientBalance(requiredPreFund, depositorBalances[strategy.depositor]);
         }
 
@@ -199,13 +199,22 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
     }
 
     /**
+     * @inheritdoc BaseOpenfortPaymaster
+     */
+    function withdrawTo(address payable _withdrawAddress, uint256 _amount) public override onlyOwner {
+        entryPoint.withdrawTo(_withdrawAddress, _amount);
+    }
+
+    /**
      * @dev Add a deposit for this paymaster and given depositor (Dapp Depositor address), used for paying for transaction fees
      * @param _depositorAddress depositor address for which deposit is being made
      */
     function depositFor(address _depositorAddress) public payable {
         if (_depositorAddress == address(0)) revert OpenfortErrorsAndEvents.ZeroValueNotAllowed();
         if (msg.value == 0) revert OpenfortErrorsAndEvents.MustSendNativeToken();
+        if (_depositorAddress == owner()) revert OpenfortErrorsAndEvents.OwnerNotAllowed();
         depositorBalances[_depositorAddress] += msg.value;
+        totalDepositorBalances += msg.value;
         entryPoint.depositTo{value: msg.value}(address(this));
         emit GasDeposited(msg.sender, _depositorAddress, msg.value);
     }
@@ -215,24 +224,26 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
      * @param _withdrawAddress The address to which the gas tokens should be transferred to.
      * @param _amount The amount of gas tokens to withdraw.
      */
-    function withdrawTo(address payable _withdrawAddress, uint256 _amount) public override {
+    function withdrawDepositorTo(address payable _withdrawAddress, uint256 _amount) external {
         if (_withdrawAddress == address(0)) revert OpenfortErrorsAndEvents.ZeroValueNotAllowed();
+        if (msg.sender == owner()) revert OpenfortErrorsAndEvents.OwnerNotAllowed();
         uint256 currentBalance = depositorBalances[msg.sender];
         if (_amount > currentBalance) {
             revert OpenfortErrorsAndEvents.InsufficientBalance(_amount, currentBalance);
         }
         depositorBalances[msg.sender] -= _amount;
+        totalDepositorBalances -= _amount;
         entryPoint.withdrawTo(_withdrawAddress, _amount);
         emit GasWithdrawn(msg.sender, _withdrawAddress, _amount);
     }
 
     /**
      * @dev The new owner accepts the ownership transfer.
-     *
+     * @notice If the new owner had something deposited to the Paymaster, it will be
      */
     function acceptOwnership() public override {
-        depositorBalances[pendingOwner()] = depositorBalances[owner()];
-        depositorBalances[owner()] = 0;
+        totalDepositorBalances -= depositorBalances[pendingOwner()];
+        depositorBalances[pendingOwner()] = 0;
         super.acceptOwnership();
         // address sender = _msgSender();
         // require(pendingOwner() == sender, "Ownable2Step: caller is not the new owner");
