@@ -95,7 +95,7 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
      * Return current paymaster's deposit on the EntryPoint for a given depositor address.
      * Owner deposit is all deposited funds that are not part of other depositors.
      */
-    function getDepositFor(address _depositor) external view returns (uint256) {
+    function getDepositFor(address _depositor) public view returns (uint256) {
         if (_depositor == owner()) return (entryPoint.balanceOf(address(this)) - totalDepositorBalances);
         return depositorBalances[_depositor];
     }
@@ -202,6 +202,9 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
      * @inheritdoc BaseOpenfortPaymaster
      */
     function withdrawTo(address payable _withdrawAddress, uint256 _amount) public override onlyOwner {
+        if (_amount > getDepositFor(msg.sender)) {
+            revert OpenfortErrorsAndEvents.InsufficientBalance(_amount, getDepositFor(msg.sender));
+        }
         entryPoint.withdrawTo(_withdrawAddress, _amount);
     }
 
@@ -239,14 +242,12 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
 
     /**
      * @dev The new owner accepts the ownership transfer.
-     * @notice If the new owner had something deposited to the Paymaster, it will be
+     * @notice If the new owner had something deposited to the Paymaster,
+     * it will be part of the owner's deposit now.
      */
     function acceptOwnership() public override {
         totalDepositorBalances -= depositorBalances[pendingOwner()];
         depositorBalances[pendingOwner()] = 0;
         super.acceptOwnership();
-        // address sender = _msgSender();
-        // require(pendingOwner() == sender, "Ownable2Step: caller is not the new owner");
-        // _transferOwnership(sender);
     }
 }
