@@ -19,6 +19,8 @@ abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
     IEntryPoint public immutable entryPoint;
     uint256 internal postOpGas; // Reference value for gas used by the EntryPoint._handlePostOp() method.
 
+    /// @notice When the paymaster is deployed
+    event PaymasterInitialized(address _entryPoint, address _owner);
     /// @notice When the paymaster owner updates the postOpGas variable
     event PostOpGasUpdated(uint256 oldPostOpGas, uint256 _newPostOpGas);
 
@@ -27,6 +29,7 @@ abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
         entryPoint = _entryPoint;
         _transferOwnership(_owner);
         postOpGas = INIT_POST_OP_GAS;
+        emit PaymasterInitialized(address(_entryPoint), _owner);
     }
 
     /**
