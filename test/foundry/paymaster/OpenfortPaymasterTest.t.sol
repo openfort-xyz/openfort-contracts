@@ -303,7 +303,7 @@ contract OpenfortPaymasterTest is Test {
         // The owner can withdraw stake
         vm.prank(paymasterAdmin);
         vm.expectRevert();
-        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+        openfortPaymaster.withdrawStake(payable(paymasterAdmin));
 
         // The owner unlocks the stake
         vm.prank(paymasterAdmin);
@@ -312,14 +312,14 @@ contract OpenfortPaymasterTest is Test {
         // The owner trying to unlock fails because it has not passed enought time
         vm.prank(paymasterAdmin);
         vm.expectRevert();
-        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+        openfortPaymaster.withdrawStake(payable(paymasterAdmin));
 
         // Passes 20 blocks...
         skip(20);
 
         // The owner can now withdraw stake (the 2 ethers recently staked + the 25 from the SetUp)
         vm.prank(paymasterAdmin);
-        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+        openfortPaymaster.withdrawStake(payable(paymasterAdmin));
         assertEq(paymasterAdmin.balance, 50 ether);
     }
 
@@ -1259,16 +1259,16 @@ contract OpenfortPaymasterTest is Test {
 
         vm.prank(factoryAdmin);
         vm.expectRevert("Ownable: caller is not the owner");
-        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 5 ether);
+        openfortPaymaster.withdrawTo(payable(paymasterAdmin), 5 ether);
         assertEq(openfortPaymaster.getDeposit(), 50 ether);
 
         vm.prank(paymasterAdmin);
         vm.expectRevert("Withdraw amount too large");
-        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 5000 ether);
+        openfortPaymaster.withdrawTo(payable(paymasterAdmin), 5000 ether);
         assertEq(openfortPaymaster.getDeposit(), 50 ether);
 
         vm.prank(paymasterAdmin);
-        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 5 ether);
+        openfortPaymaster.withdrawTo(payable(paymasterAdmin), 5 ether);
         assertEq(openfortPaymaster.getDeposit(), 45 ether);
 
         vm.prank(paymasterAdmin);
