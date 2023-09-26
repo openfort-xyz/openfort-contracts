@@ -6,6 +6,8 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation, IEntryPoint} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
+import {IPaymaster} from "account-abstraction/interfaces/IPaymaster.sol";
+
 import {StaticOpenfortFactory} from "contracts/core/static/StaticOpenfortFactory.sol";
 import {StaticOpenfortAccount} from "contracts/core/static/StaticOpenfortAccount.sol";
 import {OpenfortPaymasterV2} from "contracts/paymaster/OpenfortPaymasterV2.sol";
@@ -40,6 +42,8 @@ contract OpenfortPaymasterV2Test is Test {
     uint256 internal TESTTOKEN_ACCOUNT_PREFUND = 100 * 10 ** 18;
 
     error InvalidTokenRecipient();
+
+    event PostOpGasUpdated(uint256 oldPostOpGas, uint256 _newPostOpGas);
 
     /*
      * Auxiliary function to generate a userOP
@@ -189,8 +193,6 @@ contract OpenfortPaymasterV2Test is Test {
         }
         vm.prank(paymasterAdmin);
         openfortPaymaster = new OpenfortPaymasterV2(IEntryPoint(payable(address(entryPoint))), paymasterAdmin);
-        // Fund the paymaster with 100 ETH
-        vm.deal(address(openfortPaymaster), 100 ether);
         // Paymaster deposits 50 ETH to EntryPoint
         vm.prank(paymasterAdmin);
         openfortPaymaster.deposit{value: 50 ether}();
@@ -292,35 +294,112 @@ contract OpenfortPaymasterV2Test is Test {
     }
 
     /*
-     * The owner (paymasterAdmin) can add stake
-     * Others cannot
+     * The owner (paymasterAdmin) can add and withdraw stake.
+     * Others cannot.
      */
-    function testPaymasterAddStake() public {
+    function testPaymasterStake() public {
+        assertEq(paymasterAdmin.balance, 25 ether);
+
         // The owner can add stake
         vm.prank(paymasterAdmin);
-        openfortPaymaster.addStake{value: 2}(1);
+        openfortPaymaster.addStake{value: 2 ether}(10);
+        assertEq(paymasterAdmin.balance, 23 ether);
 
         // Others cannot add stake
         vm.expectRevert("Ownable: caller is not the owner");
-        openfortPaymaster.addStake{value: 2}(1);
+        openfortPaymaster.addStake{value: 2}(10);
+
+        // The owner trying to withdraw stake fails because it has not unlocked
+        // The owner can withdraw stake
+        vm.prank(paymasterAdmin);
+        vm.expectRevert();
+        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+
+        // The owner unlocks the stake
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.unlockStake();
+
+        // The owner trying to unlock fails because it has not passed enought time
+        vm.prank(paymasterAdmin);
+        vm.expectRevert();
+        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+
+        // Passes 20 blocks...
+        skip(20);
+
+        // The owner can now withdraw stake (the 2 ethers recently staked + the 25 from the SetUp)
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+        assertEq(paymasterAdmin.balance, 50 ether);
     }
 
     /*
-     * Deposit 2 ETH to the EntryPoint on Paymaster's behalf
-     * 
+     * Complete deposit walkthrough test
      */
-    function testEntryPointDepositToPaymaster() public {
-        assert(entryPoint.balanceOf(address(openfortPaymaster)) == 50 ether);
+    function testDepositsToPaymaster() public {
+        // Initially, the Paymaster has 50 ether deposited
+        assertEq(entryPoint.balanceOf(address(openfortPaymaster)), 50 ether);
 
-        // Directly deposit 1 ETH to EntryPoint on behalf of paymaster
+        // Directly deposit 1 ETH to EntryPoint on behalf of the Paymaster
         entryPoint.depositTo{value: 1 ether}(address(openfortPaymaster));
-        assert(entryPoint.balanceOf(address(openfortPaymaster)) == 51 ether);
+        assertEq(entryPoint.balanceOf(address(openfortPaymaster)), 51 ether);
 
         // Paymaster deposits 1 ETH to EntryPoint
         openfortPaymaster.depositFor{value: 1 ether}(address(factoryAdmin));
-        assert(openfortPaymaster.getDeposit() == 52 ether);
-        assert(openfortPaymaster.getDepositFor(address(openfortPaymaster)) == 0 ether);
-        assert(openfortPaymaster.getDepositFor(address(factoryAdmin)) == 1 ether);
+        assertEq(openfortPaymaster.getDepositFor(address(factoryAdmin)), 1 ether);
+
+        // Get the WHOLE deposited amount so far
+        assertEq(openfortPaymaster.getDeposit(), 52 ether);
+        // Notice that, even though the deposit was made to the EntryPoint for the openfortPaymaster, the deposit is 0:
+        assertEq(openfortPaymaster.getDepositFor(address(openfortPaymaster)), 0 ether);
+        
+        // All deposit not made using "depositFor" goes to owner (paymasterAdmin)
+        assertEq(openfortPaymaster.getDepositFor(address(paymasterAdmin)), 51 ether);
+
+        vm.expectRevert("Not Owner: use depositFor() instead");
+        openfortPaymaster.deposit{value: 1 ether}();
+        // Get the WHOLE deposited amount so far
+        assertEq(openfortPaymaster.getDeposit(), 52 ether);
+
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.deposit{value: 1 ether}();
+        // Get the WHOLE deposited amount so far
+        assertEq(openfortPaymaster.getDeposit(), 53 ether);
+
+        vm.expectRevert();
+        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 1 ether);
+        assertEq(openfortPaymaster.getDeposit(), 53 ether);
+
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 1 ether);
+        // Get the WHOLE deposited amount so far
+        assertEq(openfortPaymaster.getDeposit(), 52 ether);
+
+        vm.expectRevert();
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 10000 ether);
+        // Get the WHOLE deposited amount so far
+        assertEq(openfortPaymaster.getDeposit(), 52 ether);
+
+        // Let's now use withdrawDepositorTo
+        // Owner cannot call it
+        vm.expectRevert();
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.withdrawDepositorTo(payable(address(paymasterAdmin)), 1 ether);
+
+        // factoryAdmin can call it
+        assertEq(openfortPaymaster.getDepositFor(address(factoryAdmin)), 1 ether);
+        assertEq(address(factoryAdmin).balance, 100 ether);
+        // but not too much!
+        vm.expectRevert();
+        vm.prank(factoryAdmin);
+        openfortPaymaster.withdrawDepositorTo(payable(address(factoryAdmin)), 1000 ether);
+        vm.prank(factoryAdmin);
+        openfortPaymaster.withdrawDepositorTo(payable(address(factoryAdmin)), 1 ether);
+        assertEq(openfortPaymaster.getDepositFor(address(factoryAdmin)), 0 ether);
+        assertEq(address(factoryAdmin).balance, 101 ether);
+        // Deposit of the owner is still 51
+        assertEq(openfortPaymaster.getDepositFor(address(paymasterAdmin)), 51 ether);
     }
 
     /*
@@ -1394,5 +1473,78 @@ contract OpenfortPaymasterV2Test is Test {
         assert(openfortPaymaster.getDeposit() < 100 ether);
         assert(openfortPaymaster.getDepositFor(factoryAdmin) < 50 ether);
         assert(openfortPaymaster.getDepositFor(paymasterAdmin) > 50 ether); // deposit of the owner should have increased a bit because of the dust
+    }
+
+    /*
+     * Test setPostOpGas function
+     */
+    function testSetPostOpGas() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortPaymaster.setPostOpGas(15_000);
+
+        vm.prank(paymasterAdmin);
+        vm.expectRevert();
+        openfortPaymaster.setPostOpGas(0);
+
+        // Expect that we will see a PostOpGasUpdated event
+        vm.prank(paymasterAdmin);
+        vm.expectEmit(true, true, false, false);
+        emit PostOpGasUpdated(40_000, 15_000);
+        openfortPaymaster.setPostOpGas(15_000);
+    }
+
+    /*
+     * Trigger _requireFromEntryPoint() from BaseOpenfortPaymaster
+     */
+    function test_requireFromEntryPoint() public {
+        UserOperation[] memory userOpAux = _setupUserOpExecute(
+            account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()"), ""
+        );
+
+        vm.prank(paymasterAdmin);
+        vm.expectRevert("Sender not EntryPoint");
+        openfortPaymaster.validatePaymasterUserOp(userOpAux[0], bytes32(""), 0);
+
+        vm.prank(paymasterAdmin);
+        vm.expectRevert("Sender not EntryPoint");
+        openfortPaymaster.postOp(IPaymaster.PostOpMode(0), bytes(""), 0);
+    }
+
+    /*
+     * Test basic transfer ownership
+     */
+    function testAcceptOwnershipBasic() public {
+        assertEq(openfortPaymaster.owner(), paymasterAdmin);
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortPaymaster.transferOwnership(factoryAdmin);
+
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.transferOwnership(factoryAdmin);
+
+        vm.expectRevert("Ownable2Step: caller is not the new owner");
+        openfortPaymaster.acceptOwnership();
+
+        vm.prank(factoryAdmin);
+        openfortPaymaster.acceptOwnership();
+        assertEq(openfortPaymaster.owner(), factoryAdmin);
+    }
+
+    /*
+     * ToDo Test complex transfer ownership
+     */
+    function testAcceptOwnershipComplex() public {
+        assertEq(openfortPaymaster.owner(), paymasterAdmin);
+
+        // Play arround with deposits
+
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.transferOwnership(factoryAdmin);
+
+        // Play arround with deposits
+
+        vm.prank(factoryAdmin);
+        openfortPaymaster.acceptOwnership();
+        assertEq(openfortPaymaster.owner(), factoryAdmin);
     }
 }

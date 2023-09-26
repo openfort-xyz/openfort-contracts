@@ -6,6 +6,8 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation, IEntryPoint} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
+import {IPaymaster} from "account-abstraction/interfaces/IPaymaster.sol";
+
 import {StaticOpenfortFactory} from "contracts/core/static/StaticOpenfortFactory.sol";
 import {StaticOpenfortAccount} from "contracts/core/static/StaticOpenfortAccount.sol";
 import {OpenfortErrorsAndEvents} from "contracts/interfaces/OpenfortErrorsAndEvents.sol";
@@ -41,6 +43,8 @@ contract OpenfortPaymasterTest is Test {
     uint256 internal TESTTOKEN_ACCOUNT_PREFUND = 100 * 10 ** 18;
 
     error InvalidTokenRecipient();
+
+    event PostOpGasUpdated(uint256 oldPostOpGas, uint256 _newPostOpGas);
 
     /*
      * Auxiliary function to generate a userOP
@@ -187,9 +191,8 @@ contract OpenfortPaymasterTest is Test {
         }
         vm.prank(paymasterAdmin);
         openfortPaymaster = new OpenfortPaymaster(IEntryPoint(payable(address(entryPoint))), paymasterAdmin);
-        // Fund the paymaster with 100 ETH
-        vm.deal(address(openfortPaymaster), 100 ether);
         // Paymaster deposits 50 ETH to EntryPoint
+        vm.prank(paymasterAdmin);
         openfortPaymaster.deposit{value: 50 ether}();
         // Paymaster stakes 25 ETH
         vm.prank(paymasterAdmin);
@@ -281,17 +284,43 @@ contract OpenfortPaymasterTest is Test {
     }
 
     /*
-     * The owner (paymasterAdmin) can add stake
-     * Others cannot
+     * The owner (paymasterAdmin) can add and withdraw stake.
+     * Others cannot.
      */
-    function testPaymasterAddStake() public {
+    function testPaymasterStake() public {
+        assertEq(paymasterAdmin.balance, 25 ether);
+
         // The owner can add stake
         vm.prank(paymasterAdmin);
-        openfortPaymaster.addStake{value: 2}(1);
+        openfortPaymaster.addStake{value: 2 ether}(10);
+        assertEq(paymasterAdmin.balance, 23 ether);
 
         // Others cannot add stake
         vm.expectRevert("Ownable: caller is not the owner");
-        openfortPaymaster.addStake{value: 2}(1);
+        openfortPaymaster.addStake{value: 2}(10);
+
+        // The owner trying to withdraw stake fails because it has not unlocked
+        // The owner can withdraw stake
+        vm.prank(paymasterAdmin);
+        vm.expectRevert();
+        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+
+        // The owner unlocks the stake
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.unlockStake();
+
+        // The owner trying to unlock fails because it has not passed enought time
+        vm.prank(paymasterAdmin);
+        vm.expectRevert();
+        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+
+        // Passes 20 blocks...
+        skip(20);
+
+        // The owner can now withdraw stake (the 2 ethers recently staked + the 25 from the SetUp)
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+        assertEq(paymasterAdmin.balance, 50 ether);
     }
 
     /*
@@ -1220,5 +1249,65 @@ contract OpenfortPaymasterTest is Test {
         vm.prank(paymasterAdmin);
         openfortPaymaster.updateTokenRecipient(factoryAdmin);
         assertEq(openfortPaymaster.tokenRecipient(), factoryAdmin);
+    }
+
+    /*
+     * Test WithdrawTo function
+     */
+    function testWithdrawTo() public {
+        assertEq(openfortPaymaster.getDeposit(), 50 ether);
+
+        vm.prank(factoryAdmin);
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 5 ether);
+        assertEq(openfortPaymaster.getDeposit(), 50 ether);
+
+        vm.prank(paymasterAdmin);
+        vm.expectRevert("Withdraw amount too large");
+        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 5000 ether);
+        assertEq(openfortPaymaster.getDeposit(), 50 ether);
+
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 5 ether);
+        assertEq(openfortPaymaster.getDeposit(), 45 ether);
+
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.deposit{value: 1 ether}();
+        assertEq(openfortPaymaster.getDeposit(), 46 ether);
+    }
+
+    /*
+     * Test setPostOpGas function
+     */
+    function testSetPostOpGas() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortPaymaster.setPostOpGas(15_000);
+
+        vm.prank(paymasterAdmin);
+        vm.expectRevert();
+        openfortPaymaster.setPostOpGas(0);
+
+        // Expect that we will see a PostOpGasUpdated event
+        vm.prank(paymasterAdmin);
+        vm.expectEmit(true, true, false, false);
+        emit PostOpGasUpdated(40_000, 15_000);
+        openfortPaymaster.setPostOpGas(15_000);
+    }
+
+    /*
+     * Trigger _requireFromEntryPoint() from BaseOpenfortPaymaster
+     */
+    function test_requireFromEntryPoint() public {
+        UserOperation[] memory userOpAux = _setupUserOpExecute(
+            account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()"), ""
+        );
+
+        vm.prank(paymasterAdmin);
+        vm.expectRevert("Sender not EntryPoint");
+        openfortPaymaster.validatePaymasterUserOp(userOpAux[0], bytes32(""), 0);
+
+        vm.prank(paymasterAdmin);
+        vm.expectRevert("Sender not EntryPoint");
+        openfortPaymaster.postOp(IPaymaster.PostOpMode(0), bytes(""), 0);
     }
 }
