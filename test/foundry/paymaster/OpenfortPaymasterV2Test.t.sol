@@ -127,10 +127,10 @@ contract OpenfortPaymasterV2Test is Test {
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint, paymasterAndData);
     }
 
-    function mockedPaymasterDataNative() internal view returns (bytes memory dataEncoded) {
+    function mockedPaymasterDataNative(address _depositor) internal pure returns (bytes memory dataEncoded) {
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
-        strategy.depositor = address(paymasterAdmin);
+        strategy.depositor = _depositor;
         strategy.erc20Token = address(0);
         strategy.exchangeRate = EXCHANGERATE;
         // Looking at the source code, I've found this part was not Packed (filled with 0s)
@@ -240,7 +240,7 @@ contract OpenfortPaymasterV2Test is Test {
      */
     function testParsePaymasterDataNative() public {
         // Encode the paymaster data
-        bytes memory dataEncoded = mockedPaymasterDataNative();
+        bytes memory dataEncoded = mockedPaymasterDataNative(paymasterAdmin);
 
         // Get the related paymaster data signature
         bytes32 hash = keccak256(dataEncoded);
@@ -313,7 +313,7 @@ contract OpenfortPaymasterV2Test is Test {
         // The owner can withdraw stake
         vm.prank(paymasterAdmin);
         vm.expectRevert();
-        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+        openfortPaymaster.withdrawStake(payable(paymasterAdmin));
 
         // The owner unlocks the stake
         vm.prank(paymasterAdmin);
@@ -322,14 +322,14 @@ contract OpenfortPaymasterV2Test is Test {
         // The owner trying to unlock fails because it has not passed enought time
         vm.prank(paymasterAdmin);
         vm.expectRevert();
-        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+        openfortPaymaster.withdrawStake(payable(paymasterAdmin));
 
         // Passes 20 blocks...
         skip(20);
 
         // The owner can now withdraw stake (the 2 ethers recently staked + the 25 from the SetUp)
         vm.prank(paymasterAdmin);
-        openfortPaymaster.withdrawStake(payable(address(paymasterAdmin)));
+        openfortPaymaster.withdrawStake(payable(paymasterAdmin));
         assertEq(paymasterAdmin.balance, 50 ether);
     }
 
@@ -344,17 +344,30 @@ contract OpenfortPaymasterV2Test is Test {
         entryPoint.depositTo{value: 1 ether}(address(openfortPaymaster));
         assertEq(entryPoint.balanceOf(address(openfortPaymaster)), 51 ether);
 
+        // Cannot deposit to address 0
+        vm.expectRevert();
+        openfortPaymaster.depositFor{value: 0 ether}(address(0));
+
+        // Cannot deposit 0 ether
+        vm.expectRevert();
+        openfortPaymaster.depositFor{value: 0 ether}(factoryAdmin);
+
+        // Cannot depositFor using owner
+        vm.prank(paymasterAdmin);
+        vm.expectRevert();
+        openfortPaymaster.depositFor{value: 1 ether}(paymasterAdmin);
+
         // Paymaster deposits 1 ETH to EntryPoint
-        openfortPaymaster.depositFor{value: 1 ether}(address(factoryAdmin));
-        assertEq(openfortPaymaster.getDepositFor(address(factoryAdmin)), 1 ether);
+        openfortPaymaster.depositFor{value: 1 ether}(factoryAdmin);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 1 ether);
 
         // Get the WHOLE deposited amount so far
         assertEq(openfortPaymaster.getDeposit(), 52 ether);
         // Notice that, even though the deposit was made to the EntryPoint for the openfortPaymaster, the deposit is 0:
         assertEq(openfortPaymaster.getDepositFor(address(openfortPaymaster)), 0 ether);
-        
+
         // All deposit not made using "depositFor" goes to owner (paymasterAdmin)
-        assertEq(openfortPaymaster.getDepositFor(address(paymasterAdmin)), 51 ether);
+        assertEq(openfortPaymaster.getDepositFor(paymasterAdmin), 51 ether);
 
         vm.expectRevert("Not Owner: use depositFor() instead");
         openfortPaymaster.deposit{value: 1 ether}();
@@ -367,17 +380,17 @@ contract OpenfortPaymasterV2Test is Test {
         assertEq(openfortPaymaster.getDeposit(), 53 ether);
 
         vm.expectRevert();
-        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 1 ether);
+        openfortPaymaster.withdrawTo(payable(paymasterAdmin), 1 ether);
         assertEq(openfortPaymaster.getDeposit(), 53 ether);
 
         vm.prank(paymasterAdmin);
-        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 1 ether);
+        openfortPaymaster.withdrawTo(payable(paymasterAdmin), 1 ether);
         // Get the WHOLE deposited amount so far
         assertEq(openfortPaymaster.getDeposit(), 52 ether);
 
         vm.expectRevert();
         vm.prank(paymasterAdmin);
-        openfortPaymaster.withdrawTo(payable(address(paymasterAdmin)), 10000 ether);
+        openfortPaymaster.withdrawTo(payable(paymasterAdmin), 10000 ether);
         // Get the WHOLE deposited amount so far
         assertEq(openfortPaymaster.getDeposit(), 52 ether);
 
@@ -385,21 +398,43 @@ contract OpenfortPaymasterV2Test is Test {
         // Owner cannot call it
         vm.expectRevert();
         vm.prank(paymasterAdmin);
-        openfortPaymaster.withdrawDepositorTo(payable(address(paymasterAdmin)), 1 ether);
+        openfortPaymaster.withdrawDepositorTo(payable(paymasterAdmin), 1 ether);
 
         // factoryAdmin can call it
-        assertEq(openfortPaymaster.getDepositFor(address(factoryAdmin)), 1 ether);
-        assertEq(address(factoryAdmin).balance, 100 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 1 ether);
+        assertEq(factoryAdmin.balance, 100 ether);
         // but not too much!
         vm.expectRevert();
         vm.prank(factoryAdmin);
-        openfortPaymaster.withdrawDepositorTo(payable(address(factoryAdmin)), 1000 ether);
+        openfortPaymaster.withdrawDepositorTo(payable(factoryAdmin), 1000 ether);
+        // not using address 0!
+        vm.expectRevert();
         vm.prank(factoryAdmin);
-        openfortPaymaster.withdrawDepositorTo(payable(address(factoryAdmin)), 1 ether);
-        assertEq(openfortPaymaster.getDepositFor(address(factoryAdmin)), 0 ether);
-        assertEq(address(factoryAdmin).balance, 101 ether);
+        openfortPaymaster.withdrawDepositorTo(payable(address(0)), 1 ether);
+        vm.prank(factoryAdmin);
+        openfortPaymaster.withdrawDepositorTo(payable(factoryAdmin), 1 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 0 ether);
+        assertEq(factoryAdmin.balance, 101 ether);
         // Deposit of the owner is still 51
-        assertEq(openfortPaymaster.getDepositFor(address(paymasterAdmin)), 51 ether);
+        assertEq(openfortPaymaster.getDepositFor(paymasterAdmin), 51 ether);
+
+        // Finally, let's test withdrawFromDepositor
+        // deposit again using factoryAdmin
+        openfortPaymaster.depositFor{value: 1 ether}(factoryAdmin);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 1 ether);
+        // Only owner cannot call it
+        vm.expectRevert();
+        openfortPaymaster.withdrawFromDepositor(factoryAdmin, payable(factoryAdmin), 1 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 1 ether);
+
+        vm.expectRevert();
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.withdrawFromDepositor(factoryAdmin, payable(factoryAdmin), 100 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 1 ether);
+
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.withdrawFromDepositor(factoryAdmin, payable(factoryAdmin), 1 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 0 ether);
     }
 
     /*
@@ -460,7 +495,7 @@ contract OpenfortPaymasterV2Test is Test {
      * Should work
      */
     function testPaymasterUserOpNativeValidSig() public {
-        bytes memory dataEncoded = mockedPaymasterDataNative();
+        bytes memory dataEncoded = mockedPaymasterDataNative(paymasterAdmin);
 
         bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, MOCKSIG, "1", MOCKSIG);
 
@@ -475,7 +510,7 @@ contract OpenfortPaymasterV2Test is Test {
         );
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
-        strategy.depositor = address(paymasterAdmin);
+        strategy.depositor = paymasterAdmin;
         strategy.erc20Token = address(0);
         strategy.exchangeRate = EXCHANGERATE;
         bytes32 hash;
@@ -528,7 +563,7 @@ contract OpenfortPaymasterV2Test is Test {
      * Should not work
      */
     function testPaymasterUserOpNativeWrongUserSig() public {
-        bytes memory dataEncoded = mockedPaymasterDataNative();
+        bytes memory dataEncoded = mockedPaymasterDataNative(paymasterAdmin);
 
         bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, MOCKSIG, "1", MOCKSIG);
 
@@ -618,7 +653,7 @@ contract OpenfortPaymasterV2Test is Test {
         userOps[0].maxPriorityFeePerGas += 1;
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
-        strategy.depositor = address(paymasterAdmin);
+        strategy.depositor = paymasterAdmin;
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -691,7 +726,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
-        strategy.depositor = address(paymasterAdmin);
+        strategy.depositor = paymasterAdmin;
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -846,7 +881,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
-        strategy.depositor = address(paymasterAdmin);
+        strategy.depositor = paymasterAdmin;
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -1067,7 +1102,7 @@ contract OpenfortPaymasterV2Test is Test {
      * ExecBatch. Should work
      */
     function testPaymasterUserOpNativeValidSigExecBatch() public {
-        bytes memory dataEncoded = mockedPaymasterDataNative();
+        bytes memory dataEncoded = mockedPaymasterDataNative(paymasterAdmin);
 
         bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, MOCKSIG, "1", MOCKSIG);
 
@@ -1090,7 +1125,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
-        strategy.depositor = address(paymasterAdmin);
+        strategy.depositor = paymasterAdmin;
         strategy.erc20Token = address(0);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -1173,7 +1208,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
-        strategy.depositor = address(paymasterAdmin);
+        strategy.depositor = paymasterAdmin;
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -1253,7 +1288,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
-        strategy.depositor = address(paymasterAdmin);
+        strategy.depositor = paymasterAdmin;
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -1339,7 +1374,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
-        strategy.depositor = address(factoryAdmin);
+        strategy.depositor = factoryAdmin;
         strategy.erc20Token = address(testToken);
         strategy.exchangeRate = EXCHANGERATE;
 
@@ -1537,14 +1572,115 @@ contract OpenfortPaymasterV2Test is Test {
         assertEq(openfortPaymaster.owner(), paymasterAdmin);
 
         // Play arround with deposits
+        assertEq(openfortPaymaster.getDeposit(), 50 ether);
+        assertEq(openfortPaymaster.getDepositFor(paymasterAdmin), 50 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 0 ether);
+
+        openfortPaymaster.depositFor{value: 3 ether}(factoryAdmin);
+
+        assertEq(openfortPaymaster.getDeposit(), 53 ether);
+        assertEq(openfortPaymaster.getDepositFor(paymasterAdmin), 50 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 3 ether);
 
         vm.prank(paymasterAdmin);
         openfortPaymaster.transferOwnership(factoryAdmin);
 
+        assertEq(openfortPaymaster.getDeposit(), 53 ether);
+        assertEq(openfortPaymaster.getDepositFor(paymasterAdmin), 50 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 3 ether);
         // Play arround with deposits
 
         vm.prank(factoryAdmin);
         openfortPaymaster.acceptOwnership();
         assertEq(openfortPaymaster.owner(), factoryAdmin);
+
+        // After transferring the ownership, the old owner does not have any deposit
+        // and the new one has all deposit from previous owner PLUS its old deposit
+
+        assertEq(openfortPaymaster.getDeposit(), 53 ether);
+        assertEq(openfortPaymaster.getDepositFor(paymasterAdmin), 0 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 53 ether);
+    }
+
+    /*
+     * Test using a new depositor (factoryAdmin)
+     * Should work
+     */
+    function testPaymasterUserOpNativeValidSigDEPOSITOR() public {
+        bytes memory dataEncoded = mockedPaymasterDataNative(factoryAdmin);
+
+        assertEq(openfortPaymaster.getDeposit(), 50 ether);
+        assertEq(openfortPaymaster.getDepositFor(paymasterAdmin), 50 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 0 ether);
+
+        openfortPaymaster.depositFor{value: 3 ether}(factoryAdmin);
+
+        assertEq(openfortPaymaster.getDeposit(), 53 ether);
+        assertEq(openfortPaymaster.getDepositFor(paymasterAdmin), 50 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 3 ether);
+
+        bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, MOCKSIG, "1", MOCKSIG);
+
+        UserOperation[] memory userOps = _setupUserOpExecute(
+            account,
+            accountAdminPKey,
+            bytes(""),
+            address(testCounter),
+            0,
+            abi.encodeWithSignature("count()"),
+            paymasterAndData
+        );
+        OpenfortPaymasterV2.PolicyStrategy memory strategy;
+        strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
+        strategy.depositor = factoryAdmin;
+        strategy.erc20Token = address(0);
+        strategy.exchangeRate = EXCHANGERATE;
+        bytes32 hash;
+        {
+            // Simulating that the Paymaster gets the userOp and signs it
+            hash = ECDSA.toEthSignedMessageHash(openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, strategy));
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(paymasterAdminPKey, hash);
+            bytes memory signature = abi.encodePacked(r, s, v);
+            bytes memory paymasterAndDataSigned = abi.encodePacked(address(openfortPaymaster), dataEncoded, signature); // This part was packed (not filled with 0s)
+            assertEq(openfortPaymaster.owner(), ECDSA.recover(hash, signature));
+            userOps[0].paymasterAndData = paymasterAndDataSigned;
+        }
+
+        // Back to the user. Sign the userOp
+        bytes memory userOpSignature;
+        bytes32 hash2;
+        {
+            bytes32 opHash = EntryPoint(entryPoint).getUserOpHash(userOps[0]);
+            bytes32 msgHash = ECDSA.toEthSignedMessageHash(opHash);
+
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, msgHash);
+            userOpSignature = abi.encodePacked(r, s, v);
+
+            // Verifications below commented to avoid "Stack too deep" error
+            assertEq(ECDSA.recover(msgHash, v, r, s), vm.addr(accountAdminPKey));
+
+            // Should return account admin
+            hash2 =
+                ECDSA.toEthSignedMessageHash(openfortPaymaster.getHash(userOps[0], VALIDUNTIL, VALIDAFTER, strategy));
+        }
+
+        // The hash of the userOp should not have changed after the inclusion of the sig
+        assertEq(hash, hash2);
+        userOps[0].signature = userOpSignature;
+
+        // Get the paymaster deposit before handling the userOp
+        uint256 paymasterDepositBefore = openfortPaymaster.getDeposit();
+
+        entryPoint.handleOps(userOps, beneficiary);
+        // entryPoint.simulateValidation(userOp);
+
+        // Verify that the paymaster has less deposit now
+        assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
+        //Verifiy that the counter has increased
+        assertEq(testCounter.counters(account), 1);
+
+        assert(openfortPaymaster.getDeposit() < 53 ether); // less than 53 because the total cost have decreased
+        assert(openfortPaymaster.getDepositFor(paymasterAdmin) > 50 ether); // more than 50 because the dust has gone to the owner deposit
+        assert(openfortPaymaster.getDepositFor(factoryAdmin) < 3 ether); // less than 3 because the gas cost was paid using factoryAdmin's deposit
     }
 }

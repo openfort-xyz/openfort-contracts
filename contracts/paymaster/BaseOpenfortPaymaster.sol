@@ -68,11 +68,7 @@ abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
      * @param context - the context value returned by validatePaymasterUserOp
      * @param actualGasCost - actual gas used so far (without this postOp call).
      */
-    function _postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) internal virtual {
-        (mode, context, actualGasCost); // unused params
-        // subclass must override this method if validatePaymasterUserOp returns a context
-        revert("must override");
-    }
+    function _postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) internal virtual;
 
     /**
      * Add a deposit for this paymaster, used for paying for transaction fees
@@ -91,7 +87,6 @@ abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
      * This method can also carry eth value to add to the current stake.
      * @param unstakeDelaySec - the unstake delay for this paymaster. Can only be increased.
      */
-
     function addStake(uint32 unstakeDelaySec) external payable onlyOwner {
         entryPoint.addStake{value: msg.value}(unstakeDelaySec);
     }
