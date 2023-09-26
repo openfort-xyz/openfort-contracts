@@ -1,26 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.19;
 
-/* solhint-disable reason-string */
-
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "account-abstraction/interfaces/IPaymaster.sol";
-import "account-abstraction/interfaces/IEntryPoint.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {IPaymaster} from "account-abstraction/interfaces/IPaymaster.sol";
+import {IEntryPoint, UserOperation, UserOperationLib} from "account-abstraction/interfaces/IEntryPoint.sol";
 import "account-abstraction/core/Helpers.sol";
 import {OpenfortErrorsAndEvents} from "../interfaces/OpenfortErrorsAndEvents.sol";
 
 /**
- * Helper class for creating a paymaster.
+ * Helper class for creating an Openfort paymaster.
  * Provides helper methods for staking.
  * Validates that the postOp is called only by the EntryPoint
  */
 abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
     uint256 private constant INIT_POST_OP_GAS = 40_000; // Initial value for postOpGas
+    uint256 internal constant ADDRESS_OFFSET = 20; // length of an address
     IEntryPoint public immutable entryPoint;
     uint256 internal postOpGas; // Reference value for gas used by the EntryPoint._handlePostOp() method.
 
     /// @notice When the paymaster is deployed
-    event PaymasterInitialized(address _entryPoint, address _owner);
+    event PaymasterInitialized(IEntryPoint _entryPoint, address _owner);
     /// @notice When the paymaster owner updates the postOpGas variable
     event PostOpGasUpdated(uint256 oldPostOpGas, uint256 _newPostOpGas);
 
@@ -29,7 +28,7 @@ abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
         entryPoint = _entryPoint;
         _transferOwnership(_owner);
         postOpGas = INIT_POST_OP_GAS;
-        emit PaymasterInitialized(address(_entryPoint), _owner);
+        emit PaymasterInitialized(_entryPoint, _owner);
     }
 
     /**

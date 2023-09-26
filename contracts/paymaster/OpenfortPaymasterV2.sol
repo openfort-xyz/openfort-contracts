@@ -6,19 +6,19 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {UserOperation, UserOperationLib, IEntryPoint} from "account-abstraction/core/BaseAccount.sol";
-import {BaseOpenfortPaymaster} from "./BaseOpenfortPaymaster.sol";
 import "account-abstraction/core/Helpers.sol" as Helpers;
+import {BaseOpenfortPaymaster} from "./BaseOpenfortPaymaster.sol";
 import {OpenfortErrorsAndEvents} from "../interfaces/OpenfortErrorsAndEvents.sol";
 
 /**
  * @title OpenfortPaymasterV2 (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
  * @notice A paymaster that uses external service to decide whether to pay for the UserOp.
- * The paymaster trusts an external signer (owner) to sign the transaction.
+ * The Paymaster trusts an external signer (owner) to sign each user operation.
  * The calling user must pass the UserOp to that external signer first, which performs
  * whatever off-chain verification before signing the UserOp.
  * It has the following features:
- *  - Sponsor the whole UserOp
+ *  - Sponsor the whole UserOp (PayForUser mode)
  *  - Let the sender pay fees in ERC20 (both using an exchange rate per gas or per userOp)
  *  - Let multiple actors deposit native tokens to sponsor transactions
  */
@@ -27,10 +27,9 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
     using UserOperationLib for UserOperation;
     using SafeERC20 for IERC20;
 
-    uint256 private constant ADDRESS_OFFSET = 20; // length of an address
     uint256 private constant SIGNATURE_OFFSET = 212; // 20+48+48+32+32+32 = 212
 
-    mapping(address => uint256) public depositorBalances;
+    mapping(address => uint256) private depositorBalances;
     uint256 private totalDepositorBalances;
 
     enum Mode {
@@ -49,10 +48,10 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
     /// @notice When a transaction has been paid using an ERC20 token
     event GasPaidInERC20(address erc20Token, uint256 actualGasCost, uint256 actualTokensSent);
 
-    /// @notice When a depositor deposits gas to the EntryPoint
+    /// @notice When the owner or a depositor deposits gas to the EntryPoint
     event GasDeposited(address indexed from, address indexed depositor, uint256 indexed value);
 
-    /// @notice When a depositor withdraws gas from the EntryPoint
+    /// @notice When the owner or a depositor withdraws gas from the EntryPoint
     event GasWithdrawn(address indexed depositor, address indexed to, uint256 indexed value);
 
     /// @notice When a depositor uses gas from the EntryPoint deposit and it is deducted from depositorBalances
@@ -103,8 +102,8 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
     /**
      * Verify that the paymaster owner has signed this request.
      * The "paymasterAndData" is expected to be the paymaster and a signature over the entire request params
-     * paymasterAndData[:20]: address(this)
-     * paymasterAndData[20:148]: abi.encode(validUntil, validAfter, strategy)
+     * paymasterAndData[:ADDRESS_OFFSET]: address(this)
+     * paymasterAndData[ADDRESS_OFFSET:SIGNATURE_OFFSET]: abi.encode(validUntil, validAfter, strategy)
      * paymasterAndData[SIGNATURE_OFFSET:]: signature
      */
     function _validatePaymasterUserOp(UserOperation calldata userOp, bytes32, /*userOpHash*/ uint256 requiredPreFund)
@@ -165,7 +164,7 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
             IERC20(strategy.erc20Token).safeTransferFrom(sender, strategy.depositor, strategy.exchangeRate);
         }
 
-        // In any of the modes, subtract the right according
+        // In any of the modes, subtract the cost to the right depositor
         if (strategy.depositor != owner()) {
             totalDepositorBalances -= actualOpCost;
             depositorBalances[strategy.depositor] -= actualOpCost;
@@ -176,8 +175,8 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
     /**
      * Parse paymasterAndData
      * The "paymasterAndData" is expected to be the paymaster and a signature over the entire request params
-     * paymasterAndData[:20]: address(this)
-     * paymasterAndData[20:SIGNATURE_OFFSET]: (validUntil, validAfter, strategy)
+     * paymasterAndData[:ADDRESS_OFFSET]: address(this)
+     * paymasterAndData[ADDRESS_OFFSET:SIGNATURE_OFFSET]: (validUntil, validAfter, strategy)
      * paymasterAndData[SIGNATURE_OFFSET:]: signature
      */
     function parsePaymasterAndData(bytes calldata paymasterAndData)
@@ -193,9 +192,10 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
     /**
      * @dev Override the default implementation.
      */
-    function deposit() public payable virtual override {
+    function deposit() public payable override {
         if (msg.sender != owner()) revert("Not Owner: use depositFor() instead");
         entryPoint.depositTo{value: msg.value}(address(this));
+        emit GasDeposited(msg.sender, msg.sender, msg.value);
     }
 
     /**
@@ -206,10 +206,11 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
             revert OpenfortErrorsAndEvents.InsufficientBalance(_amount, getDepositFor(msg.sender));
         }
         entryPoint.withdrawTo(_withdrawAddress, _amount);
+        emit GasWithdrawn(msg.sender, _withdrawAddress, _amount);
     }
 
     /**
-     * @dev Add a deposit for this paymaster and given depositor (Dapp Depositor address), used for paying for transaction fees
+     * @dev Add a deposit for this paymaster and given depositor, used for paying for transaction fees
      * @param _depositorAddress depositor address for which deposit is being made
      */
     function depositFor(address _depositorAddress) public payable {
@@ -241,9 +242,32 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
     }
 
     /**
+     * @dev Withdraws the specified amount of gas tokens from a depositor paymaster's balance and transfers them to the specified address.
+     * @param _depositorAddress The address to which the gas tokens should be withdrawn from.
+     * @param _withdrawAddress The address to which the gas tokens should be transferred to.
+     * @param _amount The amount of gas tokens to withdraw.
+     * @notice Function to allow the owner of the Paymaster to withdraw the deposit of a depositor and send it
+     * To be used when the depositor looses access to the address and requests Openfort to recover it from the deposits.
+     */
+    function withdrawFromDepositor(address _depositorAddress, address payable _withdrawAddress, uint256 _amount)
+        external
+        onlyOwner
+    {
+        if (_depositorAddress == address(0)) revert OpenfortErrorsAndEvents.ZeroValueNotAllowed();
+        uint256 currentBalance = depositorBalances[_depositorAddress];
+        if (_amount > currentBalance) {
+            revert OpenfortErrorsAndEvents.InsufficientBalance(_amount, currentBalance);
+        }
+        depositorBalances[_depositorAddress] -= _amount;
+        totalDepositorBalances -= _amount;
+        entryPoint.withdrawTo(_withdrawAddress, _amount);
+        emit GasWithdrawn(_depositorAddress, _withdrawAddress, _amount);
+    }
+
+    /**
      * @dev The new owner accepts the ownership transfer.
-     * @notice If the new owner had something deposited to the Paymaster,
-     * it will be part of the owner's deposit now.
+     * @notice If the new owner had some native tokens deposited to the Paymaster,
+     * they will now be part of the owner's deposit.
      */
     function acceptOwnership() public override {
         totalDepositorBalances -= depositorBalances[pendingOwner()];

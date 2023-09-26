@@ -6,19 +6,19 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {UserOperation, UserOperationLib, IEntryPoint} from "account-abstraction/core/BaseAccount.sol";
-import {BaseOpenfortPaymaster} from "./BaseOpenfortPaymaster.sol";
 import "account-abstraction/core/Helpers.sol" as Helpers;
+import {BaseOpenfortPaymaster} from "./BaseOpenfortPaymaster.sol";
 import {OpenfortErrorsAndEvents} from "../interfaces/OpenfortErrorsAndEvents.sol";
 
 /**
  * @title OpenfortPaymaster (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
  * @notice A paymaster that uses external service to decide whether to pay for the UserOp.
- * The paymaster trusts an external signer (owner) to sign the transaction.
+ * The Paymaster trusts an external signer (owner) to sign each user operation.
  * The calling user must pass the UserOp to that external signer first, which performs
  * whatever off-chain verification before signing the UserOp.
  * It has the following features:
- *  - Sponsor the whole UserOp
+ *  - Sponsor the whole UserOp (PayForUser mode)
  *  - Let the sender pay fees in ERC20 (both using an exchange rate per gas or per userOp)
  *  - All ERC20s used to sponsor gas go to the address `tokenRecipient`
  */
@@ -27,7 +27,6 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
     using UserOperationLib for UserOperation;
     using SafeERC20 for IERC20;
 
-    uint256 private constant ADDRESS_OFFSET = 20; // length of an address
     uint256 private constant SIGNATURE_OFFSET = 180; // 20+48+48+32+32 = 180
 
     address public tokenRecipient;
@@ -46,6 +45,12 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
 
     /// @notice When a transaction has been paid using an ERC20 token
     event GasPaidInERC20(address erc20Token, uint256 actualGasCost, uint256 actualTokensSent);
+
+    /// @notice When the owner deposits gas to the EntryPoint
+    event GasDeposited(address indexed from, address indexed depositor, uint256 indexed value);
+
+    /// @notice When the owner withdraws gas from the EntryPoint
+    event GasWithdrawn(address indexed depositor, address indexed to, uint256 indexed value);
 
     /// @notice When tokenRecipient changes
     event TokenRecipientUpdated(address oldTokenRecipient, address newTokenRecipient);
@@ -86,8 +91,8 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
     /**
      * Verify that the paymaster owner has signed this request.
      * The "paymasterAndData" is expected to be the paymaster and a signature over the entire request params
-     * paymasterAndData[:20]: address(this)
-     * paymasterAndData[20:148]: abi.encode(validUntil, validAfter, strategy) // 20+48+48+32+32+32
+     * paymasterAndData[:ADDRESS_OFFSET]: address(this)
+     * paymasterAndData[ADDRESS_OFFSET:SIGNATURE_OFFSET]: abi.encode(validUntil, validAfter, strategy) // 20+48+48+32+32+32
      * paymasterAndData[SIGNATURE_OFFSET:]: signature
      */
     function _validatePaymasterUserOp(
@@ -147,8 +152,8 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
     /**
      * Parse paymasterAndData
      * The "paymasterAndData" is expected to be the paymaster and a signature over the entire request params
-     * paymasterAndData[:20]: address(this)
-     * paymasterAndData[20:SIGNATURE_OFFSET]: (validUntil, validAfter, strategy)
+     * paymasterAndData[:ADDRESS_OFFSET]: address(this)
+     * paymasterAndData[ADDRESS_OFFSET:SIGNATURE_OFFSET]: (validUntil, validAfter, strategy)
      * paymasterAndData[SIGNATURE_OFFSET:]: signature
      */
     function parsePaymasterAndData(bytes calldata paymasterAndData)
@@ -164,8 +169,9 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
     /**
      * @dev Override the default implementation.
      */
-    function deposit() public payable virtual override {
+    function deposit() public payable override {
         entryPoint.depositTo{value: msg.value}(address(this));
+        emit GasDeposited(msg.sender, msg.sender, msg.value);
     }
 
     /**
@@ -173,6 +179,7 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
      */
     function withdrawTo(address payable _withdrawAddress, uint256 _amount) public override onlyOwner {
         entryPoint.withdrawTo(_withdrawAddress, _amount);
+        emit GasWithdrawn(msg.sender, _withdrawAddress, _amount);
     }
 
     /**
