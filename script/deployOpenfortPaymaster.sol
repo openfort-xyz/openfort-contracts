@@ -10,7 +10,7 @@ contract OpenfortPaymasterDeploy is Script {
     // uint256 internal deployPrivKey = vm.envUint("PK");
     address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
-    uint256 internal constant UNSTAKEDELAYSEC = 8600;
+    uint32 internal constant UNSTAKEDELAYSEC = 8600;
 
     function run() public {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
