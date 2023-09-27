@@ -132,7 +132,7 @@ contract OpenfortPaymasterV2Test is Test {
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
         strategy.depositor = _depositor;
         strategy.erc20Token = address(0);
-        strategy.exchangeRate = EXCHANGERATE;
+        strategy.exchangeRate = 0;
         // Looking at the source code, I've found this part was not Packed (filled with 0s)
         dataEncoded = abi.encode(VALIDUNTIL, VALIDAFTER, strategy);
     }
@@ -256,10 +256,11 @@ contract OpenfortPaymasterV2Test is Test {
             OpenfortPaymasterV2.PolicyStrategy memory strategy,
             bytes memory returnedSignature
         ) = openfortPaymaster.parsePaymasterAndData(paymasterAndData);
+
         assertEq(returnedValidUntil, VALIDUNTIL);
         assertEq(returnedValidAfter, VALIDAFTER);
         assertEq(strategy.erc20Token, address(0));
-        assertEq(strategy.exchangeRate, EXCHANGERATE);
+        assertEq(strategy.exchangeRate, 0);
         assertEq(signature, returnedSignature);
     }
 
@@ -512,7 +513,7 @@ contract OpenfortPaymasterV2Test is Test {
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
         strategy.depositor = paymasterAdmin;
         strategy.erc20Token = address(0);
-        strategy.exchangeRate = EXCHANGERATE;
+        strategy.exchangeRate = 0;
         bytes32 hash;
         {
             // Simulating that the Paymaster gets the userOp and signs it
@@ -1127,7 +1128,7 @@ contract OpenfortPaymasterV2Test is Test {
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
         strategy.depositor = paymasterAdmin;
         strategy.erc20Token = address(0);
-        strategy.exchangeRate = EXCHANGERATE;
+        strategy.exchangeRate = 0;
 
         bytes32 hash;
         {
@@ -1620,6 +1621,9 @@ contract OpenfortPaymasterV2Test is Test {
         assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 3 ether);
 
         bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, MOCKSIG, "1", MOCKSIG);
+        console.log("paymasterAndData");
+        console.log("paymasterAndData");
+        console.logBytes(paymasterAndData);
 
         UserOperation[] memory userOps = _setupUserOpExecute(
             account,
@@ -1634,7 +1638,7 @@ contract OpenfortPaymasterV2Test is Test {
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
         strategy.depositor = factoryAdmin;
         strategy.erc20Token = address(0);
-        strategy.exchangeRate = EXCHANGERATE;
+        strategy.exchangeRate = 0;
         bytes32 hash;
         {
             // Simulating that the Paymaster gets the userOp and signs it
@@ -1645,6 +1649,10 @@ contract OpenfortPaymasterV2Test is Test {
             assertEq(openfortPaymaster.owner(), ECDSA.recover(hash, signature));
             userOps[0].paymasterAndData = paymasterAndDataSigned;
         }
+
+        console.log("userOps[0].paymasterAndData");
+        console.log("userOps[0].paymasterAndData");
+        console.logBytes(userOps[0].paymasterAndData);
 
         // Back to the user. Sign the userOp
         bytes memory userOpSignature;

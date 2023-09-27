@@ -19,7 +19,7 @@ contract OpenfortPaymasterDeploy is Script {
         OpenfortPaymaster openfortPaymaster = new OpenfortPaymaster{salt: versionSalt}(entryPoint, deployAddress);
 
         entryPoint.depositTo{value: 0.5 ether}(address(openfortPaymaster));
-        entryPoint.addStake{value: 0.25 ether}(UNSTAKEDELAYSEC);
+        openfortPaymaster.addStake{value: 0.25 ether}(UNSTAKEDELAYSEC);
 
         vm.stopBroadcast();
     }
