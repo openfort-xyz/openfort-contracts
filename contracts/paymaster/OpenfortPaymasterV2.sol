@@ -11,7 +11,7 @@ import {BaseOpenfortPaymaster} from "./BaseOpenfortPaymaster.sol";
 import {OpenfortErrorsAndEvents} from "../interfaces/OpenfortErrorsAndEvents.sol";
 
 /**
- * @title OpenfortPaymaster (Non-upgradeable)
+ * @title OpenfortPaymasterV2 (Non-upgradeable)
  * @author Eloi<eloi@openfort.xyz>
  * @notice A paymaster that uses external service to decide whether to pay for the UserOp.
  * The Paymaster trusts an external signer (owner) to sign each user operation.
@@ -20,16 +20,17 @@ import {OpenfortErrorsAndEvents} from "../interfaces/OpenfortErrorsAndEvents.sol
  * It has the following features:
  *  - Sponsor the whole UserOp (PayForUser mode)
  *  - Let the sender pay fees in ERC20 (both using an exchange rate per gas or per userOp)
- *  - All ERC20s used to sponsor gas go to the address `tokenRecipient`
+ *  - Let multiple actors deposit native tokens to sponsor transactions
  */
-contract OpenfortPaymaster is BaseOpenfortPaymaster {
+contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
     using ECDSA for bytes32;
     using UserOperationLib for UserOperation;
     using SafeERC20 for IERC20;
 
-    uint256 private constant SIGNATURE_OFFSET = 180; // 20+48+48+32+32 = 180
+    uint256 private constant SIGNATURE_OFFSET = 212; // 20+48+48+32+32+32 = 212
 
-    address public tokenRecipient;
+    mapping(address => uint256) private depositorBalances;
+    uint256 private totalDepositorBalances;
 
     enum Mode {
         PayForUser,
@@ -39,6 +40,7 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
 
     struct PolicyStrategy {
         Mode paymasterMode;
+        address depositor;
         address erc20Token;
         uint256 exchangeRate;
     }
@@ -46,17 +48,17 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
     /// @notice When a transaction has been paid using an ERC20 token
     event GasPaidInERC20(address erc20Token, uint256 actualGasCost, uint256 actualTokensSent);
 
-    /// @notice When the owner deposits gas to the EntryPoint
+    /// @notice When the owner or a depositor deposits gas to the EntryPoint
     event GasDeposited(address indexed from, address indexed depositor, uint256 indexed value);
 
-    /// @notice When the owner withdraws gas from the EntryPoint
+    /// @notice When the owner or a depositor withdraws gas from the EntryPoint
     event GasWithdrawn(address indexed depositor, address indexed to, uint256 indexed value);
 
-    /// @notice When tokenRecipient changes
-    event TokenRecipientUpdated(address oldTokenRecipient, address newTokenRecipient);
+    /// @notice When a depositor uses gas from the EntryPoint deposit and it is deducted from depositorBalances
+    event GasBalanceDeducted(address depositor, uint256 actualOpCost);
 
     constructor(IEntryPoint _entryPoint, address _owner) BaseOpenfortPaymaster(_entryPoint, _owner) {
-        tokenRecipient = _owner;
+        totalDepositorBalances = 0;
     }
 
     /**
@@ -89,17 +91,27 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
     }
 
     /**
+     * Return current paymaster's deposit on the EntryPoint for a given depositor address.
+     * Owner deposit is all deposited funds that are not part of other depositors.
+     */
+    function getDepositFor(address _depositor) public view returns (uint256) {
+        if (_depositor == owner()) return (entryPoint.balanceOf(address(this)) - totalDepositorBalances);
+        return depositorBalances[_depositor];
+    }
+
+    /**
      * Verify that the paymaster owner has signed this request.
      * The "paymasterAndData" is expected to be the paymaster and a signature over the entire request params
      * paymasterAndData[:ADDRESS_OFFSET]: address(this)
-     * paymasterAndData[ADDRESS_OFFSET:SIGNATURE_OFFSET]: abi.encode(validUntil, validAfter, strategy) // 20+48+48+32+32+32
+     * paymasterAndData[ADDRESS_OFFSET:SIGNATURE_OFFSET]: abi.encode(validUntil, validAfter, strategy)
      * paymasterAndData[SIGNATURE_OFFSET:]: signature
      */
-    function _validatePaymasterUserOp(
-        UserOperation calldata userOp,
-        bytes32, /*userOpHash*/
-        uint256 /*requiredPreFund*/
-    ) internal view override returns (bytes memory context, uint256 validationData) {
+    function _validatePaymasterUserOp(UserOperation calldata userOp, bytes32, /*userOpHash*/ uint256 requiredPreFund)
+        internal
+        view
+        override
+        returns (bytes memory context, uint256 validationData)
+    {
         (uint48 validUntil, uint48 validAfter, PolicyStrategy memory strategy, bytes calldata signature) =
             parsePaymasterAndData(userOp.paymasterAndData);
 
@@ -108,6 +120,10 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
         // Don't revert on signature failure: return SIG_VALIDATION_FAILED with empty context
         if (owner() != ECDSA.recover(hash, signature)) {
             return ("", Helpers._packValidationData(true, validUntil, validAfter));
+        }
+
+        if (strategy.depositor != owner() && requiredPreFund > depositorBalances[strategy.depositor]) {
+            revert OpenfortErrorsAndEvents.InsufficientBalance(requiredPreFund, depositorBalances[strategy.depositor]);
         }
 
         context = abi.encode(userOp.sender, strategy, userOp.maxFeePerGas, userOp.maxPriorityFeePerGas);
@@ -141,11 +157,18 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
             uint256 actualTokenCost = actualOpCost * strategy.exchangeRate;
             if (mode != PostOpMode.postOpReverted) {
                 emit GasPaidInERC20(address(strategy.erc20Token), actualOpCost, actualTokenCost);
-                IERC20(strategy.erc20Token).safeTransferFrom(sender, tokenRecipient, actualTokenCost);
+                IERC20(strategy.erc20Token).safeTransferFrom(sender, strategy.depositor, actualTokenCost);
             }
         } else if (strategy.paymasterMode == Mode.FixedRate) {
             emit GasPaidInERC20(address(strategy.erc20Token), actualOpCost, strategy.exchangeRate);
-            IERC20(strategy.erc20Token).safeTransferFrom(sender, tokenRecipient, strategy.exchangeRate);
+            IERC20(strategy.erc20Token).safeTransferFrom(sender, strategy.depositor, strategy.exchangeRate);
+        }
+
+        // In any of the modes, subtract the cost to the right depositor
+        if (strategy.depositor != owner()) {
+            totalDepositorBalances -= actualOpCost;
+            depositorBalances[strategy.depositor] -= actualOpCost;
+            emit GasBalanceDeducted(strategy.depositor, actualOpCost);
         }
     }
 
@@ -170,6 +193,7 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
      * @dev Override the default implementation.
      */
     function deposit() public payable override {
+        if (msg.sender != owner()) revert("Not Owner: use depositFor() instead");
         entryPoint.depositTo{value: msg.value}(address(this));
         emit GasDeposited(msg.sender, msg.sender, msg.value);
     }
@@ -178,16 +202,76 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
      * @inheritdoc BaseOpenfortPaymaster
      */
     function withdrawTo(address payable _withdrawAddress, uint256 _amount) public override onlyOwner {
+        if (_amount > getDepositFor(msg.sender)) {
+            revert OpenfortErrorsAndEvents.InsufficientBalance(_amount, getDepositFor(msg.sender));
+        }
         entryPoint.withdrawTo(_withdrawAddress, _amount);
         emit GasWithdrawn(msg.sender, _withdrawAddress, _amount);
     }
 
     /**
-     * Allows the owner of the paymaster to update the token recipient address
+     * @dev Add a deposit for this paymaster and given depositor, used for paying for transaction fees
+     * @param _depositorAddress depositor address for which deposit is being made
      */
-    function updateTokenRecipient(address _newTokenRecipient) external onlyOwner {
-        if (_newTokenRecipient == address(0)) revert OpenfortErrorsAndEvents.ZeroValueNotAllowed();
-        emit TokenRecipientUpdated(tokenRecipient, _newTokenRecipient);
-        tokenRecipient = _newTokenRecipient;
+    function depositFor(address _depositorAddress) public payable {
+        if (_depositorAddress == address(0)) revert OpenfortErrorsAndEvents.ZeroValueNotAllowed();
+        if (msg.value == 0) revert OpenfortErrorsAndEvents.MustSendNativeToken();
+        if (_depositorAddress == owner()) revert OpenfortErrorsAndEvents.OwnerNotAllowed();
+        depositorBalances[_depositorAddress] += msg.value;
+        totalDepositorBalances += msg.value;
+        entryPoint.depositTo{value: msg.value}(address(this));
+        emit GasDeposited(msg.sender, _depositorAddress, msg.value);
+    }
+
+    /**
+     * @dev Withdraws the specified amount of gas tokens from the paymaster's balance and transfers them to the specified address.
+     * @param _withdrawAddress The address to which the gas tokens should be transferred to.
+     * @param _amount The amount of gas tokens to withdraw.
+     */
+    function withdrawDepositorTo(address payable _withdrawAddress, uint256 _amount) external {
+        if (_withdrawAddress == address(0)) revert OpenfortErrorsAndEvents.ZeroValueNotAllowed();
+        if (msg.sender == owner()) revert OpenfortErrorsAndEvents.OwnerNotAllowed();
+        uint256 currentBalance = depositorBalances[msg.sender];
+        if (_amount > currentBalance) {
+            revert OpenfortErrorsAndEvents.InsufficientBalance(_amount, currentBalance);
+        }
+        depositorBalances[msg.sender] -= _amount;
+        totalDepositorBalances -= _amount;
+        entryPoint.withdrawTo(_withdrawAddress, _amount);
+        emit GasWithdrawn(msg.sender, _withdrawAddress, _amount);
+    }
+
+    /**
+     * @dev Withdraws the specified amount of gas tokens from a depositor paymaster's balance and transfers them to the specified address.
+     * @param _depositorAddress The address to which the gas tokens should be withdrawn from.
+     * @param _withdrawAddress The address to which the gas tokens should be transferred to.
+     * @param _amount The amount of gas tokens to withdraw.
+     * @notice Function to allow the owner of the Paymaster to withdraw the deposit of a depositor and send it
+     * To be used when the depositor looses access to the address and requests Openfort to recover it from the deposits.
+     */
+    function withdrawFromDepositor(address _depositorAddress, address payable _withdrawAddress, uint256 _amount)
+        external
+        onlyOwner
+    {
+        if (_depositorAddress == address(0)) revert OpenfortErrorsAndEvents.ZeroValueNotAllowed();
+        uint256 currentBalance = depositorBalances[_depositorAddress];
+        if (_amount > currentBalance) {
+            revert OpenfortErrorsAndEvents.InsufficientBalance(_amount, currentBalance);
+        }
+        depositorBalances[_depositorAddress] -= _amount;
+        totalDepositorBalances -= _amount;
+        entryPoint.withdrawTo(_withdrawAddress, _amount);
+        emit GasWithdrawn(_depositorAddress, _withdrawAddress, _amount);
+    }
+
+    /**
+     * @dev The new owner accepts the ownership transfer.
+     * @notice If the new owner had some native tokens deposited to the Paymaster,
+     * they will now be part of the owner's deposit.
+     */
+    function acceptOwnership() public override {
+        totalDepositorBalances -= depositorBalances[pendingOwner()];
+        depositorBalances[pendingOwner()] = 0;
+        super.acceptOwnership();
     }
 }
