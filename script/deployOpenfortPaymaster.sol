@@ -10,6 +10,7 @@ contract OpenfortPaymasterDeploy is Script {
     // uint256 internal deployPrivKey = vm.envUint("PK");
     address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
+    uint256 internal constant UNSTAKEDELAYSEC = 8600;
 
     function run() public {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
@@ -17,7 +18,8 @@ contract OpenfortPaymasterDeploy is Script {
 
         OpenfortPaymaster openfortPaymaster = new OpenfortPaymaster{salt: versionSalt}(entryPoint, deployAddress);
 
-        entryPoint.depositTo{value: 1 ether}(address(openfortPaymaster));
+        entryPoint.depositTo{value: 0.5 ether}(address(openfortPaymaster));
+        entryPoint.addStake{value: 0.25 ether}(UNSTAKEDELAYSEC);
 
         vm.stopBroadcast();
     }
