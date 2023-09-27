@@ -2344,7 +2344,7 @@ contract RecoverableOpenfortAccountTest is Test {
         recoverableOpenfortAccount.completeRecovery(signatures);
 
         assertEq(recoverableOpenfortAccount.isLocked(), false);
-        assertEq(recoverableOpenfortAccount.owner(), address(accountAdmin));
+        assertEq(recoverableOpenfortAccount.owner(), accountAdmin);
     }
 
     /*
