@@ -55,6 +55,8 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
     /// @notice When tokenRecipient changes
     event TokenRecipientUpdated(address oldTokenRecipient, address newTokenRecipient);
 
+    event PostOpReverted(bytes context, uint256 actualGasCost);
+
     constructor(IEntryPoint _entryPoint, address _owner) BaseOpenfortPaymaster(_entryPoint, _owner) {
         tokenRecipient = _owner;
     }
@@ -121,6 +123,11 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
      * For ERC20 modes (DynamicRate and FixedRate), transfer the right amount of tokens from the sender to the designated recipient
      */
     function _postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) internal override {
+        if (mode == PostOpMode.postOpReverted) {
+			emit PostOpReverted(context, actualGasCost);
+			// Do nothing here to not revert the whole bundle and harm reputation - From ethInfinitism
+			return;
+		}
         (address sender, PolicyStrategy memory strategy, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas) =
             abi.decode(context, (address, PolicyStrategy, uint256, uint256));
 
@@ -139,10 +146,8 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
 
         if (strategy.paymasterMode == Mode.DynamicRate) {
             uint256 actualTokenCost = actualOpCost * strategy.exchangeRate;
-            if (mode != PostOpMode.postOpReverted) {
-                emit GasPaidInERC20(address(strategy.erc20Token), actualOpCost, actualTokenCost);
-                IERC20(strategy.erc20Token).safeTransferFrom(sender, tokenRecipient, actualTokenCost);
-            }
+            emit GasPaidInERC20(address(strategy.erc20Token), actualOpCost, actualTokenCost);
+            IERC20(strategy.erc20Token).safeTransferFrom(sender, tokenRecipient, actualTokenCost);
         } else if (strategy.paymasterMode == Mode.FixedRate) {
             emit GasPaidInERC20(address(strategy.erc20Token), actualOpCost, strategy.exchangeRate);
             IERC20(strategy.erc20Token).safeTransferFrom(sender, tokenRecipient, strategy.exchangeRate);
