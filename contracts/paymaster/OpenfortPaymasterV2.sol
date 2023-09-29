@@ -57,6 +57,8 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
     /// @notice When a depositor uses gas from the EntryPoint deposit and it is deducted from depositorBalances
     event GasBalanceDeducted(address depositor, uint256 actualOpCost);
 
+    event PostOpReverted(bytes context, uint256 actualGasCost);
+
     constructor(IEntryPoint _entryPoint, address _owner) BaseOpenfortPaymaster(_entryPoint, _owner) {
         totalDepositorBalances = 0;
     }
@@ -137,6 +139,12 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
      * For ERC20 modes (DynamicRate and FixedRate), transfer the right amount of tokens from the sender to the designated recipient
      */
     function _postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) internal override {
+        if (mode == PostOpMode.postOpReverted) {
+			emit PostOpReverted(context, actualGasCost);
+			// Do nothing here to not revert the whole bundle and harm reputation - From ethInfinitism
+			return;
+		}
+        
         (address sender, PolicyStrategy memory strategy, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas) =
             abi.decode(context, (address, PolicyStrategy, uint256, uint256));
 
