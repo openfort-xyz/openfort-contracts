@@ -124,10 +124,10 @@ contract OpenfortPaymaster is BaseOpenfortPaymaster {
      */
     function _postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) internal override {
         if (mode == PostOpMode.postOpReverted) {
-			emit PostOpReverted(context, actualGasCost);
-			// Do nothing here to not revert the whole bundle and harm reputation - From ethInfinitism
-			return;
-		}
+            emit PostOpReverted(context, actualGasCost);
+            // Do nothing here to not revert the whole bundle and harm reputation - From ethInfinitism
+            return;
+        }
         (address sender, PolicyStrategy memory strategy, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas) =
             abi.decode(context, (address, PolicyStrategy, uint256, uint256));
 
