@@ -10,7 +10,7 @@ import {OpenfortErrorsAndEvents} from "../interfaces/OpenfortErrorsAndEvents.sol
 /**
  * Helper class for creating an Openfort paymaster.
  * Provides helper methods for staking.
- * Validates that the postOp is called only by the EntryPoint
+ * Validates that the postOp is called only by the EntryPoint.
  */
 abstract contract BaseOpenfortPaymaster is IBaseOpenfortPaymaster, Ownable2Step {
     uint256 private constant INIT_POST_OP_GAS = 40_000; // Initial value for postOpGas
