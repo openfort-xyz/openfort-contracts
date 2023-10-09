@@ -6,7 +6,7 @@ import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPo
 import {OpenfortPaymasterV2} from "../contracts/paymaster/OpenfortPaymasterV2.sol";
 
 contract OpenfortPaymasterV2Deploy is Script {
-    uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC_TESTNET"), 0);
+    uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC_PAYMASTER_OWNER_TESTNET"), 0);
     // uint256 internal deployPrivKey = vm.envUint("PK");
     address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
