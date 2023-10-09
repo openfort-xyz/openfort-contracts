@@ -7,7 +7,7 @@ import {OpenfortPaymaster} from "../contracts/paymaster/OpenfortPaymaster.sol";
 
 contract OpenfortPaymasterDeploy is Script {
     uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC_PAYMASTER_OWNER_TESTNET"), 0);
-    // uint256 internal deployPrivKey = vm.envUint("PK");
+    // uint256 internal deployPrivKey = vm.envUint("PK_PAYMASTER_OWNER_TESTNET");
     address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
     uint32 internal constant UNSTAKEDELAYSEC = 8600;
