@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {IEntryPoint, UserOperation, UserOperationLib} from "account-abstraction/interfaces/IEntryPoint.sol";
