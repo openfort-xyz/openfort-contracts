@@ -2,9 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {IPaymaster} from "account-abstraction/interfaces/IPaymaster.sol";
 import {IEntryPoint, UserOperation, UserOperationLib} from "account-abstraction/interfaces/IEntryPoint.sol";
 import "account-abstraction/core/Helpers.sol";
+import {IBaseOpenfortPaymaster} from "../interfaces/IBaseOpenfortPaymaster.sol";
 import {OpenfortErrorsAndEvents} from "../interfaces/OpenfortErrorsAndEvents.sol";
 
 /**
@@ -12,7 +12,7 @@ import {OpenfortErrorsAndEvents} from "../interfaces/OpenfortErrorsAndEvents.sol
  * Provides helper methods for staking.
  * Validates that the postOp is called only by the EntryPoint
  */
-abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
+abstract contract BaseOpenfortPaymaster is IBaseOpenfortPaymaster, Ownable2Step {
     uint256 private constant INIT_POST_OP_GAS = 40_000; // Initial value for postOpGas
     uint256 internal constant ADDRESS_OFFSET = 20; // length of an address
     IEntryPoint public immutable entryPoint;
@@ -32,7 +32,7 @@ abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
     }
 
     /**
-     * @inheritdoc IPaymaster
+     * @inheritdoc IBaseOpenfortPaymaster
      */
     function validatePaymasterUserOp(UserOperation calldata userOp, bytes32 userOpHash, uint256 maxCost)
         external
@@ -49,7 +49,7 @@ abstract contract BaseOpenfortPaymaster is IPaymaster, Ownable2Step {
         returns (bytes memory context, uint256 validationData);
 
     /**
-     * @inheritdoc IPaymaster
+     * @inheritdoc IBaseOpenfortPaymaster
      */
     function postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost) external override {
         _requireFromEntryPoint();
