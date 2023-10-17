@@ -46,7 +46,7 @@ contract CheckDeposits is OpenfortForksConfig {
         if (block.chainid == BASE_MAIN || block.chainid == ARBITRUM_MAIN || block.chainid == ARBITRUM_NOVA) {
             if (paymasterOwnerBalance < 0.15 ether) {
                 console.log(
-                    "ALERT: balance of PaymasterOwner too low on chain ID %s! Deposit: %s\n",
+                    "ALERT: balance of PaymasterOwner too low on chain ID %s! Balance: %s\n",
                     block.chainid,
                     paymasterOwnerBalance
                 );
@@ -54,7 +54,7 @@ contract CheckDeposits is OpenfortForksConfig {
         } else {
             if (paymasterOwnerBalance < 1.5 ether) {
                 console.log(
-                    "ALERT: balance of PaymasterOwner too low on chain ID %s! Deposit: %s\n",
+                    "ALERT: balance of PaymasterOwner too low on chain ID %s! Balance: %s\n",
                     block.chainid,
                     paymasterOwnerBalance
                 );
