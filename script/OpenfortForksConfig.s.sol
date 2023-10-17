@@ -12,7 +12,7 @@ import {Script} from "forge-std/Script.sol";
  */
 abstract contract OpenfortForksConfig is Script {
     address internal immutable entryPoint = vm.envAddress("ENTRY_POINT_ADDRESS");
-    uint256 internal constant NUM_ACCEPTED_CHAINS = 14;
+    uint256 internal constant NUM_ACCEPTED_CHAINS = 15;
 
     enum Forks {
         GoerliFork, // 0
@@ -28,6 +28,7 @@ abstract contract OpenfortForksConfig is Script {
         AvalancheFork,
         BscFork,
         ArbitrumFork,
+        ArbitrumNovaFork,
         BaseFork,
         BeamFork // NUM_ACCEPTED_CHAINS-1
     }
@@ -41,8 +42,12 @@ abstract contract OpenfortForksConfig is Script {
     address internal immutable verifyingPaymasterTestnet;
     address internal immutable verifyingPaymasterMainnet;
 
+    address internal immutable openfortPaymasterV2Testnet;
+    address internal immutable openfortPaymasterV2Mainnet;
+
     uint256 internal constant BASE_MAIN = 8453;
     uint256 internal constant ARBITRUM_MAIN = 42161;
+    uint256 internal constant ARBITRUM_NOVA = 42170;
 
     constructor() {
         /*//////////////////////////////////////////////////////////////////////////
@@ -57,6 +62,9 @@ abstract contract OpenfortForksConfig is Script {
         verifyingPaymasterTestnet = vm.envAddress("PAYMASTER_ADDRESS_TESTNET");
         verifyingPaymasterMainnet = vm.envAddress("PAYMASTER_ADDRESS_MAINNET");
 
+        openfortPaymasterV2Testnet = vm.envAddress("OPENFORT_PAYMASTER_V2_ADDRESS_TESTNET");
+        openfortPaymasterV2Mainnet = vm.envAddress("OPENFORT_PAYMASTER_V2_ADDRESS_MAINNET");
+
         /*//////////////////////////////////////////////////////////////////////////
                                     TESTNET FORKS
         //////////////////////////////////////////////////////////////////////////*/
@@ -65,42 +73,42 @@ abstract contract OpenfortForksConfig is Script {
         // (not trivial as fork number will not match the Fork enum anymore)
         vm.createFork(vm.envString("GOERLI_RPC"));
         paymasterOwnerAddresses[uint256(Forks.GoerliFork)] = openfortPaymasterOwnerTestnet;
-        paymasterAddresses[uint256(Forks.GoerliFork)] = verifyingPaymasterTestnet;
+        paymasterAddresses[uint256(Forks.GoerliFork)] = openfortPaymasterV2Testnet;
 
         // Fork: Mumbai testnet
         vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
         paymasterOwnerAddresses[uint256(Forks.MumbaiFork)] = openfortPaymasterOwnerTestnet;
-        paymasterAddresses[uint256(Forks.MumbaiFork)] = verifyingPaymasterTestnet;
+        paymasterAddresses[uint256(Forks.MumbaiFork)] = openfortPaymasterV2Testnet;
 
         // Fork: Fuji testnet
         vm.createFork(vm.envString("AVALANCHE_FUJI_RPC"));
         paymasterOwnerAddresses[uint256(Forks.FujiFork)] = openfortPaymasterOwnerTestnet;
-        paymasterAddresses[uint256(Forks.FujiFork)] = verifyingPaymasterTestnet;
+        paymasterAddresses[uint256(Forks.FujiFork)] = openfortPaymasterV2Testnet;
 
         // Fork: BSC testnet
         vm.createFork(vm.envString("BSC_TESTNET_RPC"));
         paymasterOwnerAddresses[uint256(Forks.BscTestFork)] = openfortPaymasterOwnerTestnet;
-        paymasterAddresses[uint256(Forks.BscTestFork)] = verifyingPaymasterTestnet;
+        paymasterAddresses[uint256(Forks.BscTestFork)] = openfortPaymasterV2Testnet;
 
         // Fork: Arbitrum Goerli testnet
         vm.createFork(vm.envString("ARBITRUM_GOERLI_RPC"));
         paymasterOwnerAddresses[uint256(Forks.ArbitrumTestFork)] = openfortPaymasterOwnerTestnet;
-        paymasterAddresses[uint256(Forks.ArbitrumTestFork)] = verifyingPaymasterTestnet;
+        paymasterAddresses[uint256(Forks.ArbitrumTestFork)] = openfortPaymasterV2Testnet;
 
         // Fork: Base Goerli testnet
         vm.createFork(vm.envString("GOERLI_BASE_RPC"));
         paymasterOwnerAddresses[uint256(Forks.BaseGoerliFork)] = openfortPaymasterOwnerTestnet;
-        paymasterAddresses[uint256(Forks.BaseGoerliFork)] = verifyingPaymasterTestnet;
+        paymasterAddresses[uint256(Forks.BaseGoerliFork)] = openfortPaymasterV2Testnet;
 
         // Fork: Beam testnet
         vm.createFork(vm.envString("BEAM_TESTNET_RPC"));
         paymasterOwnerAddresses[uint256(Forks.BeamTestnetFork)] = openfortPaymasterOwnerTestnet;
-        paymasterAddresses[uint256(Forks.BeamTestnetFork)] = verifyingPaymasterTestnet;
+        paymasterAddresses[uint256(Forks.BeamTestnetFork)] = openfortPaymasterV2Testnet;
 
         // Fork: Gnosis Chiado testnet
         vm.createFork(vm.envString("GNOSIS_CHIADO_RPC"));
         paymasterOwnerAddresses[uint256(Forks.ChiadoFork)] = openfortPaymasterOwnerTestnet;
-        paymasterAddresses[uint256(Forks.ChiadoFork)] = verifyingPaymasterTestnet;
+        paymasterAddresses[uint256(Forks.ChiadoFork)] = openfortPaymasterV2Testnet;
 
         /*//////////////////////////////////////////////////////////////////////////
                                     MAINNET FORKS
@@ -109,31 +117,36 @@ abstract contract OpenfortForksConfig is Script {
         // Fork: Polygon Mainnet
         vm.createFork(vm.envString("POLYGON_RPC"));
         paymasterOwnerAddresses[uint256(Forks.PolygonFork)] = openfortPaymasterOwnerMainnet;
-        paymasterAddresses[uint256(Forks.PolygonFork)] = verifyingPaymasterMainnet;
+        paymasterAddresses[uint256(Forks.PolygonFork)] = openfortPaymasterV2Mainnet;
 
         // Fork: Avalanche Mainnet
         vm.createFork(vm.envString("AVALANCHE_RPC"));
         paymasterOwnerAddresses[uint256(Forks.AvalancheFork)] = openfortPaymasterOwnerMainnet;
-        paymasterAddresses[uint256(Forks.AvalancheFork)] = verifyingPaymasterMainnet;
+        paymasterAddresses[uint256(Forks.AvalancheFork)] = openfortPaymasterV2Mainnet;
 
         // Fork: Avalanche Mainnet
         vm.createFork(vm.envString("BSC_RPC"));
         paymasterOwnerAddresses[uint256(Forks.BscFork)] = openfortPaymasterOwnerMainnet;
-        paymasterAddresses[uint256(Forks.BscFork)] = verifyingPaymasterMainnet;
+        paymasterAddresses[uint256(Forks.BscFork)] = openfortPaymasterV2Mainnet;
 
         // Fork: Arbitrum Mainnet
         vm.createFork(vm.envString("ARBITRUM_ONE_RPC"));
         paymasterOwnerAddresses[uint256(Forks.ArbitrumFork)] = openfortPaymasterOwnerMainnet;
-        paymasterAddresses[uint256(Forks.ArbitrumFork)] = verifyingPaymasterMainnet;
+        paymasterAddresses[uint256(Forks.ArbitrumFork)] = openfortPaymasterV2Mainnet;
+
+        // Fork: Arbitrum Nova
+        vm.createFork(vm.envString("ARBITRUM_NOVA_RPC"));
+        paymasterOwnerAddresses[uint256(Forks.ArbitrumNovaFork)] = openfortPaymasterOwnerMainnet;
+        paymasterAddresses[uint256(Forks.ArbitrumNovaFork)] = openfortPaymasterV2Mainnet;
 
         // Fork: Base Mainnet
         vm.createFork(vm.envString("MAINNET_BASE_RPC"));
         paymasterOwnerAddresses[uint256(Forks.BaseFork)] = openfortPaymasterOwnerMainnet;
-        paymasterAddresses[uint256(Forks.BaseFork)] = verifyingPaymasterMainnet;
+        paymasterAddresses[uint256(Forks.BaseFork)] = openfortPaymasterV2Mainnet;
 
         // Fork: Beam Mainnet
         vm.createFork(vm.envString("BEAM_RPC"));
         paymasterOwnerAddresses[uint256(Forks.BeamFork)] = openfortPaymasterOwnerMainnet;
-        paymasterAddresses[uint256(Forks.BeamFork)] = verifyingPaymasterMainnet;
+        paymasterAddresses[uint256(Forks.BeamFork)] = openfortPaymasterV2Mainnet;
     }
 }
