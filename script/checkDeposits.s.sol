@@ -23,11 +23,11 @@ contract CheckDeposits is OpenfortForksConfig {
         );
 
         if (block.chainid == BASE_MAIN || block.chainid == ARBITRUM_MAIN || block.chainid == ARBITRUM_NOVA) {
-            if (paymasterDeposit < 0.15 ether) {
+            if (paymasterDeposit < 0.1 ether) {
                 console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
             }
         } else {
-            if (paymasterDeposit < 1.5 ether) {
+            if (paymasterDeposit < 1 ether) {
                 console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
             }
         }
@@ -44,7 +44,7 @@ contract CheckDeposits is OpenfortForksConfig {
         );
 
         if (block.chainid == BASE_MAIN || block.chainid == ARBITRUM_MAIN || block.chainid == ARBITRUM_NOVA) {
-            if (paymasterOwnerBalance < 0.15 ether) {
+            if (paymasterOwnerBalance < 0.1 ether) {
                 console.log(
                     "ALERT: balance of PaymasterOwner too low on chain ID %s! Balance: %s\n",
                     block.chainid,
@@ -52,7 +52,7 @@ contract CheckDeposits is OpenfortForksConfig {
                 );
             }
         } else {
-            if (paymasterOwnerBalance < 1.5 ether) {
+            if (paymasterOwnerBalance < 1 ether) {
                 console.log(
                     "ALERT: balance of PaymasterOwner too low on chain ID %s! Balance: %s\n",
                     block.chainid,
@@ -71,6 +71,9 @@ contract CheckDeposits is OpenfortForksConfig {
 
         console.log("Checking Paymaster and PaymasterOwner on Goerli testnet:");
         checkPaymasterDepositAndOwnerBalance(uint256(Forks.GoerliFork));
+
+        console.log("Checking Paymaster and PaymasterOwner on Sepolia testnet:");
+        checkPaymasterDepositAndOwnerBalance(uint256(Forks.SepoliaFork));
 
         console.log("Checking Paymaster and PaymasterOwner on Mumbai testnet:");
         checkPaymasterDepositAndOwnerBalance(uint256(Forks.MumbaiFork));

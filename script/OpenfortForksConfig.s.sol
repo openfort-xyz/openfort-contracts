@@ -12,12 +12,13 @@ import {Script} from "forge-std/Script.sol";
  */
 abstract contract OpenfortForksConfig is Script {
     address internal immutable entryPoint = vm.envAddress("ENTRY_POINT_ADDRESS");
-    uint256 internal constant NUM_ACCEPTED_CHAINS = 15;
+    uint256 internal constant NUM_ACCEPTED_CHAINS = 16;
 
     enum Forks {
         GoerliFork, // 0
-        MumbaiFork, // 1
-        FujiFork, // ...
+        SepoliaFork, // 1
+        MumbaiFork, // ...
+        FujiFork,
         BscTestFork,
         ArbitrumTestFork,
         BaseGoerliFork,
@@ -74,6 +75,11 @@ abstract contract OpenfortForksConfig is Script {
         vm.createFork(vm.envString("GOERLI_RPC"));
         paymasterOwnerAddresses[uint256(Forks.GoerliFork)] = openfortPaymasterOwnerTestnet;
         paymasterAddresses[uint256(Forks.GoerliFork)] = openfortPaymasterV2Testnet;
+
+        // Fork: Sepolia testnet
+        vm.createFork(vm.envString("SEPOLIA_RPC"));
+        paymasterOwnerAddresses[uint256(Forks.SepoliaFork)] = openfortPaymasterOwnerTestnet;
+        paymasterAddresses[uint256(Forks.SepoliaFork)] = openfortPaymasterV2Testnet;
 
         // Fork: Mumbai testnet
         vm.createFork(vm.envString("POLYGON_MUMBAI_RPC"));
