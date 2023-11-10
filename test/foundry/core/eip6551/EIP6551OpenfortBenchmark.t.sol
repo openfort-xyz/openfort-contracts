@@ -524,7 +524,7 @@ contract EIP6551OpenfortBenchmark is Test {
 
     /*
      * Test transferOwnership() function using upgradeable account that have EIP6551 accounts.
-     * Scenario: a complex account changes the ownership; all NFTs are managable by the new owner
+     * Scenario: a complex account changes the ownership; all NFTs are manageable by the new owner
      */
     function test8TransferOwner4337Complex() public {
         // The EOA is the owner of the Upgradeable account

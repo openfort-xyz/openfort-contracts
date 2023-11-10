@@ -1572,7 +1572,7 @@ contract OpenfortPaymasterV2Test is Test {
     function testAcceptOwnershipComplex() public {
         assertEq(openfortPaymaster.owner(), paymasterAdmin);
 
-        // Play arround with deposits
+        // Play around with deposits
         assertEq(openfortPaymaster.getDeposit(), 50 ether);
         assertEq(openfortPaymaster.getDepositFor(paymasterAdmin), 50 ether);
         assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 0 ether);
@@ -1589,7 +1589,7 @@ contract OpenfortPaymasterV2Test is Test {
         assertEq(openfortPaymaster.getDeposit(), 53 ether);
         assertEq(openfortPaymaster.getDepositFor(paymasterAdmin), 50 ether);
         assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 3 ether);
-        // Play arround with deposits
+        // Play around with deposits
 
         vm.prank(factoryAdmin);
         openfortPaymaster.acceptOwnership();

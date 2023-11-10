@@ -153,7 +153,7 @@ As of June 2023, the current average gas cost for deploying or using the differe
 |   StaticOpenfortFactory  | Deploy factory (containing StaticOpenfortAccount's implementation) | 1 | ~2,500,000 |
 |   StaticOpenfortAccount  | Create a new static account using the `createAccountWithNonce()` of the factory | indefinite | ~150,000  |
 |   StaticOpenfortAccount  | Updating the EntryPoint address using `updateEntryPoint()` | indefinite | ~1,500  |
-|   StaticOpenfortAccount  | Transfering the ownership using `transferOwnership()` | indefinite | ~25,000  |
+|   StaticOpenfortAccount  | Transferring the ownership using `transferOwnership()` | indefinite | ~25,000  |
 
 ### Upgradeable Accounts
 |   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
