@@ -4,3 +4,6 @@
 [submodule "lib/account-abstraction"]
 	path = lib/account-abstraction
 	url = git@github.com:eth-infinitism/account-abstraction.git
+[submodule "lib/erc6551"]
+	path = lib/erc6551
+	url = https://github.com/erc6551/reference
