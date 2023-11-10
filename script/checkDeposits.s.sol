@@ -26,7 +26,13 @@ contract CheckDeposits is OpenfortForksConfig {
             if (paymasterDeposit < 0.1 ether) {
                 console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
             }
-        } else {
+        } 
+        else if (block.chainid == BEAM_MAIN) {
+            if (paymasterDeposit < 4 ether) {
+                console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
+            }
+        }
+        else {
             if (paymasterDeposit < 1 ether) {
                 console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
             }
@@ -95,6 +101,9 @@ contract CheckDeposits is OpenfortForksConfig {
 
         console.log("Checking Paymaster and PaymasterOwner on Gnosis Chiado testnet:");
         checkPaymasterDepositAndOwnerBalance(uint256(Forks.ChiadoFork));
+
+        console.log("Checking Paymaster and PaymasterOwner on Linea testnet:");
+        checkPaymasterDepositAndOwnerBalance(uint256(Forks.LineaTestnetFork));
 
         console.log("----------------");
         console.log("----Mainnets----");
