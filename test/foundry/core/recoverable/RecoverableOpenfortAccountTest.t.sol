@@ -1975,7 +1975,7 @@ contract RecoverableOpenfortAccountTest is Test {
      */
 
     /*
-     * Check the correct functionallity of startRecovery()
+     * Check the correct functionality of startRecovery()
      */
     function testStartRecovery() public {
         RecoverableOpenfortAccount recoverableOpenfortAccount = RecoverableOpenfortAccount(payable(account));
