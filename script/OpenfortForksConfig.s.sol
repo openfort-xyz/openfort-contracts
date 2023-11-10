@@ -12,7 +12,7 @@ import {Script} from "forge-std/Script.sol";
  */
 abstract contract OpenfortForksConfig is Script {
     address internal immutable entryPoint = vm.envAddress("ENTRY_POINT_ADDRESS");
-    uint256 internal constant NUM_ACCEPTED_CHAINS = 16;
+    uint256 internal constant NUM_ACCEPTED_CHAINS = 17;
 
     enum Forks {
         GoerliFork, // 0
@@ -24,6 +24,7 @@ abstract contract OpenfortForksConfig is Script {
         BaseGoerliFork,
         BeamTestnetFork,
         ChiadoFork,
+        LineaTestnetFork,
         // Mainnets
         PolygonFork,
         AvalancheFork,
@@ -49,6 +50,7 @@ abstract contract OpenfortForksConfig is Script {
     uint256 internal constant BASE_MAIN = 8453;
     uint256 internal constant ARBITRUM_MAIN = 42161;
     uint256 internal constant ARBITRUM_NOVA = 42170;
+    uint256 internal constant BEAM_MAIN = 4337;
 
     constructor() {
         /*//////////////////////////////////////////////////////////////////////////
@@ -115,6 +117,11 @@ abstract contract OpenfortForksConfig is Script {
         vm.createFork(vm.envString("GNOSIS_CHIADO_RPC"));
         paymasterOwnerAddresses[uint256(Forks.ChiadoFork)] = openfortPaymasterOwnerTestnet;
         paymasterAddresses[uint256(Forks.ChiadoFork)] = openfortPaymasterV2Testnet;
+
+        // Fork: Linea testnet
+        vm.createFork(vm.envString("LINEA_TEST_RPC"));
+        paymasterOwnerAddresses[uint256(Forks.LineaTestnetFork)] = openfortPaymasterOwnerTestnet;
+        paymasterAddresses[uint256(Forks.LineaTestnetFork)] = openfortPaymasterV2Testnet;
 
         /*//////////////////////////////////////////////////////////////////////////
                                     MAINNET FORKS
