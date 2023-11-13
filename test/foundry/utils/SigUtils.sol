@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity =0.8.19;
 
 /*
  * Based on Foundry's tutorial: https://book.getfoundry.sh/tutorials/testing-eip712

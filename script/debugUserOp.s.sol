@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.19;
+pragma solidity =0.8.19;
 
 import "forge-std/Script.sol";
 import {UserOperation, EntryPoint} from "account-abstraction/core/EntryPoint.sol";
