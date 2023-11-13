@@ -461,7 +461,7 @@ contract OpenfortPaymasterV2Test is Test {
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
 
@@ -487,7 +487,7 @@ contract OpenfortPaymasterV2Test is Test {
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
 
@@ -555,7 +555,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
-        //Verifiy that the counter has increased
+        //Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -623,7 +623,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore == openfortPaymaster.getDeposit());
-        //Verifiy that the counter has not increased
+        //Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
 
@@ -697,7 +697,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
-        // Verifiy that the balance of the smart account has decreased
+        // Verify that the balance of the smart account has decreased
         assert(testToken.balanceOf(account) < TESTTOKEN_ACCOUNT_PREFUND);
     }
 
@@ -770,7 +770,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
-        // Verifiy that the balance of the smart account has decreased
+        // Verify that the balance of the smart account has decreased
         assert(testToken.balanceOf(account) < TESTTOKEN_ACCOUNT_PREFUND);
     }
 
@@ -844,7 +844,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
-        // Verifiy that the balance of the smart account has decreased
+        // Verify that the balance of the smart account has decreased
         assert(testToken.balanceOf(account) == TESTTOKEN_ACCOUNT_PREFUND - pricePerTransaction);
     }
 
@@ -925,7 +925,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
-        // Verifiy that the balance of the smart account has decreased
+        // Verify that the balance of the smart account has decreased
         assert(testToken.balanceOf(account) < TESTTOKEN_ACCOUNT_PREFUND);
         assertEq(testCounter.counters(account), 1);
     }
@@ -1009,7 +1009,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
-        // Verifiy that the balance of the smart account has decreased
+        // Verify that the balance of the smart account has decreased
         assert(testToken.balanceOf(account) == TESTTOKEN_ACCOUNT_PREFUND - pricePerTransaction);
         assertEq(testCounter.counters(account), 1);
     }
@@ -1093,7 +1093,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
-        // Verifiy that the balance of the smart account has decreased
+        // Verify that the balance of the smart account has decreased
         assert(testToken.balanceOf(account) == TESTTOKEN_ACCOUNT_PREFUND - pricePerTransaction);
         assertEq(testCounter.counters(account), 1);
     }
@@ -1170,7 +1170,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
-        //Verifiy that the counter has increased
+        //Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -1418,7 +1418,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
-        // Verifiy that the balance of the smart account has decreased
+        // Verify that the balance of the smart account has decreased
         assert(testToken.balanceOf(account) < TESTTOKEN_ACCOUNT_PREFUND);
 
         assert(openfortPaymaster.getDeposit() < 100 ether);
@@ -1503,7 +1503,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
-        // Verifiy that the balance of the smart account has decreased
+        // Verify that the balance of the smart account has decreased
         assert(testToken.balanceOf(account) < TESTTOKEN_ACCOUNT_PREFUND);
 
         assert(openfortPaymaster.getDeposit() < 100 ether);
@@ -1684,7 +1684,7 @@ contract OpenfortPaymasterV2Test is Test {
 
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
-        //Verifiy that the counter has increased
+        //Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
 
         assert(openfortPaymaster.getDeposit() < 53 ether); // less than 53 because the total cost have decreased

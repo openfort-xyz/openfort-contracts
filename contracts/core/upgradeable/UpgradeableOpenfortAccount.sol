@@ -27,7 +27,7 @@ contract UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         emit EntryPointUpdated(entrypointContract, _entrypoint);
         _transferOwnership(_defaultAdmin);
         entrypointContract = _entrypoint;
-        __EIP712_init("Openfort", "0.4");
+        __EIP712_init("Openfort", "0.5");
     }
 
     function _authorizeUpgrade(address) internal override onlyOwner {}

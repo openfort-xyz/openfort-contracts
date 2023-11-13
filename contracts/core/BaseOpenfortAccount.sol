@@ -286,52 +286,6 @@ abstract contract BaseOpenfortAccount is
     }
 
     /**
-     * Register a master session key to the account
-     * @param _key session key to register
-     * @param _validAfter - this session key is valid only after this timestamp.
-     * @param _validUntil - this session key is valid only up to this timestamp.
-     * @notice using this function will automatically set the sessionkey as a
-     * master session key because no further restriction was set.
-     * @notice default limit set to 100.
-     */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) public {
-        registerSessionKey(_key, _validAfter, _validUntil, DEFAULT_LIMIT);
-        sessionKeys[_key].masterSessionKey = true;
-    }
-
-    /**
-     * Register a master session key to the account
-     * @param _key session key to register
-     * @param _validAfter - this session key is valid only after this timestamp.
-     * @param _validUntil - this session key is valid only up to this timestamp.
-     * @param _limit - limit of uses remaining.
-     * @notice using this function will automatically set the sessionkey as a
-     * master session key because no further restriction was set.
-     */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, uint48 _limit) public {
-        _requireFromEntryPointOrOwnerorSelf();
-        sessionKeys[_key].validAfter = _validAfter;
-        sessionKeys[_key].validUntil = _validUntil;
-        sessionKeys[_key].limit = _limit;
-        sessionKeys[_key].masterSessionKey = false;
-        sessionKeys[_key].whitelising = false;
-        emit SessionKeyRegistered(_key);
-    }
-
-    /**
-     * Register a session key to the account
-     * @param _key session key to register
-     * @param _validAfter - this session key is valid only after this timestamp.
-     * @param _validUntil - this session key is valid only up to this timestamp.
-     * @param _whitelist - this session key can only interact with the addresses in the _whitelist.
-     */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, address[] calldata _whitelist)
-        public
-    {
-        registerSessionKey(_key, _validAfter, _validUntil, DEFAULT_LIMIT, _whitelist);
-    }
-
-    /**
      * Register a session key to the account
      * @param _key session key to register
      * @param _validAfter - this session key is valid only after this timestamp.
@@ -350,18 +304,24 @@ abstract contract BaseOpenfortAccount is
 
         // Not sure why changing this for a custom error increases gas dramatically
         require(_whitelist.length < 11, "Whitelist too big");
-        for (uint256 i = 0; i < _whitelist.length;) {
+        uint256 i = 0;
+        for (i; i < _whitelist.length;) {
             sessionKeys[_key].whitelist[_whitelist[i]] = true;
             unchecked {
                 ++i; // gas optimization
             }
         }
+        if (i > 0) {
+            sessionKeys[_key].whitelising = true;
+            sessionKeys[_key].masterSessionKey = false;
+        } else {
+            if (_limit == ((2 ** 48) - 1)) sessionKeys[_key].masterSessionKey = true;
+            else sessionKeys[_key].masterSessionKey = false;
+        }
 
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
         sessionKeys[_key].limit = _limit;
-        sessionKeys[_key].masterSessionKey = false;
-        sessionKeys[_key].whitelising = true;
 
         emit SessionKeyRegistered(_key);
     }
@@ -374,6 +334,7 @@ abstract contract BaseOpenfortAccount is
         _requireFromEntryPointOrOwnerorSelf();
         if (sessionKeys[_key].validUntil != 0) {
             sessionKeys[_key].validUntil = 0;
+            sessionKeys[_key].masterSessionKey = false;
             emit SessionKeyRevoked(_key);
         }
     }

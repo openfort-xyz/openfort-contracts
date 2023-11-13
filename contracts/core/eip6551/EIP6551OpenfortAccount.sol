@@ -8,8 +8,8 @@ import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interface
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 
-import "./interfaces/IERC6551Account.sol";
-import "./utils/Bytecode.sol";
+import "erc6551/src/interfaces/IERC6551Account.sol";
+import {ERC6551AccountLib} from "erc6551/src/lib/ERC6551AccountLib.sol";
 import {BaseAccount, UserOperation, IEntryPoint} from "account-abstraction/core/BaseAccount.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
 import "account-abstraction/core/Helpers.sol" as Helpers;
@@ -44,6 +44,8 @@ contract EIP6551OpenfortAccount is
     // bytes4(keccak256("executeBatch(address[],uint256[],bytes[])")
     bytes4 internal constant EXECUTEBATCH_SELECTOR = 0x47e1da2a;
     uint48 internal constant DEFAULT_LIMIT = 100;
+
+    uint256 public state;
 
     /**
      * Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
@@ -93,6 +95,7 @@ contract EIP6551OpenfortAccount is
         emit EntryPointUpdated(entrypointContract, _entrypoint);
         entrypointContract = _entrypoint;
         __EIP712_init("Openfort", "0.4");
+        state = 1;
     }
 
     /**
@@ -122,11 +125,10 @@ contract EIP6551OpenfortAccount is
         }
     }
 
-    function owner() public view returns (address) {
-        (uint256 chainId, address tokenContract, uint256 tokenId) = this.token();
+    function owner() public view virtual returns (address) {
+        (uint256 chainId, address contractAddress, uint256 tokenId) = token();
         if (chainId != block.chainid) return address(0);
-
-        return IERC721(tokenContract).ownerOf(tokenId);
+        return IERC721(contractAddress).ownerOf(tokenId);
     }
 
     /**
@@ -147,11 +149,14 @@ contract EIP6551OpenfortAccount is
                 revert(add(result, 32), mload(result))
             }
         }
+        ++state;
     }
 
-    function token() external view returns (uint256 chainId, address tokenContract, uint256 tokenId) {
-        uint256 length = address(this).code.length;
-        return abi.decode(Bytecode.codeAt(address(this), length - 0x60, length), (uint256, address, uint256));
+    /**
+     * @dev {See IERC6551Account-token}
+     */
+    function token() public view virtual override returns (uint256, address, uint256) {
+        return ERC6551AccountLib.token();
     }
 
     /**
@@ -272,6 +277,7 @@ contract EIP6551OpenfortAccount is
     function execute(address dest, uint256 value, bytes calldata func) external {
         _requireFromEntryPointOrOwner();
         _call(dest, value, func);
+        ++state;
     }
 
     /**
@@ -287,6 +293,7 @@ contract EIP6551OpenfortAccount is
             unchecked {
                 ++i; // gas optimization
             }
+            ++state;
         }
     }
 
@@ -305,6 +312,7 @@ contract EIP6551OpenfortAccount is
      */
     function withdrawDepositTo(address payable withdrawAddress, uint256 amount) public {
         _requireFromOwner();
+        ++state;
         entryPoint().withdrawTo(withdrawAddress, amount);
     }
 
@@ -318,6 +326,7 @@ contract EIP6551OpenfortAccount is
                 revert(add(result, 32), mload(result))
             }
         }
+        ++state;
     }
 
     /**
@@ -344,50 +353,13 @@ contract EIP6551OpenfortAccount is
         return SIG_VALIDATION_FAILED;
     }
 
-    /**
-     * Register a master session key to the account
-     * @param _key session key to register
-     * @param _validAfter - this session key is valid only after this timestamp.
-     * @param _validUntil - this session key is valid only up to this timestamp.
-     * @notice using this function will automatically set the sessionkey as a
-     * master session key because no further restriction was set.
-     * @notice default limit set to 100.
-     */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil) public {
-        registerSessionKey(_key, _validAfter, _validUntil, DEFAULT_LIMIT);
-        sessionKeys[_key].masterSessionKey = true;
+    function isValidSigner(address signer, bytes calldata) external view virtual returns (bytes4) {
+        if (_isValidSigner(signer)) return IERC6551Account.isValidSigner.selector;
+        return bytes4(0);
     }
 
-    /**
-     * Register a master session key to the account
-     * @param _key session key to register
-     * @param _validAfter - this session key is valid only after this timestamp.
-     * @param _validUntil - this session key is valid only up to this timestamp.
-     * @param _limit - limit of uses remaining.
-     * @notice using this function will automatically set the sessionkey as a
-     * master session key because no further restriction was set.
-     */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, uint48 _limit) public {
-        _requireFromEntryPointOrOwnerorSelf();
-        sessionKeys[_key].validAfter = _validAfter;
-        sessionKeys[_key].validUntil = _validUntil;
-        sessionKeys[_key].limit = _limit;
-        sessionKeys[_key].masterSessionKey = false;
-        sessionKeys[_key].whitelising = false;
-        emit SessionKeyRegistered(_key);
-    }
-
-    /**
-     * Register a session key to the account
-     * @param _key session key to register
-     * @param _validAfter - this session key is valid only after this timestamp.
-     * @param _validUntil - this session key is valid only up to this timestamp.
-     * @param _whitelist - this session key can only interact with the addresses in the _whitelist.
-     */
-    function registerSessionKey(address _key, uint48 _validAfter, uint48 _validUntil, address[] calldata _whitelist)
-        public
-    {
-        registerSessionKey(_key, _validAfter, _validUntil, DEFAULT_LIMIT, _whitelist);
+    function _isValidSigner(address signer) internal view virtual returns (bool) {
+        return signer == owner();
     }
 
     /**
@@ -409,19 +381,21 @@ contract EIP6551OpenfortAccount is
 
         // Not sure why changing this for a custom error increases gas dramatically
         require(_whitelist.length < 11, "Whitelist too big");
-        for (uint256 i = 0; i < _whitelist.length;) {
+        uint256 i = 0;
+        for (i; i < _whitelist.length;) {
             sessionKeys[_key].whitelist[_whitelist[i]] = true;
             unchecked {
                 ++i; // gas optimization
             }
         }
+        if (i != 0) sessionKeys[_key].whitelising = true;
+        else if (_limit == 2 ** 48 - 1) sessionKeys[_key].masterSessionKey = true;
 
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
         sessionKeys[_key].limit = _limit;
         sessionKeys[_key].masterSessionKey = false;
-        sessionKeys[_key].whitelising = true;
-
+        ++state;
         emit SessionKeyRegistered(_key);
     }
 
@@ -431,8 +405,10 @@ contract EIP6551OpenfortAccount is
      */
     function revokeSessionKey(address _key) external {
         _requireFromEntryPointOrOwnerorSelf();
+        ++state;
         if (sessionKeys[_key].validUntil != 0) {
             sessionKeys[_key].validUntil = 0;
+            sessionKeys[_key].masterSessionKey = false;
             emit SessionKeyRevoked(_key);
         }
     }
@@ -456,14 +432,8 @@ contract EIP6551OpenfortAccount is
             revert ZeroAddressNotAllowed();
         }
         _requireFromOwner();
+        ++state;
         emit EntryPointUpdated(entrypointContract, _newEntrypoint);
         entrypointContract = _newEntrypoint;
-    }
-
-    /**
-     * Like getNonce() from EIP4337. Needed to comply with EIP6551.
-     */
-    function nonce() external view returns (uint256) {
-        return getNonce();
     }
 }

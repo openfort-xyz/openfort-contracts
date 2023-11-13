@@ -221,14 +221,14 @@ contract ManagedOpenfortAccountTest is Test {
      * Create an account using the factory and make it call count() directly.
      */
     function testIncrementCounterDirect() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         // Make the admin of the static account wallet (deployer) call "count"
         vm.prank(accountAdmin);
         ManagedOpenfortAccount(payable(account)).execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -237,7 +237,7 @@ contract ManagedOpenfortAccountTest is Test {
      * using the execute() function using the EntryPoint (userOp). Leaveraging ERC-4337.
      */
     function testIncrementCounterViaEntrypoint() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -249,7 +249,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -258,7 +258,7 @@ contract ManagedOpenfortAccountTest is Test {
      * using the executeBatching() function using the EntryPoint (userOp). Leaveraging ERC-4337.
      */
     function testIncrementCounterViaEntrypointBatching() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         uint256 count = 3;
@@ -280,7 +280,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 3);
     }
 
@@ -288,7 +288,7 @@ contract ManagedOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that is not registered.
      */
     function testFailIncrementCounterViaSessionKeyNotregistered() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -304,7 +304,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
 
@@ -312,15 +312,16 @@ contract ManagedOpenfortAccountTest is Test {
      * Use a sessionKey that is registered.
      */
     function testIncrementCounterViaSessionKey() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
 
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1);
+        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
@@ -331,7 +332,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -340,12 +341,13 @@ contract ManagedOpenfortAccountTest is Test {
      * using the EntryPoint (userOp). Then use the sessionKey to count
      */
     function testRegisterSessionKeyViaEntrypoint() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
@@ -353,7 +355,14 @@ contract ManagedOpenfortAccountTest is Test {
             bytes(""),
             account,
             0,
-            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48)", sessionKey, 0, 2 ** 48 - 1)
+            abi.encodeWithSignature(
+                "registerSessionKey(address,uint48,uint48,uint48,address[])",
+                sessionKey,
+                0,
+                2 ** 48 - 1,
+                100,
+                emptyWhitelist
+            )
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -361,7 +370,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
 
         userOp = _setupUserOpExecute(
@@ -373,7 +382,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -382,12 +391,13 @@ contract ManagedOpenfortAccountTest is Test {
      * using the EntryPoint (userOp). Then use that sessionKey to register a second one
      */
     function testRegisterSessionKeyViaEntrypoint2ndKey() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
@@ -395,7 +405,14 @@ contract ManagedOpenfortAccountTest is Test {
             bytes(""),
             account,
             0,
-            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48)", sessionKey, 0, 2 ** 48 - 1)
+            abi.encodeWithSignature(
+                "registerSessionKey(address,uint48,uint48,uint48,address[])",
+                sessionKey,
+                0,
+                2 ** 48 - 1,
+                2 ** 48 - 1,
+                emptyWhitelist
+            )
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -403,7 +420,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
 
         userOp = _setupUserOpExecute(
@@ -415,7 +432,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
 
         address sessionKeyAttack;
@@ -428,7 +445,14 @@ contract ManagedOpenfortAccountTest is Test {
             bytes(""),
             account,
             0,
-            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48)", sessionKeyAttack, 0, 2 ** 48 - 1)
+            abi.encodeWithSignature(
+                "registerSessionKey(address,uint48,uint48,uint48,address[])",
+                sessionKeyAttack,
+                0,
+                2 ** 48 - 1,
+                100,
+                emptyWhitelist
+            )
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -442,7 +466,7 @@ contract ManagedOpenfortAccountTest is Test {
      * using the EntryPoint (userOp). Then use that sessionKey to register a second one
      */
     function testFailAttackRegisterSessionKeyViaEntrypoint2ndKey() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -463,7 +487,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
 
         userOp = _setupUserOpExecute(
@@ -475,7 +499,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
 
         // Verify that the registered key is not a MasterKey nor has whitelisting
@@ -508,16 +532,17 @@ contract ManagedOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that is expired.
      */
     function testIncrementCounterViaSessionKeyExpired() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
 
         vm.warp(100);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 99);
+        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 99, 100, emptyWhitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
@@ -529,7 +554,7 @@ contract ManagedOpenfortAccountTest is Test {
         vm.expectRevert();
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
 
@@ -537,15 +562,16 @@ contract ManagedOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that is revoked.
      */
     function testFailIncrementCounterViaSessionKeyRevoked() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
 
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
+        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 0, 100, emptyWhitelist);
         ManagedOpenfortAccount(payable(account)).revokeSessionKey(sessionKey);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -557,7 +583,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -565,17 +591,18 @@ contract ManagedOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that reached its limit.
      */
     function testFailIncrementCounterViaSessionKeyReachLimit() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
 
         // We are now in block 100, but our session key is valid until block 150
         vm.warp(100);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 150, 1);
+        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 150, 1, emptyWhitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
@@ -595,7 +622,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has only increased by one
+        // Verify that the counter has only increased by one
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -603,17 +630,18 @@ contract ManagedOpenfortAccountTest is Test {
      *  Should fail, try to use a sessionKey that reached its limit.
      */
     function testFailIncrementCounterViaSessionKeyReachLimitBatching() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
 
         // We are now in block 100, but our session key is valid until block 150
         vm.warp(100);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 150, 2);
+        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 150, 2, emptyWhitelist);
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
@@ -634,7 +662,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
 
@@ -642,15 +670,16 @@ contract ManagedOpenfortAccountTest is Test {
      *  Should fail, try to revoke a sessionKey using a non-privileged user
      */
     function testFailRevokeSessionKeyInvalidUser() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
 
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 0);
+        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 0, 100, emptyWhitelist);
         vm.prank(beneficiary);
         ManagedOpenfortAccount(payable(account)).revokeSessionKey(sessionKey);
 
@@ -663,7 +692,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -671,7 +700,7 @@ contract ManagedOpenfortAccountTest is Test {
      * Use a sessionKey with whitelisting to call Execute().
      */
     function testIncrementCounterViaSessionKeyWhitelisting() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -692,7 +721,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -700,7 +729,7 @@ contract ManagedOpenfortAccountTest is Test {
      * Should fail, try to register a sessionKey with a large whitelist.
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingTooBig() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -720,7 +749,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
 
@@ -728,7 +757,7 @@ contract ManagedOpenfortAccountTest is Test {
      * Use a sessionKey with whitelisting to call ExecuteBatch().
      */
     function testIncrementCounterViaSessionKeyWhitelistingBatch() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -766,7 +795,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 3);
     }
 
@@ -774,7 +803,7 @@ contract ManagedOpenfortAccountTest is Test {
      * Use a sessionKey with whitelisting to call ExecuteBatch().
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingBatch() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -812,7 +841,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
 
@@ -820,7 +849,7 @@ contract ManagedOpenfortAccountTest is Test {
      * Should fail, try to use a sessionKey with invalid whitelisting to call Execute().
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingWrongAddress() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -841,7 +870,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -849,7 +878,7 @@ contract ManagedOpenfortAccountTest is Test {
      * Should fail, try to use a sessionKey with invalid whitelisting to call ExecuteBatch().
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingBatchWrongAddress() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -886,7 +915,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
 
@@ -914,14 +943,14 @@ contract ManagedOpenfortAccountTest is Test {
         vm.prank(accountAdmin2);
         ManagedOpenfortAccount(payable(account)).acceptOwnership();
 
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         // Make the admin of the static account wallet (deployer) call "count"
         vm.prank(accountAdmin2);
         ManagedOpenfortAccount(payable(account)).execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -938,7 +967,7 @@ contract ManagedOpenfortAccountTest is Test {
         vm.prank(accountAdmin2);
         ManagedOpenfortAccount(payable(account)).acceptOwnership();
 
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -950,7 +979,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the counter has increased
+        // Verify that the counter has increased
         assertEq(testCounter.counters(account), 1);
     }
 
@@ -958,7 +987,7 @@ contract ManagedOpenfortAccountTest is Test {
      * Test an account with testToken instead of TestCount.
      */
     function testMintTokenAccount() public {
-        // Verifiy that the totalSupply is stil 0
+        // Verify that the totalSupply is stil 0
         assertEq(testToken.totalSupply(), 0);
 
         // Mint 1 to beneficiary
@@ -979,7 +1008,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
-        // Verifiy that the totalSupply has increased
+        // Verify that the totalSupply has increased
         assertEq(testToken.totalSupply(), 2);
     }
 
@@ -1019,7 +1048,7 @@ contract ManagedOpenfortAccountTest is Test {
      * Basic test of simulateValidation() to check that it always reverts.
      */
     function testSimulateValidation() public {
-        // Verifiy that the counter is stil set to 0
+        // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -1049,7 +1078,7 @@ contract ManagedOpenfortAccountTest is Test {
         vm.expectRevert();
         entryPoint.simulateHandleOp(userOp[0], address(0), "");
 
-        // Verifiy that the counter has not increased
+        // Verify that the counter has not increased
         assertEq(testCounter.counters(account), 0);
     }
 
