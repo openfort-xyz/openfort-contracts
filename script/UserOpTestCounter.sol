@@ -127,7 +127,7 @@ contract UserOpTestCounter is Script {
     function run() public {
         vm.startBroadcast(deployPrivKey);
 
-        // Verifiy that the counter is still set to 0
+        // Verify that the counter is still set to 0
         assert(testCounter.counters(deployAddress) == 0);
         // Count using deployPrivKey
         testCounter.count();
