@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity =0.8.19;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 // Smart wallet implementation to use
@@ -10,7 +10,6 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
 
 /**
  * @title RecoverableOpenfortFactory (Non-upgradeable)
- * @author Eloi<eloi@openfort.xyz>
  * @notice Contract to create an on-chain factory to deploy new RecoverableOpenfortAccounts.
  * It uses OpenZeppelin's Create2 and OpenfortRecoverableProxy libraries.
  * It inherits from:

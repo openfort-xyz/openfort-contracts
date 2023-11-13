@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity =0.8.19;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
@@ -16,7 +16,6 @@ import "account-abstraction/core/Helpers.sol" as Helpers;
 
 /**
  * @title EIP6551OpenfortAccount (Non-upgradeable)
- * @author Eloi<eloi@openfort.xyz>
  * @notice Smart contract wallet with session keys following the ERC-4337 and EIP-6551 standards.
  * It inherits from:
  *  - BaseAccount to comply with ERC-4337
