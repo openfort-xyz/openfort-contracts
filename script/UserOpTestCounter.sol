@@ -3,7 +3,10 @@ pragma solidity =0.8.19;
 
 import {Script, console} from "forge-std/Script.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {StaticOpenfortFactory, StaticOpenfortAccount} from "../contracts/core/static/StaticOpenfortFactory.sol";
+import {
+    UpgradeableOpenfortFactory,
+    UpgradeableOpenfortAccount
+} from "../contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
 import {UserOperation, UserOperationLib} from "account-abstraction/interfaces/UserOperation.sol";
@@ -18,8 +21,8 @@ contract UserOpTestCounter is Script {
     address internal deployAddress = vm.addr(deployPrivKey);
     EntryPoint internal entryPoint = EntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
 
-    StaticOpenfortFactory staticOpenfortFactory;
-    StaticOpenfortAccount staticOpenfortAccount;
+    UpgradeableOpenfortFactory staticOpenfortFactory;
+    UpgradeableOpenfortAccount staticOpenfortAccount;
     TestCounter testCounter;
 
     // WIP based on calcPreVerificationGas.ts from the bundler's SDK
@@ -117,7 +120,7 @@ contract UserOpTestCounter is Script {
         vm.selectFork(mumbaiFork);
 
         // Due to errors with Foundry and create2, let's use hardcoded addresses for testing:
-        staticOpenfortFactory = StaticOpenfortFactory(0xe9B5fb44f377Ce5a03427d5Be7D9d073bf8FE1f0);
+        staticOpenfortFactory = UpgradeableOpenfortFactory(0xe9B5fb44f377Ce5a03427d5Be7D9d073bf8FE1f0);
         testCounter = new TestCounter();
     }
 

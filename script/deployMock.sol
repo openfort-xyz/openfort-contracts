@@ -3,7 +3,7 @@ pragma solidity =0.8.19;
 
 import {Script, console} from "forge-std/Script.sol";
 import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import {StaticOpenfortFactory} from "../contracts/core/static/StaticOpenfortFactory.sol";
+import {UpgradeableOpenfortFactory} from "../contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 // import {USDC} from "../contracts/mock/USDC.sol";
 import {Rewards} from "../contracts/mock/Rewards.sol";
 
