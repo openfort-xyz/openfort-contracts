@@ -51,6 +51,7 @@ abstract contract OpenfortForksConfig is Script {
     uint256 internal constant ARBITRUM_MAIN = 42161;
     uint256 internal constant ARBITRUM_NOVA = 42170;
     uint256 internal constant BEAM_MAIN = 4337;
+    uint256 internal constant BEAM_TESTNET_MAIN = 13337;
 
     constructor() {
         /*//////////////////////////////////////////////////////////////////////////
