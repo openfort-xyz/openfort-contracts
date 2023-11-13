@@ -8,16 +8,16 @@ import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
 import {IPaymaster} from "account-abstraction/interfaces/IPaymaster.sol";
 
-import {StaticOpenfortFactory} from "contracts/core/static/StaticOpenfortFactory.sol";
-import {StaticOpenfortAccount} from "contracts/core/static/StaticOpenfortAccount.sol";
+import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
+import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {OpenfortPaymasterV2} from "contracts/paymaster/OpenfortPaymasterV2.sol";
 
 contract OpenfortPaymasterV2Test is Test {
     using ECDSA for bytes32;
 
     EntryPoint public entryPoint;
-    StaticOpenfortAccount public staticOpenfortAccount;
-    StaticOpenfortFactory public staticOpenfortFactory;
+    UpgradeableOpenfortAccount public staticOpenfortAccount;
+    UpgradeableOpenfortFactory public staticOpenfortFactory;
     OpenfortPaymasterV2 public openfortPaymaster;
     address public account;
     TestCounter public testCounter;
@@ -162,9 +162,9 @@ contract OpenfortPaymasterV2Test is Test {
     }
 
     /**
-     * @notice Initialize the StaticOpenfortAccount testing contract.
+     * @notice Initialize the UpgradeableOpenfortAccount testing contract.
      * Scenario:
-     * - factoryAdmin is the deployer (and owner) of the StaticOpenfortFactory
+     * - factoryAdmin is the deployer (and owner) of the UpgradeableOpenfortFactory
      * - paymasterAdmin is the deployer (and owner) of the OpenfortPaymaster
      * - accountAdmin is the account used to deploy new static accounts
      * - entryPoint is the singleton EntryPoint
@@ -202,10 +202,10 @@ contract OpenfortPaymasterV2Test is Test {
 
         // deploy account factory
         vm.prank(factoryAdmin);
-        staticOpenfortAccount = new StaticOpenfortAccount();
+        staticOpenfortAccount = new UpgradeableOpenfortAccount();
         vm.prank(factoryAdmin);
         staticOpenfortFactory =
-            new StaticOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(staticOpenfortAccount));
+        new UpgradeableOpenfortFactory((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))), address(staticOpenfortAccount));
         // deploy a new TestCounter
         testCounter = new TestCounter();
         // deploy a new TestToken (ERC20) and mint 1000

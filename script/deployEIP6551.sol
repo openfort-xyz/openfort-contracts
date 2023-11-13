@@ -5,12 +5,13 @@ import {Script, console} from "forge-std/Script.sol";
 import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {VIPNFT} from "contracts/mock/VipNFT.sol";
 import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAccount.sol";
-import {ERC6551Registry} from "../contracts/core/eip6551/ERC6551Registry.sol";
+import {IERC6551Registry} from "lib/erc6551/src/ERC6551Registry.sol";
 
 contract EIP6551OpenfortDeploy is Script {
     uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
     address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
+    IERC6551Registry internal erc6551Registry = IERC6551Registry((payable(vm.envAddress("ERC6551_REGISTRY_ADDRESS"))));
     VIPNFT testToken;
 
     function run() public {
@@ -19,9 +20,6 @@ contract EIP6551OpenfortDeploy is Script {
 
         // Create an acccount to serve as implementation
         EIP6551OpenfortAccount eip6551OpenfortAccount = new EIP6551OpenfortAccount{salt: versionSalt}();
-
-        // Create a factory to deploy cloned accounts
-        ERC6551Registry erc6551Registry = new ERC6551Registry{salt: versionSalt}();
 
         uint256 chainId;
         assembly {

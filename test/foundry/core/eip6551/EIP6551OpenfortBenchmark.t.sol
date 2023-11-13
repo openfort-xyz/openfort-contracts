@@ -11,7 +11,7 @@ import {USDC} from "contracts/mock/USDC.sol";
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 
-import {ERC6551Registry} from "contracts/core/eip6551/ERC6551Registry.sol";
+import {ERC6551Registry} from "lib/erc6551/src/ERC6551Registry.sol";
 import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAccount.sol";
 
 contract EIP6551OpenfortBenchmark is Test {
@@ -132,9 +132,9 @@ contract EIP6551OpenfortBenchmark is Test {
     }
 
     /**
-     * @notice Initialize the StaticOpenfortAccount testing contract.
+     * @notice Initialize the UpgradeableOpenfortAccount testing contract.
      * Scenario:
-     * - factoryAdmin is the deployer (and owner) of the StaticOpenfortFactory
+     * - factoryAdmin is the deployer (and owner) of the UpgradeableOpenfortFactory
      * - accountAdmin is the account used to deploy new static accounts
      * - entryPoint is the singleton EntryPoint
      * - testCounter is the counter used to test userOps

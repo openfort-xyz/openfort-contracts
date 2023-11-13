@@ -5,12 +5,12 @@ import {Script, console} from "forge-std/Script.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {UserOperation, EntryPoint} from "account-abstraction/core/EntryPoint.sol";
-import {StaticOpenfortFactory} from "../contracts/core/static/StaticOpenfortFactory.sol";
+import {UpgradeableOpenfortFactory} from "../contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 
 contract DeployBatching is Script {
     using ECDSA for bytes32;
 
-    StaticOpenfortFactory public staticOpenfortFactory;
+    UpgradeableOpenfortFactory public staticOpenfortFactory;
     TestCounter public testCounter;
 
     uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
@@ -86,14 +86,14 @@ contract DeployBatching is Script {
 
         // Due to errors with Foundry and create2, let's use hardcoded addresses for testing:
         // Created with
-        // forge create StaticOpenfortFactory --mnemonic $MNEMONIC --constructor-args $ENTRY_POINT_ADDRESS --rpc-url $POLYGON_MUMBAI_RPC --verify
-        staticOpenfortFactory = StaticOpenfortFactory(0xe9B5fb44f377Ce5a03427d5Be7D9d073bf8FE1f0);
+        // forge create UpgradeableOpenfortFactory --mnemonic $MNEMONIC --constructor-args $ENTRY_POINT_ADDRESS --rpc-url $POLYGON_MUMBAI_RPC --verify
+        staticOpenfortFactory = UpgradeableOpenfortFactory(0xe9B5fb44f377Ce5a03427d5Be7D9d073bf8FE1f0);
         // Created with
         // forge create TestCounter --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify
         testCounter = TestCounter(0x1A09053F78695ad7372D0539E5246d025b254A4c);
 
         // Created with:
-        // $forge create StaticOpenfortAccount --constructor-args $ENTRY_POINT_ADDRESS 0x6E767F52d49b0abD686003727b8bc0684011819B --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify
+        // $forge create UpgradeableOpenfortAccount --constructor-args $ENTRY_POINT_ADDRESS 0x6E767F52d49b0abD686003727b8bc0684011819B --mnemonic $MNEMONIC --rpc-url $POLYGON_MUMBAI_RPC --verify
         address account = staticOpenfortFactory.createAccountWithNonce(deployAddress, "1");
 
         uint256 count = 3;
