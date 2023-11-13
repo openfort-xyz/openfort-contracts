@@ -26,7 +26,7 @@ contract CheckDeposits is OpenfortForksConfig {
             if (paymasterDeposit < 0.1 ether) {
                 console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
             }
-        } else if (block.chainid == BEAM_MAIN) {
+        } else if (block.chainid == BEAM_MAIN || block.chainid == BEAM_TESTNET_MAIN) {
             if (paymasterDeposit < 4 ether) {
                 console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
             }
