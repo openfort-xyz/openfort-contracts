@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity =0.8.19;
 
 // Base account contract to inherit from and EntryPoint interface
 import {BaseOpenfortAccount, IEntryPoint, SafeCastUpgradeable, ECDSAUpgradeable} from "../BaseOpenfortAccount.sol";
@@ -8,7 +8,6 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title RecoverableOpenfortAccount
- * @author Eloi<eloi@openfort.xyz>
  * @notice Openfort account with session keys, guardians and pausability following the ERC-4337 standard.
  * It inherits from:
  *  - BaseOpenfortAccount

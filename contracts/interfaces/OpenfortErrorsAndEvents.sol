@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity =0.8.19;
 
 interface OpenfortErrorsAndEvents {
     /// @notice Error when a parameter is 0.

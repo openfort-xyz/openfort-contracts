@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity =0.8.19;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
@@ -14,7 +14,6 @@ import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 
 /**
  * @title ManagedOpenfortFactory (Non-upgradeable)
- * @author Eloi<eloi@openfort.xyz>
  * @notice Contract to create an on-chain factory to deploy new ManagedOpenfortAccounts.
  * It uses OpenZeppelin's Create2 and OpenfortBeaconProxy libraries.
  * It inherits from:

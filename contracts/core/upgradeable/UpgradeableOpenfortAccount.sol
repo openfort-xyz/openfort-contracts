@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity =0.8.19;
 
 // Base account contract to inherit from and EntryPoint interface
 import {BaseOpenfortAccount, IEntryPoint} from "../BaseOpenfortAccount.sol";
@@ -7,7 +7,6 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 
 /**
  * @title UpgradeableOpenfortAccount
- * @author Eloi<eloi@openfort.xyz>
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseOpenfortAccount
