@@ -12,7 +12,7 @@ contract EIP6551OpenfortDeploy is Script {
     address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
     IERC6551Registry internal erc6551Registry = IERC6551Registry((payable(vm.envAddress("ERC6551_REGISTRY_ADDRESS"))));
-    VIPNFT testToken;
+    VIPNFT internal testToken;
 
     function run() public {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
@@ -30,14 +30,8 @@ contract EIP6551OpenfortDeploy is Script {
         testToken = new VIPNFT();
 
         // The first call should create a new account, while the second will just return the corresponding account address
-        address account2 = erc6551Registry.createAccount(
-            address(eip6551OpenfortAccount),
-            chainId,
-            address(testToken),
-            1,
-            1,
-            abi.encodeWithSignature("initialize(address)", address(entryPoint))
-        );
+        address account2 =
+            erc6551Registry.createAccount(address(eip6551OpenfortAccount), versionSalt, chainId, address(testToken), 1);
         console.log("Registry at address %s has created an account at address %s", address(erc6551Registry), account2);
 
         vm.stopBroadcast();

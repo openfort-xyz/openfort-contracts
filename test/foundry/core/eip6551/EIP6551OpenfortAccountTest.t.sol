@@ -6,7 +6,7 @@ import {SigUtils} from "../../utils/SigUtils.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {VIPNFT} from "contracts/mock/VipNFT.sol";
-import {ERC6551Registry} from "lib/erc6551/src/ERC6551Registry.sol";
+import {ERC6551Registry, ERC6551AccountCreated} from "lib/erc6551/src/ERC6551Registry.sol";
 import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAccount.sol";
 
 contract EIP6551OpenfortAccountTest is Test {
@@ -27,10 +27,6 @@ contract EIP6551OpenfortAccountTest is Test {
     uint256 private accountAdminPKey;
 
     address payable private beneficiary = payable(makeAddr("beneficiary"));
-
-    event AccountCreated(
-        address account, address implementation, uint256 chainId, address tokenContract, uint256 tokenId, uint256 salt
-    );
 
     /*
      * Auxiliary function to generate a userOP
@@ -113,7 +109,7 @@ contract EIP6551OpenfortAccountTest is Test {
     }
 
     /**
-     * @notice Initialize the UpgradeableOpenfortAccount testing contract.
+     * @notice Initialize the StaticOpenfortAccount testing contract.
      * Scenario:
      * - factoryAdmin is the deployer (and owner) of the UpgradeableOpenfortFactory
      * - accountAdmin is the account used to deploy new static accounts
@@ -308,7 +304,7 @@ contract EIP6551OpenfortAccountTest is Test {
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
-        emit AccountCreated(
+        emit ERC6551AccountCreated(
             eip6551OpenfortAccountAddress2, address(eip6551OpenfortAccount), chainId, address(testToken), 1, 2
         );
 
