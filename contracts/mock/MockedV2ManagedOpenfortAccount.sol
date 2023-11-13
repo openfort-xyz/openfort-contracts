@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity =0.8.19;
 
 // Base account contract to inherit from
 import {BaseOpenfortAccount, IEntryPoint} from "../core/BaseOpenfortAccount.sol";
 
 /**
  * @title ManagedOpenfortAccount (Upgradeable via Beacon)
- * @author Eloi<eloi@openfort.xyz>
  * @notice Smart contract wallet managed via Beacon with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseOpenfortAccount

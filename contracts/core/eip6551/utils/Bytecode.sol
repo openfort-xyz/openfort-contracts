@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity =0.8.19;
 
 library Bytecode {
     error InvalidCodeAtRange(uint256 _size, uint256 _start, uint256 _end);
