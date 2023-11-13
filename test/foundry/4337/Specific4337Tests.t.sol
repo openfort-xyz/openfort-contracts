@@ -6,8 +6,8 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
-import {StaticOpenfortFactory} from "contracts/core/static/StaticOpenfortFactory.sol";
-import {StaticOpenfortAccount} from "contracts/core/static/StaticOpenfortAccount.sol";
+import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
+import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import "account-abstraction/core/Helpers.sol" as Helpers;
 
 contract Specific4337Tests is Test {
@@ -16,7 +16,7 @@ contract Specific4337Tests is Test {
     uint48 constant MAX_TIME = 2 ** 48 - 1;
 
     EntryPoint public entryPoint;
-    StaticOpenfortFactory public staticOpenfortFactory;
+    UpgradeableOpenfortFactory public staticOpenfortFactory;
     TestCounter public testCounter;
     TestToken public testToken;
 
@@ -106,13 +106,13 @@ contract Specific4337Tests is Test {
         bytes32 opHash = EntryPoint(entryPoint).getUserOpHash(userOp[0]);
 
         vm.prank(address(entryPoint));
-        return StaticOpenfortAccount(payable(sender)).validateUserOp(userOp[0], opHash, 0);
+        return UpgradeableOpenfortAccount(payable(sender)).validateUserOp(userOp[0], opHash, 0);
     }
 
     /**
-     * @notice Initialize the StaticOpenfortAccount testing contract.
+     * @notice Initialize the UpgradeableOpenfortAccount testing contract.
      * Scenario:
-     * - factoryAdmin is the deployer (and owner) of the StaticOpenfortFactory
+     * - factoryAdmin is the deployer (and owner) of the UpgradeableOpenfortFactory
      * - accountAdmin is the account used to deploy new static accounts
      * - entryPoint is the singleton EntryPoint
      * - testCounter is the counter used to test userOps
@@ -183,7 +183,7 @@ contract Specific4337Tests is Test {
     //     (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
     //     vm.prank(accountAdmin);
-    //     StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, MAX_TIME);
+    //     UpgradeableOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, MAX_TIME);
 
     //     uint256 validationData = _getValidationData(
     //         account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
@@ -210,7 +210,7 @@ contract Specific4337Tests is Test {
     //     (sessionKey2, sessionKeyPrivKey2) = makeAddrAndKey("sessionKey2");
 
     //     vm.prank(accountAdmin);
-    //     StaticOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, MAX_TIME);
+    //     UpgradeableOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, MAX_TIME);
 
     //     uint256 validationData = _getValidationData(
     //         account, sessionKeyPrivKey2, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
