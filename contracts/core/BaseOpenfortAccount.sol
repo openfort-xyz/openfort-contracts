@@ -178,7 +178,7 @@ abstract contract BaseOpenfortAccount is
      */
     function isValidSignature(bytes32 _hash, bytes memory _signature) public view override returns (bytes4) {
         address signer = _hash.recover(_signature);
-        
+
         if (owner() == signer) return MAGICVALUE;
 
         bytes32 hash = _hash.toEthSignedMessageHash();
