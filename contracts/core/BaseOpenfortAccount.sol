@@ -39,7 +39,6 @@ abstract contract BaseOpenfortAccount is
     bytes4 internal constant EXECUTE_SELECTOR = 0xb61d27f6;
     // bytes4(keccak256("executeBatch(address[],uint256[],bytes[])")
     bytes4 internal constant EXECUTEBATCH_SELECTOR = 0x47e1da2a;
-    uint48 internal constant DEFAULT_LIMIT = 100;
 
     /**
      * Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
@@ -108,19 +107,18 @@ abstract contract BaseOpenfortAccount is
      */
     function isValidSessionKey(address _sessionKey, bytes calldata callData) public returns (bool) {
         SessionKeyStruct storage sessionKey = sessionKeys[_sessionKey];
-        // If the signer is a session key that is still valid
-        if (sessionKey.validUntil == 0) {
-            return false;
-        } // Not owner or session key revoked
+        // If not owner and the session key is revoked, return false
+        if (sessionKey.validUntil == 0) return false;
 
+        // If the signer is a session key that is still valid
         // Let's first get the selector of the function that the caller is using
         bytes4 funcSelector =
             callData[0] | (bytes4(callData[1]) >> 8) | (bytes4(callData[2]) >> 16) | (bytes4(callData[3]) >> 24);
 
         if (funcSelector == EXECUTE_SELECTOR) {
-            if (sessionKey.limit == 0) {
-                return false;
-            } // Limit of transactions per sessionKey reached
+            // Limit of transactions per sessionKey reached
+            if (sessionKey.limit == 0) return false;
+            // Deduct one use of the limit for the given session key
             unchecked {
                 sessionKey.limit = sessionKey.limit - 1;
             }
@@ -145,17 +143,14 @@ abstract contract BaseOpenfortAccount is
             return false; // All other cases, deny
         } else if (funcSelector == EXECUTEBATCH_SELECTOR) {
             (address[] memory toContracts,,) = abi.decode(callData[4:], (address[], uint256[], bytes[]));
-            if (sessionKey.limit < toContracts.length || toContracts.length > 9) {
-                return false;
-            } // Limit of transactions per sessionKey reached
+            // Check if limit of transactions per sessionKey reached
+            if (sessionKey.limit < toContracts.length || toContracts.length > 9) return false;
             unchecked {
                 sessionKey.limit = sessionKey.limit - SafeCastUpgradeable.toUint48(toContracts.length);
             }
 
-            // Check if it is a masterSessionKey
-            if (sessionKey.masterSessionKey) {
-                return true;
-            }
+            // Check if it is a masterSessionKey (no whitelist applies)
+            if (sessionKey.masterSessionKey) return true;
 
             for (uint256 i = 0; i < toContracts.length;) {
                 if (toContracts[i] == address(this)) {
