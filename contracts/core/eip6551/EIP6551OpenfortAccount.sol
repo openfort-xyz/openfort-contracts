@@ -8,7 +8,8 @@ import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interface
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 
-import "erc6551/src/interfaces/IERC6551Account.sol";
+import {IERC6551Account} from "erc6551/src/interfaces/IERC6551Account.sol";
+import {IERC6551Executable} from "erc6551/src/interfaces/IERC6551Executable.sol";
 import {ERC6551AccountLib} from "erc6551/src/lib/ERC6551AccountLib.sol";
 import {BaseAccount, UserOperation, IEntryPoint} from "account-abstraction/core/BaseAccount.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
@@ -29,6 +30,7 @@ contract EIP6551OpenfortAccount is
     BaseAccount,
     Initializable,
     IERC6551Account,
+    IERC6551Executable,
     EIP712Upgradeable,
     IERC1271Upgradeable,
     TokenCallbackHandler
@@ -39,11 +41,12 @@ contract EIP6551OpenfortAccount is
 
     // bytes4(keccak256("isValidSignature(bytes32,bytes)")
     bytes4 internal constant MAGICVALUE = 0x1626ba7e;
+    // bytes4(keccak256("execute(address,uint256,bytes,uint8)")
+    bytes4 internal constant EXECUTE_ERC6551_SELECTOR = 0x51945447;
     // bytes4(keccak256("execute(address,uint256,bytes)")
     bytes4 internal constant EXECUTE_SELECTOR = 0xb61d27f6;
     // bytes4(keccak256("executeBatch(address[],uint256[],bytes[])")
     bytes4 internal constant EXECUTEBATCH_SELECTOR = 0x47e1da2a;
-    uint48 internal constant DEFAULT_LIMIT = 100;
 
     uint256 public state;
 
@@ -132,27 +135,6 @@ contract EIP6551OpenfortAccount is
     }
 
     /**
-     * Like execute() from EIP4337. Needed to comply with EIP6551.
-     */
-    function executeCall(address to, uint256 value, bytes calldata data)
-        external
-        payable
-        returns (bytes memory result)
-    {
-        _requireFromEntryPointOrOwner();
-        // The following code is like _call(), but returning the result value. Consider merging in the future.
-        bool success;
-        (success, result) = to.call{value: value}(data);
-
-        if (!success) {
-            assembly {
-                revert(add(result, 32), mload(result))
-            }
-        }
-        ++state;
-    }
-
-    /**
      * @dev {See IERC6551Account-token}
      */
     function token() public view virtual override returns (uint256, address, uint256) {
@@ -171,19 +153,18 @@ contract EIP6551OpenfortAccount is
      */
     function isValidSessionKey(address _sessionKey, bytes calldata callData) public returns (bool) {
         SessionKeyStruct storage sessionKey = sessionKeys[_sessionKey];
-        // If the signer is a session key that is still valid
-        if (sessionKey.validUntil == 0) {
-            return false;
-        } // Not owner or session key revoked
+        // If not owner and the session key is revoked, return false
+        if (sessionKey.validUntil == 0) return false;
 
+        // If the signer is a session key that is still valid
         // Let's first get the selector of the function that the caller is using
         bytes4 funcSelector =
             callData[0] | (bytes4(callData[1]) >> 8) | (bytes4(callData[2]) >> 16) | (bytes4(callData[3]) >> 24);
 
-        if (funcSelector == EXECUTE_SELECTOR) {
-            if (sessionKey.limit == 0) {
-                return false;
-            } // Limit of transactions per sessionKey reached
+        if (funcSelector == EXECUTE_SELECTOR || funcSelector == EXECUTE_ERC6551_SELECTOR) {
+            // Limit of transactions per sessionKey reached
+            if (sessionKey.limit == 0) return false;
+            // Deduct one use of the limit for the given session key
             unchecked {
                 sessionKey.limit = sessionKey.limit - 1;
             }
@@ -208,17 +189,14 @@ contract EIP6551OpenfortAccount is
             return false; // All other cases, deny
         } else if (funcSelector == EXECUTEBATCH_SELECTOR) {
             (address[] memory toContracts,,) = abi.decode(callData[4:], (address[], uint256[], bytes[]));
-            if (sessionKey.limit < toContracts.length || toContracts.length > 9) {
-                return false;
-            } // Limit of transactions per sessionKey reached
+            // Check if limit of transactions per sessionKey reached
+            if (sessionKey.limit < toContracts.length || toContracts.length > 9) return false;
             unchecked {
                 sessionKey.limit = sessionKey.limit - SafeCastUpgradeable.toUint48(toContracts.length);
             }
 
-            // Check if it is a masterSessionKey
-            if (sessionKey.masterSessionKey) {
-                return true;
-            }
+            // Check if it is a masterSessionKey (no whitelist applies)
+            if (sessionKey.masterSessionKey) return true;
 
             for (uint256 i = 0; i < toContracts.length;) {
                 if (toContracts[i] == address(this)) {
@@ -244,19 +222,16 @@ contract EIP6551OpenfortAccount is
      */
     function isValidSignature(bytes32 _hash, bytes memory _signature) public view override returns (bytes4) {
         address signer = _hash.recover(_signature);
-        if (owner() == signer) {
-            return MAGICVALUE;
-        }
+
+        if (owner() == signer) return MAGICVALUE;
+
         bytes32 hash = _hash.toEthSignedMessageHash();
         signer = hash.recover(_signature);
-        if (owner() == signer) {
-            return MAGICVALUE;
-        }
+        if (owner() == signer) return MAGICVALUE;
+
         bytes32 digest = _hashTypedDataV4(_hash);
         signer = digest.recover(_signature);
-        if (owner() == signer) {
-            return MAGICVALUE;
-        }
+        if (owner() == signer) return MAGICVALUE;
 
         SessionKeyStruct storage sessionKey = sessionKeys[signer];
         // If the signer is a session key that is still valid
@@ -272,12 +247,31 @@ contract EIP6551OpenfortAccount is
     }
 
     /**
+     * @dev {See IERC6551Executable-execute}
+     */
+    function execute(address _target, uint256 _value, bytes calldata _data, uint8 _operation)
+        external
+        payable
+        override
+        returns (bytes memory _result)
+    {
+        require(_isValidSigner(msg.sender), "Caller is not owner");
+        require(_operation == 0, "Only call operations are supported");
+        ++state;
+        bool success;
+        // solhint-disable-next-line avoid-low-level-calls
+        (success, _result) = _target.call{value: _value}(_data);
+        require(success, string(_result));
+        return _result;
+    }
+
+    /**
      * Execute a transaction (called directly from owner, or by entryPoint)
      */
     function execute(address dest, uint256 value, bytes calldata func) external {
         _requireFromEntryPointOrOwner();
-        _call(dest, value, func);
         ++state;
+        _call(dest, value, func);
     }
 
     /**
@@ -289,11 +283,11 @@ contract EIP6551OpenfortAccount is
             revert InvalidParameterLength();
         }
         for (uint256 i = 0; i < _target.length;) {
+            ++state;
             _call(_target[i], _value[i], _calldata[i]);
             unchecked {
                 ++i; // gas optimization
             }
-            ++state;
         }
     }
 

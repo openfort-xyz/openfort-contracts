@@ -174,19 +174,11 @@ abstract contract BaseOpenfortAccount is
 
     /*
      * @notice See EIP-1271
-     * Any signature by the owner is valid. Session keys need to sign using EIP712.
+     * Owner and session keys need to sign using EIP712.
      */
     function isValidSignature(bytes32 _hash, bytes memory _signature) public view override returns (bytes4) {
-        address signer = _hash.recover(_signature);
-
-        if (owner() == signer) return MAGICVALUE;
-
-        bytes32 hash = _hash.toEthSignedMessageHash();
-        signer = hash.recover(_signature);
-        if (owner() == signer) return MAGICVALUE;
-
         bytes32 digest = _hashTypedDataV4(_hash);
-        signer = digest.recover(_signature);
+        address signer = digest.recover(_signature);
         if (owner() == signer) return MAGICVALUE;
 
         SessionKeyStruct storage sessionKey = sessionKeys[signer];
