@@ -39,6 +39,8 @@ abstract contract BaseOpenfortAccount is
     bytes4 internal constant EXECUTE_SELECTOR = 0xb61d27f6;
     // bytes4(keccak256("executeBatch(address[],uint256[],bytes[])")
     bytes4 internal constant EXECUTEBATCH_SELECTOR = 0x47e1da2a;
+    // keccak256("OpenfortMessage(bytes message)");
+    bytes32 private constant OF_MSG_TYPEHASH = 0x0377d315aa54a3da816a164f1ec77274ec694f433648d0b2bed072479f8531fc;
 
     /**
      * Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
@@ -176,19 +178,16 @@ abstract contract BaseOpenfortAccount is
      */
     function isValidSignature(bytes32 _hash, bytes memory _signature) public view override returns (bytes4) {
         address signer = _hash.recover(_signature);
-        if (owner() == signer) {
-            return MAGICVALUE;
-        }
+        
+        if (owner() == signer) return MAGICVALUE;
+
         bytes32 hash = _hash.toEthSignedMessageHash();
         signer = hash.recover(_signature);
-        if (owner() == signer) {
-            return MAGICVALUE;
-        }
+        if (owner() == signer) return MAGICVALUE;
+
         bytes32 digest = _hashTypedDataV4(_hash);
         signer = digest.recover(_signature);
-        if (owner() == signer) {
-            return MAGICVALUE;
-        }
+        if (owner() == signer) return MAGICVALUE;
 
         SessionKeyStruct storage sessionKey = sessionKeys[signer];
         // If the signer is a session key that is still valid
