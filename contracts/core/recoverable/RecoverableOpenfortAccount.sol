@@ -104,7 +104,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         emit EntryPointUpdated(entrypointContract, _entrypoint);
         _transferOwnership(_defaultAdmin);
         entrypointContract = _entrypoint;
-        __EIP712_init("Openfort", "0.4");
+        __EIP712_init("Openfort", "0.5");
 
         recoveryPeriod = _recoveryPeriod;
         lockPeriod = _lockPeriod;
@@ -231,18 +231,13 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      * @notice Lets the owner propose a guardian to its Openfort account.
      * The first guardian is added immediately (see constructor). All following proposals must be confirmed
      * by calling the confirmGuardianProposal() method. Only the owner can add guardians.
+     * Guardians must either be an EOA or a contract with an owner() (ERC-173).
      * @param _guardian The guardian to propose.
      */
     function proposeGuardian(address _guardian) external onlyOwner {
         if (isLocked()) revert AccountLocked();
         if (owner() == _guardian) revert GuardianCannotBeOwner();
         if (isGuardian(_guardian)) revert DuplicatedGuardian();
-
-        // Guardians must either be an EOA or a contract with an owner() (ERC-173)
-        // method that returns an address with a 25000 gas stipend.
-        // Note that this test is not meant to be strict and can be bypassed by custom malicious contracts.
-        (bool success,) = _guardian.call{gas: 25000}(abi.encodeWithSignature("owner()"));
-        require(success, "Must be an EOA or an ownable wallet");
 
         if (
             guardiansConfig.info[_guardian].pending != 0

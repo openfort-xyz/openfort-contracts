@@ -29,6 +29,9 @@ contract UpgradeableOpenfortAccountTest is Test {
     uint256 private accountAdminPKey;
 
     address payable private beneficiary = payable(makeAddr("beneficiary"));
+    
+    // bytes4(keccak256("isValidSignature(bytes32,bytes)")
+    bytes4 internal constant MAGICVALUE = 0x1626ba7e;
 
     event AccountCreated(address indexed account, address indexed accountAdmin);
 
@@ -1066,5 +1069,76 @@ contract UpgradeableOpenfortAccountTest is Test {
         upgradeableAccount.updateEntryPoint(newEntryPoint);
 
         assertEq(address(upgradeableAccount.entryPoint()), newEntryPoint);
+    }
+
+    function testFailIsValidSignature() public {
+        bytes32 hash = keccak256("Signed by Owner");
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hash);
+        address signer = ecrecover(hash, v, r, s);
+        assertEq(accountAdmin, signer); // [PASS]
+
+        bytes memory signature = abi.encodePacked(r, s, v);
+        signer = ECDSA.recover(hash, signature);
+        assertEq(accountAdmin, signer); // [PASS]
+
+        bytes4 valid = UpgradeableOpenfortAccount(payable(account)).isValidSignature(hash, signature);
+        assertEq(valid, bytes4(0xffffffff)); // SHOULD PASS!
+        assertEq(valid, MAGICVALUE); // SHOULD FAIL! We do not accept straight signatures from owners anymore
+    }
+
+    function testFailIsValidSignatureMessage() public {
+        bytes32 hash = keccak256("Signed by Owner");
+        bytes32 hashMessage = hash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hashMessage);
+        address signer = ecrecover(hashMessage, v, r, s);
+        assertEq(accountAdmin, signer); // [PASS]
+
+        bytes memory signature = abi.encodePacked(r, s, v);
+        signer = ECDSA.recover(hashMessage, signature);
+        assertEq(accountAdmin, signer); // [PASS]
+
+        bytes4 valid = UpgradeableOpenfortAccount(payable(account)).isValidSignature(hash, signature);
+        assertEq(valid, bytes4(0xffffffff)); // SHOULD PASS!
+        assertEq(valid, MAGICVALUE); // SHOULD FAIL! We do not accept straight signatures from owners anymore
+    }
+
+
+    /*
+     * Auxiliary function to get a valid EIP712 signature using _eip721contract's domains separator,
+     * a valid hash of the message to sign (_structHash) and a private key (_pk)
+     */
+    function getEIP712SignatureFrom(address _eip721contract, bytes32 _structHash, uint256 _pk)
+        internal
+        returns (bytes memory signature721)
+    {
+        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+            IERC5267(_eip721contract).eip712Domain();
+        bytes32 _TYPE_HASH =
+            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+        bytes32 domainSeparator = keccak256(
+            abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
+        );
+        bytes32 hash712 = domainSeparator.toTypedDataHash(_structHash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_pk, hash712);
+        signature721 = abi.encodePacked(r, s, v);
+        assertEq(ecrecover(hash712, v, r, s), vm.addr(_pk));
+    }
+
+    function testisValidSignatureTyped() public {
+        bytes32 hash = keccak256("Signed by Owner");
+        bytes32 hashMessage = hash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hashMessage);
+        address signer = ecrecover(hashMessage, v, r, s);
+        assertEq(accountAdmin, signer); // [PASS]
+
+        bytes memory signatures = getEIP712SignatureFrom(account, structHash, OPENFORT_GUARDIAN_PKEY);
+
+        bytes memory signature = abi.encodePacked(r, s, v);
+        signer = ECDSA.recover(hashMessage, signature);
+        assertEq(accountAdmin, signer); // [PASS]
+
+        bytes4 valid = UpgradeableOpenfortAccount(payable(account)).isValidSignature(hash, signature);
+        assertEq(valid, bytes4(0xffffffff)); // SHOULD PASS!
+        assertEq(valid, MAGICVALUE); // SHOULD FAIL! We do not accept straight signatures from owners anymore
     }
 }
