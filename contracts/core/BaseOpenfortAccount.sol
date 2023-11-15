@@ -2,7 +2,6 @@
 pragma solidity =0.8.19;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
@@ -13,12 +12,11 @@ import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCa
 import "account-abstraction/core/Helpers.sol" as Helpers;
 
 /**
- * @title BaseOpenfortAccount (Non-upgradeable)
+ * @title BaseOpenfortAccount (Non upgradeable by default)
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseAccount to comply with ERC-4337
  *  - Initializable because accounts are meant to be created using Factories
- *  - Ownable2StepUpgradeable to have permissions
  *  - EIP712Upgradeable to use typed structured signatures EIP-712 (supporting ERC-5267 too)
  *  - IERC1271Upgradeable for Signature Validation (ERC-1271)
  *  - TokenCallbackHandler to support ERC-777, ERC-721 and ERC-1155
@@ -26,7 +24,6 @@ import "account-abstraction/core/Helpers.sol" as Helpers;
 abstract contract BaseOpenfortAccount is
     BaseAccount,
     Initializable,
-    Ownable2StepUpgradeable,
     EIP712Upgradeable,
     IERC1271Upgradeable,
     TokenCallbackHandler
@@ -39,8 +36,8 @@ abstract contract BaseOpenfortAccount is
     bytes4 internal constant EXECUTE_SELECTOR = 0xb61d27f6;
     // bytes4(keccak256("executeBatch(address[],uint256[],bytes[])")
     bytes4 internal constant EXECUTEBATCH_SELECTOR = 0x47e1da2a;
-    // keccak256("OpenfortMessage(bytes message)");
-    bytes32 private constant OF_MSG_TYPEHASH = 0x0377d315aa54a3da816a164f1ec77274ec694f433648d0b2bed072479f8531fc;
+    // keccak256("OpenfortMessage(bytes32 hashedMessage)");
+    bytes32 private constant OF_MSG_TYPEHASH = 0x57159f03b9efda178eab2037b2ec0b51ce11be0051b8a2a9992c29dc260e4a30;
 
     /**
      * Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
@@ -68,7 +65,7 @@ abstract contract BaseOpenfortAccount is
 
     error ZeroAddressNotAllowed();
     error NotOwnerOrEntrypoint();
-    error NotOwnerOrEntrypointOrSelf();
+    error NotOwner();
     error InvalidParameterLength();
 
     // solhint-disable-next-line no-empty-blocks
@@ -89,13 +86,15 @@ abstract contract BaseOpenfortAccount is
     }
 
     /**
-     * Require the function call went through EntryPoint, owner or self
+     * Require the function call went through owner
      */
-    function _requireFromEntryPointOrOwnerorSelf() internal view {
-        if (msg.sender != address(entryPoint()) && msg.sender != owner() && msg.sender != address(this)) {
-            revert NotOwnerOrEntrypointOrSelf();
+    function _requireFromOwner() internal view {
+        if (msg.sender != owner()) {
+            revert NotOwner();
         }
     }
+
+    function owner() public view virtual returns (address);
 
     /**
      * Check current account deposit in the entryPoint
@@ -177,7 +176,8 @@ abstract contract BaseOpenfortAccount is
      * Owner and session keys need to sign using EIP712.
      */
     function isValidSignature(bytes32 _hash, bytes memory _signature) public view override returns (bytes4) {
-        bytes32 digest = _hashTypedDataV4(_hash);
+        bytes32 structHash = keccak256(abi.encode(OF_MSG_TYPEHASH, _hash));
+        bytes32 digest = _hashTypedDataV4(structHash);
         address signer = digest.recover(_signature);
         if (owner() == signer) return MAGICVALUE;
 
@@ -197,7 +197,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * Execute a transaction (called directly from owner, or by entryPoint)
      */
-    function execute(address dest, uint256 value, bytes calldata func) external {
+    function execute(address dest, uint256 value, bytes calldata func) external virtual {
         _requireFromEntryPointOrOwner();
         _call(dest, value, func);
     }
@@ -205,7 +205,10 @@ abstract contract BaseOpenfortAccount is
     /**
      * Execute a sequence of transactions. Maximum 9.
      */
-    function executeBatch(address[] calldata _target, uint256[] calldata _value, bytes[] calldata _calldata) external {
+    function executeBatch(address[] calldata _target, uint256[] calldata _value, bytes[] calldata _calldata)
+        external
+        virtual
+    {
         _requireFromEntryPointOrOwner();
         if (_target.length > 9 || _target.length != _calldata.length || _target.length != _value.length) {
             revert InvalidParameterLength();
@@ -231,7 +234,8 @@ abstract contract BaseOpenfortAccount is
      * @param _amount to withdraw
      * @notice ONLY the owner can call this function (it's not using _requireFromEntryPointOrOwner())
      */
-    function withdrawDepositTo(address payable _withdrawAddress, uint256 _amount) public onlyOwner {
+    function withdrawDepositTo(address payable _withdrawAddress, uint256 _amount) external {
+        _requireFromOwner();
         entryPoint().withdrawTo(_withdrawAddress, _amount);
     }
 
@@ -286,7 +290,7 @@ abstract contract BaseOpenfortAccount is
         uint48 _limit,
         address[] calldata _whitelist
     ) public {
-        _requireFromEntryPointOrOwnerorSelf();
+        _requireFromEntryPointOrOwner();
 
         // Not sure why changing this for a custom error increases gas dramatically
         require(_whitelist.length < 11, "Whitelist too big");
@@ -317,7 +321,7 @@ abstract contract BaseOpenfortAccount is
      * @param _key session key to revoke
      */
     function revokeSessionKey(address _key) external {
-        _requireFromEntryPointOrOwnerorSelf();
+        _requireFromEntryPointOrOwner();
         if (sessionKeys[_key].validUntil != 0) {
             sessionKeys[_key].validUntil = 0;
             sessionKeys[_key].masterSessionKey = false;

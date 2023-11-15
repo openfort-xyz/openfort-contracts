@@ -2,9 +2,14 @@
 pragma solidity =0.8.19;
 
 // Base account contract to inherit from and EntryPoint interface
-import {BaseOpenfortAccount, IEntryPoint, SafeCastUpgradeable, ECDSAUpgradeable} from "../BaseOpenfortAccount.sol";
+import {
+    Ownable2StepUpgradeable,
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+
+import {BaseOpenfortAccount, IEntryPoint, SafeCastUpgradeable, ECDSAUpgradeable} from "../BaseOpenfortAccount.sol";
 
 /**
  * @title RecoverableOpenfortAccount
@@ -13,7 +18,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
  *  - BaseOpenfortAccount
  *  - UUPSUpgradeable
  */
-contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
+contract RecoverableOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradeable, UUPSUpgradeable {
     using ECDSAUpgradeable for bytes32;
 
     address internal entrypointContract;
@@ -125,6 +130,10 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
     function entryPoint() public view override returns (IEntryPoint) {
         return IEntryPoint(entrypointContract);
+    }
+
+    function owner() public view virtual override(BaseOpenfortAccount, OwnableUpgradeable) returns (address) {
+        return OwnableUpgradeable.owner();
     }
 
     /**

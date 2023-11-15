@@ -63,6 +63,8 @@ contract RecoverableOpenfortAccountTest is Test {
 
     // keccak256("Recover(address recoveryAddress,uint64 executeAfter,uint32 guardiansRequired)");
     bytes32 RECOVER_TYPEHASH = 0x9f7aca777caf11405930359f601a4db01fad1b2d79ef3f2f9e93c835e9feffa5;
+    bytes32 private constant _TYPE_HASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
     /*
      * Auxiliary function to generate a userOP
@@ -423,12 +425,10 @@ contract RecoverableOpenfortAccountTest is Test {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
         address[] memory emptyWhitelist;
 
-        UserOperation[] memory userOp = _setupUserOpExecute(
+        UserOperation[] memory userOp = _setupUserOp(
             account,
             accountAdminPKey,
             bytes(""),
-            account,
-            0,
             abi.encodeWithSignature(
                 "registerSessionKey(address,uint48,uint48,uint48,address[])",
                 sessionKey,
@@ -463,8 +463,9 @@ contract RecoverableOpenfortAccountTest is Test {
     /*
      * Register a master sessionKey via userOp calling the execute() function
      * using the EntryPoint (userOp). Then use that sessionKey to register a second one
+     * Should not be allowed: session keys cannot register new session keys!
      */
-    function testRegisterSessionKeyViaEntrypoint2ndKey() public {
+    function testFailRegisterSessionKeyViaEntrypoint2ndKey() public {
         // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -473,12 +474,10 @@ contract RecoverableOpenfortAccountTest is Test {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
         address[] memory emptyWhitelist;
 
-        UserOperation[] memory userOp = _setupUserOpExecute(
+        UserOperation[] memory userOp = _setupUserOp(
             account,
             accountAdminPKey,
             bytes(""),
-            account,
-            0,
             abi.encodeWithSignature(
                 "registerSessionKey(address,uint48,uint48,uint48,address[])",
                 sessionKey,
@@ -513,87 +512,18 @@ contract RecoverableOpenfortAccountTest is Test {
         uint256 sessionKeyPrivKeyAttack;
         (sessionKeyAttack, sessionKeyPrivKeyAttack) = makeAddrAndKey("sessionKeyAttack");
 
-        userOp = _setupUserOpExecute(
+        userOp = _setupUserOp(
             account,
             sessionKeyPrivKey,
             bytes(""),
-            account,
-            0,
             abi.encodeWithSignature(
                 "registerSessionKey(address,uint48,uint48,uint48,address[])",
                 sessionKeyAttack,
                 0,
                 2 ** 48 - 1,
-                100,
+                2 ** 48 - 1,
                 emptyWhitelist
             )
-        );
-
-        entryPoint.depositTo{value: 1000000000000000000}(account);
-        vm.expectRevert();
-        entryPoint.simulateValidation(userOp[0]);
-        entryPoint.handleOps(userOp, beneficiary);
-    }
-
-    /*
-     * Register a limited sessionKey via userOp calling the execute() function
-     * using the EntryPoint (userOp). Then use that sessionKey to register a second one
-     */
-    function testFailAttackRegisterSessionKeyViaEntrypoint2ndKey() public {
-        // Verify that the counter is stil set to 0
-        assertEq(testCounter.counters(account), 0);
-
-        address sessionKey;
-        uint256 sessionKeyPrivKey;
-        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
-
-        UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
-            accountAdminPKey,
-            bytes(""),
-            account,
-            0,
-            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48,uint48)", sessionKey, 0, 2 ** 48 - 1, 10)
-        );
-
-        entryPoint.depositTo{value: 1000000000000000000}(account);
-        vm.expectRevert();
-        entryPoint.simulateValidation(userOp[0]);
-        entryPoint.handleOps(userOp, beneficiary);
-
-        // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
-
-        userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
-        );
-
-        entryPoint.depositTo{value: 1000000000000000000}(account);
-        vm.expectRevert();
-        entryPoint.simulateValidation(userOp[0]);
-        entryPoint.handleOps(userOp, beneficiary);
-
-        // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
-
-        // Verify that the registered key is not a MasterKey nor has whitelisting
-        bool isMasterKey;
-        bool isWhitelisted;
-        (,,, isMasterKey, isWhitelisted) = RecoverableOpenfortAccount(payable(account)).sessionKeys(sessionKey);
-        assert(!isMasterKey);
-        assert(!isWhitelisted);
-
-        address sessionKeyAttack;
-        uint256 sessionKeyPrivKeyAttack;
-        (sessionKeyAttack, sessionKeyPrivKeyAttack) = makeAddrAndKey("sessionKeyAttack");
-
-        userOp = _setupUserOpExecute(
-            account,
-            sessionKeyPrivKey,
-            bytes(""),
-            account,
-            0,
-            abi.encodeWithSignature("registerSessionKey(address,uint48,uint48)", sessionKeyAttack, 0, 2 ** 48 - 1)
         );
 
         entryPoint.depositTo{value: 1000000000000000000}(account);
@@ -2059,8 +1989,6 @@ contract RecoverableOpenfortAccountTest is Test {
     {
         (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
             IERC5267(_eip721contract).eip712Domain();
-        bytes32 _TYPE_HASH =
-            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
         bytes32 domainSeparator = keccak256(
             abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
         );

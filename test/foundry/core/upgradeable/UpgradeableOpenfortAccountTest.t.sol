@@ -3,6 +3,7 @@ pragma solidity =0.8.19;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {TestToken} from "account-abstraction/test/TestToken.sol";
@@ -29,9 +30,13 @@ contract UpgradeableOpenfortAccountTest is Test {
     uint256 private accountAdminPKey;
 
     address payable private beneficiary = payable(makeAddr("beneficiary"));
-    
+
     // bytes4(keccak256("isValidSignature(bytes32,bytes)")
     bytes4 internal constant MAGICVALUE = 0x1626ba7e;
+    // keccak256("OpenfortMessage(bytes32 hashedMessage)");
+    bytes32 private constant OF_MSG_TYPEHASH = 0x57159f03b9efda178eab2037b2ec0b51ce11be0051b8a2a9992c29dc260e4a30;
+    bytes32 private constant _TYPE_HASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
     event AccountCreated(address indexed account, address indexed accountAdmin);
 
@@ -351,12 +356,10 @@ contract UpgradeableOpenfortAccountTest is Test {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
         address[] memory emptyWhitelist;
 
-        UserOperation[] memory userOp = _setupUserOpExecute(
+        UserOperation[] memory userOp = _setupUserOp(
             account,
             accountAdminPKey,
             bytes(""),
-            account,
-            0,
             abi.encodeWithSignature(
                 "registerSessionKey(address,uint48,uint48,uint48,address[])",
                 sessionKey,
@@ -391,8 +394,9 @@ contract UpgradeableOpenfortAccountTest is Test {
     /*
      * Register a master sessionKey via userOp calling the execute() function
      * using the EntryPoint (userOp). Then use that sessionKey to register a second one
+     * Should not be allowed: session keys cannot register new session keys!
      */
-    function testRegisterSessionKeyViaEntrypoint2ndKey() public {
+    function testFailRegisterSessionKeyViaEntrypoint2ndKey() public {
         // Verify that the counter is stil set to 0
         assertEq(testCounter.counters(account), 0);
 
@@ -401,12 +405,10 @@ contract UpgradeableOpenfortAccountTest is Test {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
         address[] memory emptyWhitelist;
 
-        UserOperation[] memory userOp = _setupUserOpExecute(
+        UserOperation[] memory userOp = _setupUserOp(
             account,
             accountAdminPKey,
             bytes(""),
-            account,
-            0,
             abi.encodeWithSignature(
                 "registerSessionKey(address,uint48,uint48,uint48,address[])",
                 sessionKey,
@@ -441,18 +443,16 @@ contract UpgradeableOpenfortAccountTest is Test {
         uint256 sessionKeyPrivKeyAttack;
         (sessionKeyAttack, sessionKeyPrivKeyAttack) = makeAddrAndKey("sessionKeyAttack");
 
-        userOp = _setupUserOpExecute(
+        userOp = _setupUserOp(
             account,
             sessionKeyPrivKey,
             bytes(""),
-            account,
-            0,
             abi.encodeWithSignature(
                 "registerSessionKey(address,uint48,uint48,uint48,address[])",
                 sessionKeyAttack,
                 0,
                 2 ** 48 - 1,
-                100,
+                2 ** 48 - 1,
                 emptyWhitelist
             )
         );
@@ -1102,7 +1102,6 @@ contract UpgradeableOpenfortAccountTest is Test {
         assertEq(valid, MAGICVALUE); // SHOULD FAIL! We do not accept straight signatures from owners anymore
     }
 
-
     /*
      * Auxiliary function to get a valid EIP712 signature using _eip721contract's domains separator,
      * a valid hash of the message to sign (_structHash) and a private key (_pk)
@@ -1113,8 +1112,6 @@ contract UpgradeableOpenfortAccountTest is Test {
     {
         (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
             IERC5267(_eip721contract).eip712Domain();
-        bytes32 _TYPE_HASH =
-            keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
         bytes32 domainSeparator = keccak256(
             abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
         );
@@ -1125,20 +1122,25 @@ contract UpgradeableOpenfortAccountTest is Test {
     }
 
     function testisValidSignatureTyped() public {
-        bytes32 hash = keccak256("Signed by Owner");
-        bytes32 hashMessage = hash.toEthSignedMessageHash();
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hashMessage);
-        address signer = ecrecover(hashMessage, v, r, s);
-        assertEq(accountAdmin, signer); // [PASS]
+        string memory messageToSign = "Signed by Owner";
+        bytes32 hash = keccak256(abi.encodePacked(messageToSign));
 
-        bytes memory signatures = getEIP712SignatureFrom(account, structHash, OPENFORT_GUARDIAN_PKEY);
+        bytes32 structHash = keccak256(abi.encode(OF_MSG_TYPEHASH, hash));
 
-        bytes memory signature = abi.encodePacked(r, s, v);
-        signer = ECDSA.recover(hashMessage, signature);
+        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+            IERC5267(account).eip712Domain();
+
+        bytes32 domainSeparator = keccak256(
+            abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
+        );
+
+        bytes memory signature = getEIP712SignatureFrom(account, structHash, accountAdminPKey);
+        bytes32 hash712 = domainSeparator.toTypedDataHash(structHash);
+        address signer = hash712.recover(signature);
+
         assertEq(accountAdmin, signer); // [PASS]
 
         bytes4 valid = UpgradeableOpenfortAccount(payable(account)).isValidSignature(hash, signature);
-        assertEq(valid, bytes4(0xffffffff)); // SHOULD PASS!
-        assertEq(valid, MAGICVALUE); // SHOULD FAIL! We do not accept straight signatures from owners anymore
+        assertEq(valid, MAGICVALUE); // SHOULD PASS
     }
 }
