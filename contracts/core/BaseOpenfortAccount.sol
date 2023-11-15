@@ -154,8 +154,8 @@ abstract contract BaseOpenfortAccount is
 
             // Check if it is a masterSessionKey (no whitelist applies)
             if (sessionKey.masterSessionKey) return true;
-
-            for (uint256 i = 0; i < toContracts.length;) {
+            uint256 i;
+            for (i; i < toContracts.length;) {
                 if (toContracts[i] == address(this)) {
                     return false;
                 } // Only masterSessionKey can reenter
@@ -163,7 +163,7 @@ abstract contract BaseOpenfortAccount is
                     return false;
                 } // One contract's not in the sessionKey's whitelist (if any)
                 unchecked {
-                    ++i; // gas optimization
+                    ++i;
                 }
             }
             return true;
@@ -217,10 +217,11 @@ abstract contract BaseOpenfortAccount is
         if (_target.length > 9 || _target.length != _calldata.length || _target.length != _value.length) {
             revert InvalidParameterLength();
         }
-        for (uint256 i = 0; i < _target.length;) {
+        uint256 i;
+        for (i; i < _target.length;) {
             _call(_target[i], _value[i], _calldata[i]);
             unchecked {
-                ++i; // gas optimization
+                ++i;
             }
         }
     }
@@ -263,7 +264,7 @@ abstract contract BaseOpenfortAccount is
         override
         returns (uint256 validationData)
     {
-        // require(entryPoint().getUserOpHash(userOp) == userOpHash, "MEEECK!");
+        require(entryPoint().getUserOpHash(userOp) == userOpHash, "Calculated userOpHash doesn't match");
         bytes32 hash = userOpHash.toEthSignedMessageHash();
         address signer = hash.recover(userOp.signature);
 
@@ -296,14 +297,14 @@ abstract contract BaseOpenfortAccount is
         _requireFromEntryPointOrOwner();
 
         require(_whitelist.length < 11, "Whitelist too big");
-        uint256 i = 0;
+        uint256 i;
         for (i; i < _whitelist.length;) {
             sessionKeys[_key].whitelist[_whitelist[i]] = true;
             unchecked {
-                ++i; // gas optimization
+                ++i;
             }
         }
-        if (i > 0) {
+        if (i != 0) {
             // If there was some whitelisting, it is not a masterSessionKey
             sessionKeys[_key].whitelising = true;
             sessionKeys[_key].masterSessionKey = false;
