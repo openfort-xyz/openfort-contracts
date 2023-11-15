@@ -776,7 +776,7 @@ contract RecoverableOpenfortAccountTest is Test {
         // Verify that the registered key is not a MasterKey but has whitelisting
         bool isMasterKey;
         bool isWhitelisted;
-        (,,, isMasterKey, isWhitelisted) = RecoverableOpenfortAccount(payable(account)).sessionKeys(sessionKey);
+        (,,, isMasterKey, isWhitelisted,) = RecoverableOpenfortAccount(payable(account)).sessionKeys(sessionKey);
         assert(!isMasterKey);
         assert(isWhitelisted);
 

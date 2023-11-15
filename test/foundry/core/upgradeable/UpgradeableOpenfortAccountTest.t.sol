@@ -507,7 +507,7 @@ contract UpgradeableOpenfortAccountTest is Test {
         // Verify that the registered key is not a MasterKey nor has whitelisting
         bool isMasterKey;
         bool isWhitelisted;
-        (,,, isMasterKey, isWhitelisted) = UpgradeableOpenfortAccount(payable(account)).sessionKeys(sessionKey);
+        (,,, isMasterKey, isWhitelisted,) = UpgradeableOpenfortAccount(payable(account)).sessionKeys(sessionKey);
         assert(!isMasterKey);
         assert(!isWhitelisted);
 
@@ -774,7 +774,7 @@ contract UpgradeableOpenfortAccountTest is Test {
         // Verify that the registered key is not a MasterKey but has whitelisting
         bool isMasterKey;
         bool isWhitelisted;
-        (,,, isMasterKey, isWhitelisted) = UpgradeableOpenfortAccount(payable(account)).sessionKeys(sessionKey);
+        (,,, isMasterKey, isWhitelisted,) = UpgradeableOpenfortAccount(payable(account)).sessionKeys(sessionKey);
         assert(!isMasterKey);
         assert(isWhitelisted);
 
