@@ -6,10 +6,9 @@ import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/crypto
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
 import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
-
-import {BaseAccount, UserOperation, IEntryPoint} from "account-abstraction/core/BaseAccount.sol";
+import {BaseAccount, UserOperation, IEntryPoint, UserOperationLib} from "account-abstraction/core/BaseAccount.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
-import "account-abstraction/core/Helpers.sol" as Helpers;
+import {_packValidationData} from "account-abstraction/core/Helpers.sol";
 
 /**
  * @title BaseOpenfortAccount (Non upgradeable by default)
@@ -69,7 +68,6 @@ abstract contract BaseOpenfortAccount is
     error NotOwner();
     error InvalidParameterLength();
 
-    // solhint-disable-next-line no-empty-blocks
     receive() external payable virtual {}
 
     constructor() {
@@ -265,17 +263,16 @@ abstract contract BaseOpenfortAccount is
         override
         returns (uint256 validationData)
     {
+        // require(entryPoint().getUserOpHash(userOp) == userOpHash, "MEEECK!");
         bytes32 hash = userOpHash.toEthSignedMessageHash();
         address signer = hash.recover(userOp.signature);
 
         // If the userOp was signed by the owner, allow straightaway
-        if (owner() == signer) {
-            return 0;
-        }
+        if (owner() == signer) return 0;
 
         // Check if the session key is valid according to the data in the userOp
         if (isValidSessionKey(signer, userOp.callData)) {
-            return Helpers._packValidationData(false, sessionKeys[signer].validUntil, sessionKeys[signer].validAfter);
+            return _packValidationData(false, sessionKeys[signer].validUntil, sessionKeys[signer].validAfter);
         }
 
         return SIG_VALIDATION_FAILED;

@@ -2,12 +2,15 @@
 pragma solidity =0.8.19;
 
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC6551Account} from "erc6551/src/interfaces/IERC6551Account.sol";
 import {IERC6551Executable} from "erc6551/src/interfaces/IERC6551Executable.sol";
 import {ERC6551AccountLib} from "erc6551/src/lib/ERC6551AccountLib.sol";
-import {BaseOpenfortAccount, IEntryPoint, ECDSAUpgradeable} from "../BaseOpenfortAccount.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
-import "account-abstraction/core/Helpers.sol" as Helpers;
+
+import {BaseOpenfortAccount, IEntryPoint, ECDSAUpgradeable} from "../BaseOpenfortAccount.sol";
 
 /**
  * @title EIP6551OpenfortAccount (Non-upgradeable)
@@ -29,7 +32,6 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
 
     event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
 
-    // solhint-disable-next-line no-empty-blocks
     receive() external payable override(BaseOpenfortAccount, IERC6551Account) {}
 
     constructor() {
@@ -50,6 +52,9 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
         state = 1;
     }
 
+    /*
+     * Returns the address of the owner
+     */
     function owner() public view override returns (address) {
         (uint256 chainId, address contractAddress, uint256 tokenId) = token();
         if (chainId != block.chainid) return address(0);
@@ -63,6 +68,9 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
         return ERC6551AccountLib.token();
     }
 
+    /**
+     * @dev {See IERC6551Account-isValidSigner}
+     */
     function isValidSigner(address signer, bytes calldata) external view override returns (bytes4) {
         if (_isValidSigner(signer)) return IERC6551Account.isValidSigner.selector;
         return bytes4(0);
@@ -127,5 +135,13 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
      */
     function entryPoint() public view override returns (IEntryPoint) {
         return IEntryPoint(entrypointContract);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
+        return (
+            interfaceId == type(IERC6551Account).interfaceId || interfaceId == type(IERC6551Executable).interfaceId
+                || interfaceId == type(IERC1155Receiver).interfaceId || interfaceId == type(IERC721Receiver).interfaceId
+                || interfaceId == type(IERC165).interfaceId
+        );
     }
 }
