@@ -26,7 +26,7 @@
     "eslint-plugin-n": "^15.7.0",
     "eslint-plugin-promise": "^6.1.1",
     "hardhat": "^2.14.0",
-    "solhint": "^3.4.1",
+    "solhint": "3.6.2",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.1",
     "typescript": "^5.0.4"

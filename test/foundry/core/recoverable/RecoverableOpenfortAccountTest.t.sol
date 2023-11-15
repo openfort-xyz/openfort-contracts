@@ -62,7 +62,7 @@ contract RecoverableOpenfortAccountTest is Test {
     error InvalidSignatureAmount();
 
     // keccak256("Recover(address recoveryAddress,uint64 executeAfter,uint32 guardiansRequired)");
-    bytes32 RECOVER_TYPEHASH = 0x9f7aca777caf11405930359f601a4db01fad1b2d79ef3f2f9e93c835e9feffa5;
+    bytes32 private RECOVER_TYPEHASH = 0x9f7aca777caf11405930359f601a4db01fad1b2d79ef3f2f9e93c835e9feffa5;
     bytes32 private constant _TYPE_HASH =
         keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 

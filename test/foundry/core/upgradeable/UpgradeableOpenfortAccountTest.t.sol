@@ -142,8 +142,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         }
         // If not a fork, deploy entryPoint (at correct address)
         else {
-            EntryPoint entryPoint_aux = new EntryPoint();
-            bytes memory code = address(entryPoint_aux).code;
+            EntryPoint entryPointAux = new EntryPoint();
+            bytes memory code = address(entryPointAux).code;
             address targetAddr = address(vm.envAddress("ENTRY_POINT_ADDRESS"));
             vm.etch(targetAddr, code);
             entryPoint = EntryPoint(payable(targetAddr));
