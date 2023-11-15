@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.19;
 
+import {
+    Ownable2StepUpgradeable,
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+
 // Base account contract to inherit from
 import {BaseOpenfortAccount, IEntryPoint} from "../core/BaseOpenfortAccount.sol";
 
@@ -10,7 +15,7 @@ import {BaseOpenfortAccount, IEntryPoint} from "../core/BaseOpenfortAccount.sol"
  * It inherits from:
  *  - BaseOpenfortAccount
  */
-contract MockedV2ManagedOpenfortAccount is BaseOpenfortAccount {
+contract MockedV2ManagedOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradeable {
     address private constant ENTRYPOINTCONTRACT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
 
     /*
@@ -25,6 +30,10 @@ contract MockedV2ManagedOpenfortAccount is BaseOpenfortAccount {
 
     function version() external pure override returns (uint256) {
         return 2;
+    }
+
+    function owner() public view virtual override(BaseOpenfortAccount, OwnableUpgradeable) returns (address) {
+        return OwnableUpgradeable.owner();
     }
 
     /**

@@ -3,6 +3,10 @@ pragma solidity =0.8.19;
 
 // Base account contract to inherit from and EntryPoint interface
 import {BaseOpenfortAccount, IEntryPoint} from "../BaseOpenfortAccount.sol";
+import {
+    Ownable2StepUpgradeable,
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
@@ -10,9 +14,10 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseOpenfortAccount
+ *  - Ownable2StepUpgradeable
  *  - UUPSUpgradeable
  */
-contract UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
+contract UpgradeableOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradeable, UUPSUpgradeable {
     address internal entrypointContract;
 
     event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
@@ -37,6 +42,10 @@ contract UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
      */
     function entryPoint() public view override returns (IEntryPoint) {
         return IEntryPoint(entrypointContract);
+    }
+
+    function owner() public view virtual override(BaseOpenfortAccount, OwnableUpgradeable) returns (address) {
+        return OwnableUpgradeable.owner();
     }
 
     /**
