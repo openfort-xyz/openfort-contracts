@@ -55,6 +55,7 @@ abstract contract BaseOpenfortAccount is
         bool masterSessionKey;
         bool whitelising;
         mapping(address => bool) whitelist;
+        address registrarAddress;
     }
 
     mapping(address => SessionKeyStruct) public sessionKeys;
@@ -110,6 +111,9 @@ abstract contract BaseOpenfortAccount is
         SessionKeyStruct storage sessionKey = sessionKeys[_sessionKey];
         // If not owner and the session key is revoked, return false
         if (sessionKey.validUntil == 0) return false;
+
+        // If the sessionKey was not registered by the owner, return false
+        if (sessionKey.registrarAddress != owner()) return false;
 
         // If the signer is a session key that is still valid
         // Let's first get the selector of the function that the caller is using
@@ -189,7 +193,9 @@ abstract contract BaseOpenfortAccount is
         ) {
             return 0xffffffff;
         } // Not owner or session key revoked
-        else {
+        else if (sessionKey.registrarAddress != owner()) {
+            return 0xffffffff;
+        } else {
             return MAGICVALUE;
         }
     }
@@ -292,7 +298,6 @@ abstract contract BaseOpenfortAccount is
     ) public {
         _requireFromEntryPointOrOwner();
 
-        // Not sure why changing this for a custom error increases gas dramatically
         require(_whitelist.length < 11, "Whitelist too big");
         uint256 i = 0;
         for (i; i < _whitelist.length;) {
@@ -302,6 +307,7 @@ abstract contract BaseOpenfortAccount is
             }
         }
         if (i > 0) {
+            // If there was some whitelisting, it is not a masterSessionKey
             sessionKeys[_key].whitelising = true;
             sessionKeys[_key].masterSessionKey = false;
         } else {
@@ -312,6 +318,7 @@ abstract contract BaseOpenfortAccount is
         sessionKeys[_key].validAfter = _validAfter;
         sessionKeys[_key].validUntil = _validUntil;
         sessionKeys[_key].limit = _limit;
+        sessionKeys[_key].registrarAddress = owner();
 
         emit SessionKeyRegistered(_key);
     }
@@ -325,6 +332,7 @@ abstract contract BaseOpenfortAccount is
         if (sessionKeys[_key].validUntil != 0) {
             sessionKeys[_key].validUntil = 0;
             sessionKeys[_key].masterSessionKey = false;
+            sessionKeys[_key].registrarAddress = address(0);
             emit SessionKeyRevoked(_key);
         }
     }
