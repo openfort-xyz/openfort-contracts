@@ -40,9 +40,7 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory, UpgradeableBeacon {
         bytes32 salt = keccak256(abi.encode(_admin, _nonce));
         account = getAddressWithNonce(_admin, _nonce);
 
-        if (account.code.length > 0) {
-            return account;
-        }
+        if (account.code.length != 0) return account;
 
         emit AccountCreated(account, _admin);
         account = address(

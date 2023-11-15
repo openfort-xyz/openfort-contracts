@@ -30,6 +30,8 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
 
     uint256 public state;
 
+    error OperationNotAllowed();
+
     event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
 
     receive() external payable override(BaseOpenfortAccount, IERC6551Account) {}
@@ -89,7 +91,7 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
         override
         returns (bytes memory _result)
     {
-        require(_operation == 0, "Only call operations are supported");
+        if (_operation != 0) revert OperationNotAllowed();
         ++state;
         bool success;
         // solhint-disable-next-line avoid-low-level-calls

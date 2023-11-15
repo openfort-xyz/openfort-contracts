@@ -11,6 +11,6 @@ contract SimpleNFT is ERC721 {
 
     // Anyone can mint an NFT for anyone
     function mint(address _to) public {
-        _safeMint(_to, tokenId++);
+        _safeMint(_to, ++tokenId);
     }
 }
