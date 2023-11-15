@@ -2,6 +2,10 @@
 pragma solidity =0.8.19;
 
 // Base account contract to inherit from and EntryPoint interface
+import {
+    Ownable2StepUpgradeable,
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {BaseOpenfortAccount, IEntryPoint} from "../BaseOpenfortAccount.sol";
 
 /**
@@ -10,7 +14,7 @@ import {BaseOpenfortAccount, IEntryPoint} from "../BaseOpenfortAccount.sol";
  * It inherits from:
  *  - BaseOpenfortAccount
  */
-contract ManagedOpenfortAccount is BaseOpenfortAccount {
+contract ManagedOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradeable {
     address private constant ENTRYPOINTCONTRACT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
 
     /*
@@ -22,6 +26,10 @@ contract ManagedOpenfortAccount is BaseOpenfortAccount {
         }
         _transferOwnership(_defaultAdmin);
         __EIP712_init("Openfort", "0.5");
+    }
+
+    function owner() public view virtual override(BaseOpenfortAccount, OwnableUpgradeable) returns (address) {
+        return OwnableUpgradeable.owner();
     }
 
     /**
