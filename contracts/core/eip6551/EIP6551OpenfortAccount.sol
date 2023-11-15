@@ -5,7 +5,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC6551Account} from "erc6551/src/interfaces/IERC6551Account.sol";
 import {IERC6551Executable} from "erc6551/src/interfaces/IERC6551Executable.sol";
 import {ERC6551AccountLib} from "erc6551/src/lib/ERC6551AccountLib.sol";
-import {BaseOpenfortAccount, IEntryPoint, SafeCastUpgradeable, ECDSAUpgradeable} from "../BaseOpenfortAccount.sol";
+import {BaseOpenfortAccount, IEntryPoint, ECDSAUpgradeable} from "../BaseOpenfortAccount.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
 import "account-abstraction/core/Helpers.sol" as Helpers;
 
@@ -13,12 +13,9 @@ import "account-abstraction/core/Helpers.sol" as Helpers;
  * @title EIP6551OpenfortAccount (Non-upgradeable)
  * @notice Smart contract wallet with session keys following the ERC-4337 and EIP-6551 standards.
  * It inherits from:
- *  - BaseAccount to comply with ERC-4337
- *  - Initializable because accounts are meant to be created using Factories
+ *  - BaseOpenfortAccount to comply with ERC-4337
  *  - IERC6551Account to have permissions using ERC-721 tokens
- *  - EIP712Upgradeable to use typed structured signatures EIP-712 (supporting ERC-5267 too)
- *  - IERC1271Upgradeable for Signature Validation (ERC-1271)
- *  - TokenCallbackHandler to support ERC-777, ERC-721 and ERC-1155
+ *  - IERC6551Executable
  */
 contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC6551Executable {
     using ECDSAUpgradeable for bytes32;
@@ -67,10 +64,7 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
     }
 
     function isValidSigner(address signer, bytes calldata) external view override returns (bytes4) {
-        if (_isValidSigner(signer)) {
-            return IERC6551Account.isValidSigner.selector;
-        }
-
+        if (_isValidSigner(signer)) return IERC6551Account.isValidSigner.selector;
         return bytes4(0);
     }
 
@@ -87,7 +81,6 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
         override
         returns (bytes memory _result)
     {
-        require(_isValidSigner(msg.sender), "Caller is not owner");
         require(_operation == 0, "Only call operations are supported");
         ++state;
         bool success;
@@ -95,6 +88,25 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
         (success, _result) = _target.call{value: _value}(_data);
         require(success, string(_result));
         return _result;
+    }
+
+    /**
+     * Execute a transaction (called directly from owner, or by entryPoint)
+     */
+    function execute(address dest, uint256 value, bytes calldata func) public override {
+        ++state;
+        super.execute(dest, value, func);
+    }
+
+    /**
+     * Execute a sequence of transactions. Maximum 9.
+     */
+    function executeBatch(address[] calldata _target, uint256[] calldata _value, bytes[] calldata _calldata)
+        public
+        override
+    {
+        state += _target.length;
+        super.executeBatch(_target, _value, _calldata);
     }
 
     /**
