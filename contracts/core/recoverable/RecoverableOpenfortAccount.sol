@@ -380,7 +380,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradea
      */
     function completeRecovery(bytes[] calldata _signatures) external {
         _requireRecovery(true);
-        require(uint64(block.timestamp) > recoveryDetails.executeAfter, "Ongoing recovery period");
+        if (recoveryDetails.executeAfter > uint64(block.timestamp)) revert OngoingRecovery();
 
         require(recoveryDetails.guardiansRequired > 0, "No guardians set on wallet");
         if (recoveryDetails.guardiansRequired != _signatures.length) revert InvalidSignatureAmount();
@@ -389,8 +389,6 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradea
 
         address recoveryOwner = recoveryDetails.recoveryAddress;
         delete recoveryDetails;
-
-        // End sessions here?
 
         _transferOwnership(recoveryOwner);
         _setLock(0);
