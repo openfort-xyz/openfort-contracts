@@ -40,7 +40,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradea
 
     struct GuardiansConfig {
         address[] guardians; // list of guardian addresses
-        mapping(address => GuardianInfo) info; // info about guardians
+        mapping(address guardianAddress => GuardianInfo guardianInfo) info; // info about guardians
         uint256 lock; // Lock's release timestamp
     }
 

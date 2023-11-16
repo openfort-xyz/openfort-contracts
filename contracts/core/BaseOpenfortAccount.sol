@@ -53,11 +53,11 @@ abstract contract BaseOpenfortAccount is
         uint48 limit;
         bool masterSessionKey;
         bool whitelising;
-        mapping(address => bool) whitelist;
+        mapping(address contractAddress => bool allowed) whitelist;
         address registrarAddress;
     }
 
-    mapping(address => SessionKeyStruct) public sessionKeys;
+    mapping(address sessionKey => SessionKeyStruct sessionKeyData) public sessionKeys;
 
     event AccountCreated(address indexed creator);
     event SessionKeyRegistered(address indexed key);
