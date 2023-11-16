@@ -1964,7 +1964,7 @@ contract RecoverableOpenfortAccountTest is Test {
         assertEq(recoverableOpenfortAccount.isLocked(), true);
 
         // The recovery time period has not passed. The user should wait to recover.
-        vm.expectRevert("Ongoing recovery period");
+        vm.expectRevert(OngoingRecovery.selector);
         bytes[] memory signatures = new bytes[](1);
         recoverableOpenfortAccount.completeRecovery(signatures);
 
