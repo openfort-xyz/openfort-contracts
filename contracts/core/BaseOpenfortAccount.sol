@@ -59,7 +59,7 @@ abstract contract BaseOpenfortAccount is
 
     mapping(address sessionKey => SessionKeyStruct sessionKeyData) public sessionKeys;
 
-    event AccountCreated(address indexed creator);
+    event AccountImplementationDeployed(address indexed creator);
     event SessionKeyRegistered(address indexed key);
     event SessionKeyRevoked(address indexed key);
 
@@ -71,7 +71,7 @@ abstract contract BaseOpenfortAccount is
     receive() external payable virtual {}
 
     constructor() {
-        emit AccountCreated(msg.sender);
+        emit AccountImplementationDeployed(msg.sender);
         _disableInitializers();
     }
 

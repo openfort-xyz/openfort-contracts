@@ -39,6 +39,7 @@ contract UpgradeableOpenfortAccountTest is Test {
         keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
     event AccountCreated(address indexed account, address indexed accountAdmin);
+    event AccountImplementationDeployed(address indexed creator);
 
     /*
      * Auxiliary function to generate a userOP
@@ -149,6 +150,8 @@ contract UpgradeableOpenfortAccountTest is Test {
             entryPoint = EntryPoint(payable(targetAddr));
         }
         // deploy upgradeable account implementation
+        vm.expectEmit(true, true, false, true);
+        emit AccountImplementationDeployed(factoryAdmin);
         upgradeableOpenfortAccount = new UpgradeableOpenfortAccount();
         // deploy upgradeable account factory
         upgradeableOpenfortFactory =
