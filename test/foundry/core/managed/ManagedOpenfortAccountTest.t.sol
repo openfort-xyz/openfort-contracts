@@ -5,11 +5,11 @@ import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
-import {TestToken} from "account-abstraction/test/TestToken.sol";
+import {MockERC20} from "contracts/mock/MockERC20.sol";
 import {ManagedOpenfortAccount} from "contracts/core/managed/ManagedOpenfortAccount.sol";
 import {ManagedOpenfortFactory} from "contracts/core/managed/ManagedOpenfortFactory.sol";
 import {OpenfortBeaconProxy} from "contracts/core/managed/OpenfortBeaconProxy.sol";
-import {MockedV2ManagedOpenfortAccount} from "contracts/mock/MockedV2ManagedOpenfortAccount.sol";
+import {MockV2ManagedOpenfortAccount} from "contracts/mock/MockV2ManagedOpenfortAccount.sol";
 
 contract ManagedOpenfortAccountTest is Test {
     using ECDSA for bytes32;
@@ -20,7 +20,7 @@ contract ManagedOpenfortAccountTest is Test {
     ManagedOpenfortFactory public managedOpenfortFactory;
     address public account;
     TestCounter public testCounter;
-    TestToken public testToken;
+    MockERC20 public mockERC20;
 
     // Testing addresses
     address private factoryAdmin;
@@ -152,8 +152,8 @@ contract ManagedOpenfortAccountTest is Test {
         account = managedOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
         // deploy a new TestCounter
         testCounter = new TestCounter();
-        // deploy a new TestToken (ERC20)
-        testToken = new TestToken();
+        // deploy a new MockERC20 (ERC20)
+        mockERC20 = new MockERC20();
         vm.stopPrank();
     }
 
@@ -913,21 +913,21 @@ contract ManagedOpenfortAccountTest is Test {
     }
 
     /*
-     * Test an account with testToken instead of TestCount.
+     * Test an account with mockERC20 instead of TestCount.
      */
     function testMintTokenAccount() public {
         // Verify that the totalSupply is stil 0
-        assertEq(testToken.totalSupply(), 0);
+        assertEq(mockERC20.totalSupply(), 0);
 
         // Mint 1 to beneficiary
-        testToken.mint(beneficiary, 1);
-        assertEq(testToken.totalSupply(), 1);
+        mockERC20.mint(beneficiary, 1);
+        assertEq(mockERC20.totalSupply(), 1);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
             accountAdminPKey,
             bytes(""),
-            address(testToken),
+            address(mockERC20),
             0,
             abi.encodeWithSignature("mint(address,uint256)", beneficiary, 1)
         );
@@ -938,7 +938,7 @@ contract ManagedOpenfortAccountTest is Test {
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the totalSupply has increased
-        assertEq(testToken.totalSupply(), 2);
+        assertEq(mockERC20.totalSupply(), 2);
     }
 
     /*
@@ -1020,7 +1020,8 @@ contract ManagedOpenfortAccountTest is Test {
         vm.prank(factoryAdmin);
         address payable accountOld = payable(managedOpenfortFactory.createAccountWithNonce(accountAdmin, "2"));
         ManagedOpenfortAccount managedAccount = ManagedOpenfortAccount(accountOld);
-        assertEq(managedAccount.version(), 1);
+        assertEq(managedAccount.owner(), accountAdmin);
+        assertEq(address(managedAccount.entryPoint()), address(entryPoint));
 
         OpenfortBeaconProxy p = OpenfortBeaconProxy(payable(account));
         // Printing account address and the implementation address
@@ -1028,7 +1029,7 @@ contract ManagedOpenfortAccountTest is Test {
         console.log(p.implementation());
 
         // Deploy the new implementation
-        MockedV2ManagedOpenfortAccount newImplementation = new MockedV2ManagedOpenfortAccount();
+        MockV2ManagedOpenfortAccount newImplementation = new MockV2ManagedOpenfortAccount();
         address newImplementationAddress = address(newImplementation);
 
         vm.expectRevert("Ownable: caller is not the owner");
@@ -1038,16 +1039,18 @@ contract ManagedOpenfortAccountTest is Test {
         managedOpenfortFactory.upgradeTo(newImplementationAddress);
 
         assertEq(managedOpenfortFactory.accountImplementation(), newImplementationAddress);
-        assertEq(managedOpenfortFactory.implementation(), newImplementationAddress); //redundant view call for now (due to factory being the Beacon now)
+        //redundant view call for now (due to factory being the Beacon now)
+        assertEq(managedOpenfortFactory.implementation(), newImplementationAddress);
 
-        // Notice that, even though we bind the address to the old implementation, version() now returns 2
-        assertEq(managedAccount.version(), 2);
+        // Notice that, even though we bind the address to the old implementation, entryPoint() is now 0
+        assertEq(address(managedAccount.entryPoint()), address(0));
 
-        // Same for new accounts. From now on, they have the new version.
+        // Same for new accounts. From now on, they have the new owner().
         vm.prank(factoryAdmin);
         address payable account3 = payable(managedOpenfortFactory.createAccountWithNonce(accountAdmin, "3"));
         ManagedOpenfortAccount managedAccount3 = ManagedOpenfortAccount(account3);
-        managedAccount3.version();
+
+        assertEq(address(managedAccount3.entryPoint()), address(0));
 
         // Printing account address and the implementation address. Impl address should have changed
         console.log(account);

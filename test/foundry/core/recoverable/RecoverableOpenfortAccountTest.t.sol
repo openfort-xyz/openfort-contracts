@@ -1021,31 +1021,6 @@ contract RecoverableOpenfortAccountTest is Test {
         assertEq(testCounter.counters(account), 0);
     }
 
-    // /*
-    //  * Create an account and upgrade its implementation
-    //  */
-    // function testUpgradeAccount() public {
-    //     assertEq(RecoverableOpenfortAccount(payable(account)).version(), 1);
-    //     MockedV2RecoverableOpenfortAccount newAccountImplementation = new MockedV2RecoverableOpenfortAccount();
-    //     OpenfortUpgradeableProxy p = OpenfortUpgradeableProxy(payable(account));
-    //     // Printing account address and the implementation address
-    //     console.log(account);
-    //     console.log(p.implementation());
-
-    //     vm.expectRevert("Ownable: caller is not the owner");
-    //     RecoverableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
-
-    //     vm.prank(accountAdmin);
-    //     RecoverableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
-
-    //     // Notice that, even though we bind the address to the old implementation, version() now returns 2
-    //     assertEq(RecoverableOpenfortAccount(payable(account)).version(), 2);
-
-    //     // Printing account address and the implementation address. Impl address should have changed
-    //     console.log(account);
-    //     console.log(p.implementation());
-    // }
-
     /*
      * 1- Deploy a factory using the old EntryPoint to create an account.
      * 2- Inform the account of the new EntryPoint by calling updateEntryPoint()

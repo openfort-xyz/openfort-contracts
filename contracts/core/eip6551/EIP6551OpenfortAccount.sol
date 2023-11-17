@@ -8,7 +8,6 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC6551Account} from "erc6551/src/interfaces/IERC6551Account.sol";
 import {IERC6551Executable} from "erc6551/src/interfaces/IERC6551Executable.sol";
 import {ERC6551AccountLib} from "erc6551/src/lib/ERC6551AccountLib.sol";
-import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
 
 import {BaseOpenfortAccount, IEntryPoint, ECDSAUpgradeable} from "../BaseOpenfortAccount.sol";
 
@@ -73,13 +72,13 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
     /**
      * @dev {See IERC6551Account-isValidSigner}
      */
-    function isValidSigner(address signer, bytes calldata) external view override returns (bytes4) {
-        if (_isValidSigner(signer)) return IERC6551Account.isValidSigner.selector;
+    function isValidSigner(address _signer, bytes calldata) external view override returns (bytes4) {
+        if (_isValidSigner(_signer)) return IERC6551Account.isValidSigner.selector;
         return bytes4(0);
     }
 
-    function _isValidSigner(address signer) internal view returns (bool) {
-        return signer == owner();
+    function _isValidSigner(address _signer) internal view returns (bool) {
+        return _signer == owner();
     }
 
     /**
@@ -102,9 +101,9 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
     /**
      * Execute a transaction (called directly from owner, or by entryPoint)
      */
-    function execute(address dest, uint256 value, bytes calldata func) public override returns (bytes memory _result) {
+    function execute(address _dest, uint256 _value, bytes calldata _func) public override {
         ++state;
-        super.execute(dest, value, func);
+        super.execute(_dest, _value, _func);
     }
 
     /**
@@ -138,11 +137,11 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
         return IEntryPoint(entrypointContract);
     }
 
-    function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
+    function supportsInterface(bytes4 _interfaceId) public pure override returns (bool) {
         return (
-            interfaceId == type(IERC6551Account).interfaceId || interfaceId == type(IERC6551Executable).interfaceId
-                || interfaceId == type(IERC1155Receiver).interfaceId || interfaceId == type(IERC721Receiver).interfaceId
-                || interfaceId == type(IERC165).interfaceId
+            _interfaceId == type(IERC6551Account).interfaceId || _interfaceId == type(IERC6551Executable).interfaceId
+                || _interfaceId == type(IERC1155Receiver).interfaceId || _interfaceId == type(IERC721Receiver).interfaceId
+                || _interfaceId == type(IERC165).interfaceId
         );
     }
 }

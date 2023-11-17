@@ -4,8 +4,7 @@ pragma solidity =0.8.19;
 import {Script, console} from "forge-std/Script.sol";
 import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {UpgradeableOpenfortFactory} from "../contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
-// import {USDC} from "../contracts/mock/USDC.sol";
-import {Rewards} from "../contracts/mock/Rewards.sol";
+import {MockERC20} from "../contracts/mock/MockERC20.sol";
 
 contract DeployMock is Script {
     uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
@@ -16,9 +15,8 @@ contract DeployMock is Script {
     function run() public {
         vm.startBroadcast(deployPrivKey);
 
-        // USDC u = new USDC();
-        Rewards r = new Rewards();
-        (r);
+        MockERC20 mockERC20 = new MockERC20();
+        (mockERC20);
 
         vm.stopBroadcast();
     }

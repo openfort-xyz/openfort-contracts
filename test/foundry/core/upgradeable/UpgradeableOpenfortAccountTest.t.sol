@@ -4,13 +4,13 @@ pragma solidity =0.8.19;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
-import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
+import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
-import {TestToken} from "account-abstraction/test/TestToken.sol";
+import {MockERC20} from "contracts/mock/MockERC20.sol";
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {OpenfortUpgradeableProxy} from "contracts/core/upgradeable/OpenfortUpgradeableProxy.sol";
-import {MockedV2UpgradeableOpenfortAccount} from "contracts/mock/MockedV2UpgradeableOpenfortAccount.sol";
+import {MockV2UpgradeableOpenfortAccount} from "contracts/mock/MockV2UpgradeableOpenfortAccount.sol";
 
 contract UpgradeableOpenfortAccountTest is Test {
     using ECDSA for bytes32;
@@ -20,7 +20,7 @@ contract UpgradeableOpenfortAccountTest is Test {
     UpgradeableOpenfortFactory public upgradeableOpenfortFactory;
     address public account;
     TestCounter public testCounter;
-    TestToken public testToken;
+    MockERC20 public mockERC20;
 
     // Testing addresses
     address private factoryAdmin;
@@ -159,8 +159,8 @@ contract UpgradeableOpenfortAccountTest is Test {
 
         // deploy a new TestCounter
         testCounter = new TestCounter();
-        // deploy a new TestToken (ERC20)
-        testToken = new TestToken();
+        // deploy a new MockERC20 (ERC20)
+        mockERC20 = new MockERC20();
         vm.stopPrank();
     }
 
@@ -942,21 +942,21 @@ contract UpgradeableOpenfortAccountTest is Test {
     }
 
     /*
-     * Test an account with testToken instead of TestCount.
+     * Test an account with mockERC20 instead of TestCount.
      */
     function testMintTokenAccount() public {
         // Verify that the totalSupply is stil 0
-        assertEq(testToken.totalSupply(), 0);
+        assertEq(mockERC20.totalSupply(), 0);
 
         // Mint 1 to beneficiary
-        testToken.mint(beneficiary, 1);
-        assertEq(testToken.totalSupply(), 1);
+        mockERC20.mint(beneficiary, 1);
+        assertEq(mockERC20.totalSupply(), 1);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             account,
             accountAdminPKey,
             bytes(""),
-            address(testToken),
+            address(mockERC20),
             0,
             abi.encodeWithSignature("mint(address,uint256)", beneficiary, 1)
         );
@@ -967,7 +967,7 @@ contract UpgradeableOpenfortAccountTest is Test {
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the totalSupply has increased
-        assertEq(testToken.totalSupply(), 2);
+        assertEq(mockERC20.totalSupply(), 2);
     }
 
     /*
@@ -1026,8 +1026,9 @@ contract UpgradeableOpenfortAccountTest is Test {
      * Create an account and upgrade its implementation
      */
     function testUpgradeAccount() public {
-        assertEq(UpgradeableOpenfortAccount(payable(account)).version(), 1);
-        MockedV2UpgradeableOpenfortAccount newAccountImplementation = new MockedV2UpgradeableOpenfortAccount();
+        assertEq(UpgradeableOpenfortAccount(payable(account)).owner(), address(accountAdmin));
+        assertEq(address(UpgradeableOpenfortAccount(payable(account)).entryPoint()), address(entryPoint));
+        MockV2UpgradeableOpenfortAccount newAccountImplementation = new MockV2UpgradeableOpenfortAccount();
         OpenfortUpgradeableProxy p = OpenfortUpgradeableProxy(payable(account));
         // Printing account address and the implementation address
         console.log(account);
@@ -1039,8 +1040,8 @@ contract UpgradeableOpenfortAccountTest is Test {
         vm.prank(accountAdmin);
         UpgradeableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
 
-        // Notice that, even though we bind the address to the old implementation, version() now returns 2
-        assertEq(UpgradeableOpenfortAccount(payable(account)).version(), 2);
+        // Notice that, even though we bind the address to the old implementation, entryPoint() is now 0
+        assertEq(address(UpgradeableOpenfortAccount(payable(account)).entryPoint()), address(0));
 
         // Printing account address and the implementation address. Impl address should have changed
         console.log(account);

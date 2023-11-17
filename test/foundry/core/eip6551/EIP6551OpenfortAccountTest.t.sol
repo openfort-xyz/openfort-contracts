@@ -2,12 +2,12 @@
 pragma solidity =0.8.19;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {SigUtils} from "../../utils/SigUtils.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {ERC6551Registry, IERC6551Registry} from "erc6551/src/ERC6551Registry.sol";
 import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
-import {VIPNFT} from "contracts/mock/VipNFT.sol";
-import {ERC6551Registry, IERC6551Registry} from "lib/erc6551/src/ERC6551Registry.sol";
+import {MockERC721} from "contracts/mock/MockERC721.sol";
 import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAccount.sol";
+import {SigUtils} from "../../utils/SigUtils.sol";
 
 contract EIP6551OpenfortAccountTest is Test {
     using ECDSA for bytes32;
@@ -18,7 +18,7 @@ contract EIP6551OpenfortAccountTest is Test {
     EIP6551OpenfortAccount public implEIP6551OpenfortAccount;
     bytes32 public versionSalt = vm.envBytes32("VERSION_SALT");
     address public account;
-    VIPNFT public testToken;
+    MockERC721 public mockERC721;
 
     // Testing addresses
     address private factoryAdmin;
@@ -112,7 +112,7 @@ contract EIP6551OpenfortAccountTest is Test {
     /**
      * @notice Initialize the StaticOpenfortAccount testing contract.
      * Scenario:
-     * - factoryAdmin is the deployer (and owner) of the UpgradeableOpenfortFactory
+     * - factoryAdmin is the deployer (and owner) of the mockNFT
      * - accountAdmin is the account used to deploy new static accounts
      * - entryPoint is the singleton EntryPoint
      * - testCounter is the counter used to test userOps
@@ -135,7 +135,7 @@ contract EIP6551OpenfortAccountTest is Test {
         if (vm.envAddress("ENTRY_POINT_ADDRESS").code.length > 0) {
             entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
         }
-        // If not a fork, deploy entryPoint (at correct address)
+        // If not a fork, deploy entryPoint (at the correct address)
         else {
             EntryPoint entryPoint_aux = new EntryPoint();
             bytes memory code = address(entryPoint_aux).code;
@@ -148,7 +148,7 @@ contract EIP6551OpenfortAccountTest is Test {
         if (vm.envAddress("ERC6551_REGISTRY_ADDRESS").code.length > 0) {
             erc6551Registry = ERC6551Registry(payable(vm.envAddress("ERC6551_REGISTRY_ADDRESS")));
         }
-        // If not a fork, deploy entryPoint (at correct address)
+        // If not a fork, deploy ERC6551 registry (at the correct address)
         else {
             ERC6551Registry ERC6551Registry_aux = new ERC6551Registry();
             bytes memory code = address(ERC6551Registry_aux).code;
@@ -157,29 +157,43 @@ contract EIP6551OpenfortAccountTest is Test {
             erc6551Registry = ERC6551Registry(payable(targetAddr));
         }
 
-        // deploy a new VIPNFT collection
-        testToken = new VIPNFT();
+        // deploy a new MockERC721 collection
+        mockERC721 = new MockERC721();
 
         implEIP6551OpenfortAccount = new EIP6551OpenfortAccount();
 
         address eip6551OpenfortAccountAddress = erc6551Registry.createAccount(
-            address(implEIP6551OpenfortAccount), versionSalt, chainId, address(testToken), 1
+            address(implEIP6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1
         );
 
         eip6551OpenfortAccount = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress));
         eip6551OpenfortAccount.initialize(address(entryPoint));
 
-        testToken.mint(eip6551OpenfortAccountAddress, 1);
+        mockERC721.mint(eip6551OpenfortAccountAddress, 1);
 
         vm.stopPrank();
     }
 
     /*
      * Test reinitialize. It should fail.
-     *
      */
     function testFailReinitialize() public {
         eip6551OpenfortAccount.initialize(address(entryPoint));
+    }
+
+    /*
+     * Test deploy. Regular, no userOps.
+     */
+    function testERC6551Deploy() public {
+        address deployedAccount =
+            erc6551Registry.createAccount(address(implEIP6551OpenfortAccount), 0, block.chainid, address(0), 0);
+
+        assertTrue(deployedAccount != address(0));
+
+        address predictedAccount =
+            erc6551Registry.account(address(implEIP6551OpenfortAccount), 0, block.chainid, address(0), 0);
+
+        assertEq(predictedAccount, deployedAccount);
     }
 
     /*
@@ -207,7 +221,7 @@ contract EIP6551OpenfortAccountTest is Test {
             chainId := chainid()
         }
         address eip6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
-            address(implEIP6551OpenfortAccount), bytes32(0), chainId, address(testToken), 1
+            address(implEIP6551OpenfortAccount), bytes32(0), chainId, address(mockERC721), 1
         );
 
         EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
@@ -225,7 +239,7 @@ contract EIP6551OpenfortAccountTest is Test {
             chainId := chainid()
         }
         address eip6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
-            address(implEIP6551OpenfortAccount), versionSalt, chainId, address(testToken), 1
+            address(implEIP6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1
         );
         EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
         IEntryPoint e = eip6551OpenfortAccount2.entryPoint();
@@ -242,7 +256,7 @@ contract EIP6551OpenfortAccountTest is Test {
             chainId := chainid()
         }
         address eip6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
-            address(implEIP6551OpenfortAccount), versionSalt, chainId, address(testToken), 1
+            address(implEIP6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1
         );
 
         EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
@@ -274,7 +288,7 @@ contract EIP6551OpenfortAccountTest is Test {
      * Check that the owner of the eip6551 account is the owner of the NFT
      */
     function testOwner() public {
-        assertEq(eip6551OpenfortAccount.owner(), testToken.ownerOf(1));
+        assertEq(eip6551OpenfortAccount.owner(), mockERC721.ownerOf(1));
         assertEq(eip6551OpenfortAccount.owner(), address(eip6551OpenfortAccount));
     }
 
@@ -285,9 +299,9 @@ contract EIP6551OpenfortAccountTest is Test {
     function testNotOwner() public {
         // Burning the NFT
         vm.prank(address(eip6551OpenfortAccount));
-        testToken.transferFrom(address(eip6551OpenfortAccount), address(1), 1);
+        mockERC721.transferFrom(address(eip6551OpenfortAccount), address(1), 1);
 
-        assertEq(eip6551OpenfortAccount.owner(), testToken.ownerOf(1));
+        assertEq(eip6551OpenfortAccount.owner(), mockERC721.ownerOf(1));
         assertNotEq(eip6551OpenfortAccount.owner(), address(eip6551OpenfortAccount));
         assertEq(eip6551OpenfortAccount.owner(), address(1));
     }
@@ -304,31 +318,31 @@ contract EIP6551OpenfortAccountTest is Test {
         // Get the counterfactual address
         vm.prank(factoryAdmin);
         address eip6551OpenfortAccountAddress2 =
-            erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId, address(testToken), 1);
+            erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1);
 
         // Expect that we will see an event containing the account and admin
         // vm.expectEmit(true, true, false, true);
         // emit IERC6551Registry.ERC6551AccountCreated(
-        //     eip6551OpenfortAccountAddress2, address(eip6551OpenfortAccount), chainId, address(testToken), 1, 2
+        //     eip6551OpenfortAccountAddress2, address(eip6551OpenfortAccount), chainId, address(mockERC721), 1, 2
         // );
 
         // Deploy a static account to the counterfactual address
         vm.prank(factoryAdmin);
-        erc6551Registry.createAccount(address(eip6551OpenfortAccount), versionSalt, chainId, address(testToken), 1);
+        erc6551Registry.createAccount(address(eip6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1);
 
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
         assertEq(
             eip6551OpenfortAccountAddress2,
-            erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId, address(testToken), 1)
+            erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1)
         );
         // assertNotEq(
         //     eip6551OpenfortAccountAddress2,
-        //     erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId, address(testToken), 1)
+        //     erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1)
         // );
         assertNotEq(
             eip6551OpenfortAccountAddress2,
-            erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId + 1, address(testToken), 1)
+            erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId + 1, address(mockERC721), 1)
         );
         assertNotEq(
             eip6551OpenfortAccountAddress2,

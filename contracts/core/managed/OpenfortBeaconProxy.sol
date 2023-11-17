@@ -5,7 +5,7 @@ import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol"
 
 /**
  * @title OpenfortBeaconProxy (Non-upgradeable)
- * @notice Contract to create the Beacon to determine implementation contract, which is where they will delegate all function calls.
+ * @notice Contract to create the beacon. It determines the implementation contract.
  * It inherits from:
  *  - BeaconProxy
  */
