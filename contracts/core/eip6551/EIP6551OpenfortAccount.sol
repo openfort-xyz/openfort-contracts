@@ -50,7 +50,7 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
         }
         emit EntryPointUpdated(entrypointContract, _entrypoint);
         entrypointContract = _entrypoint;
-        __EIP712_init("Openfort", "0.4");
+        __EIP712_init("Openfort", "0.5");
         state = 1;
     }
 
@@ -94,7 +94,6 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
         if (_operation != 0) revert OperationNotAllowed();
         ++state;
         bool success;
-        // solhint-disable-next-line avoid-low-level-calls
         (success, _result) = _target.call{value: _value}(_data);
         require(success, string(_result));
         return _result;
@@ -103,7 +102,7 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
     /**
      * Execute a transaction (called directly from owner, or by entryPoint)
      */
-    function execute(address dest, uint256 value, bytes calldata func) public override {
+    function execute(address dest, uint256 value, bytes calldata func) public override returns (bytes memory _result) {
         ++state;
         super.execute(dest, value, func);
     }
