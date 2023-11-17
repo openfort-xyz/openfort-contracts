@@ -62,21 +62,9 @@ contract RecoverableOpenfortFactory is IBaseOpenfortFactory {
         }
 
         emit AccountCreated(account, _admin);
-        account = address(
-            new OpenfortRecoverableProxy{salt: salt}(
-                accountImplementation,
-                abi.encodeCall(
-                    RecoverableOpenfortAccount.initialize,
-                    (
-                        _admin,
-                        entrypointContract,
-                        recoveryPeriod,
-                        securityPeriod,
-                        securityWindow,
-                        lockPeriod,
-                        openfortGuardian)
-                    )
-                )
+        account = address(new OpenfortRecoverableProxy{salt: salt}(accountImplementation, ""));
+        RecoverableOpenfortAccount(payable(account)).initialize(
+            _admin, entrypointContract, recoveryPeriod, securityPeriod, securityWindow, lockPeriod, openfortGuardian
         );
     }
 
@@ -88,24 +76,7 @@ contract RecoverableOpenfortFactory is IBaseOpenfortFactory {
         return Create2.computeAddress(
             salt,
             keccak256(
-                abi.encodePacked(
-                    type(OpenfortRecoverableProxy).creationCode,
-                    abi.encode(
-                        accountImplementation,
-                        abi.encodeCall(
-                            RecoverableOpenfortAccount.initialize,
-                            (
-                                _admin,
-                                entrypointContract,
-                                recoveryPeriod,
-                                securityPeriod,
-                                securityWindow,
-                                lockPeriod,
-                                openfortGuardian
-                            )
-                        )
-                    )
-                )
+                abi.encodePacked(type(OpenfortRecoverableProxy).creationCode, abi.encode(accountImplementation, ""))
             )
         );
     }

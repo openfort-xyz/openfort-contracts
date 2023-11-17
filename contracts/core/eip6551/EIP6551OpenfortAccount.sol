@@ -35,11 +35,6 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
 
     receive() external payable override(BaseOpenfortAccount, IERC6551Account) {}
 
-    constructor() {
-        emit AccountCreated(msg.sender);
-        _disableInitializers();
-    }
-
     /*
      * @notice Initialize the smart contract wallet.
      */
