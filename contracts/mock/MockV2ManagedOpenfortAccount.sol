@@ -15,7 +15,7 @@ import {BaseOpenfortAccount, IEntryPoint} from "../core/BaseOpenfortAccount.sol"
  * It inherits from:
  *  - BaseOpenfortAccount
  */
-contract MockedV2ManagedOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradeable {
+contract MockV2ManagedOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradeable {
     address private constant ENTRYPOINTCONTRACT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
 
     /*
@@ -28,10 +28,6 @@ contract MockedV2ManagedOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgr
         _transferOwnership(_defaultAdmin);
     }
 
-    function version() external pure override returns (uint256) {
-        return 2;
-    }
-
     function owner() public view virtual override(BaseOpenfortAccount, OwnableUpgradeable) returns (address) {
         return OwnableUpgradeable.owner();
     }
@@ -40,6 +36,6 @@ contract MockedV2ManagedOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgr
      * Return the current EntryPoint
      */
     function entryPoint() public pure override returns (IEntryPoint) {
-        return IEntryPoint(ENTRYPOINTCONTRACT);
+        return IEntryPoint(address(0));
     }
 }
