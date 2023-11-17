@@ -105,7 +105,7 @@ abstract contract BaseOpenfortAccount is
     /*
      * @notice Return whether a sessionKey is valid.
      */
-    function isValidSessionKey(address _sessionKey, bytes calldata callData) public returns (bool) {
+    function isValidSessionKey(address _sessionKey, bytes calldata _callData) public returns (bool) {
         SessionKeyStruct storage sessionKey = sessionKeys[_sessionKey];
         // If not owner and the session key is revoked, return false
         if (sessionKey.validUntil == 0) return false;
@@ -116,7 +116,7 @@ abstract contract BaseOpenfortAccount is
         // If the signer is a session key that is still valid
         // Let's first get the selector of the function that the caller is using
         bytes4 funcSelector =
-            callData[0] | (bytes4(callData[1]) >> 8) | (bytes4(callData[2]) >> 16) | (bytes4(callData[3]) >> 24);
+            _callData[0] | (bytes4(_callData[1]) >> 8) | (bytes4(_callData[2]) >> 16) | (bytes4(_callData[3]) >> 24);
 
         if (funcSelector == EXECUTE_SELECTOR) {
             // Limit of transactions per sessionKey reached
@@ -133,7 +133,7 @@ abstract contract BaseOpenfortAccount is
 
             // If it is not a masterSessionKey, let's check for whitelisting and reentrancy
             address toContract;
-            (toContract,,) = abi.decode(callData[4:], (address, uint256, bytes));
+            (toContract,,) = abi.decode(_callData[4:], (address, uint256, bytes));
             if (toContract == address(this)) {
                 return false;
             } // Only masterSessionKey can reenter
@@ -145,7 +145,7 @@ abstract contract BaseOpenfortAccount is
 
             return false; // All other cases, deny
         } else if (funcSelector == EXECUTEBATCH_SELECTOR) {
-            (address[] memory toContracts,,) = abi.decode(callData[4:], (address[], uint256[], bytes[]));
+            (address[] memory toContracts,,) = abi.decode(_callData[4:], (address[], uint256[], bytes[]));
             // Check if limit of transactions per sessionKey reached
             if (sessionKey.limit < toContracts.length || toContracts.length > 9) return false;
             unchecked {
@@ -333,9 +333,5 @@ abstract contract BaseOpenfortAccount is
             sessionKeys[_key].registrarAddress = address(0);
             emit SessionKeyRevoked(_key);
         }
-    }
-
-    function version() external pure virtual returns (uint256) {
-        return 1;
     }
 }

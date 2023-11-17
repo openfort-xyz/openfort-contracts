@@ -3,7 +3,7 @@ pragma solidity =0.8.19;
 
 import {Script, console} from "forge-std/Script.sol";
 import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import {VIPNFT} from "contracts/mock/VipNFT.sol";
+import {MockERC721} from "contracts/mock/MockERC721.sol";
 import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAccount.sol";
 import {IERC6551Registry} from "lib/erc6551/src/ERC6551Registry.sol";
 
@@ -12,7 +12,7 @@ contract EIP6551OpenfortDeploy is Script {
     address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
     IERC6551Registry internal erc6551Registry = IERC6551Registry((payable(vm.envAddress("ERC6551_REGISTRY_ADDRESS"))));
-    VIPNFT internal testToken;
+    MockERC721 internal nft721;
 
     function run() public {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
@@ -26,12 +26,12 @@ contract EIP6551OpenfortDeploy is Script {
             chainId := chainid()
         }
 
-        // deploy a new VIPNFT collection
-        testToken = new VIPNFT();
+        // deploy a new MockERC721 collection
+        nft721 = new MockERC721();
 
         // The first call should create a new account, while the second will just return the corresponding account address
         address account2 =
-            erc6551Registry.createAccount(address(eip6551OpenfortAccount), versionSalt, chainId, address(testToken), 1);
+            erc6551Registry.createAccount(address(eip6551OpenfortAccount), versionSalt, chainId, address(nft721), 1);
         console.log("Registry at address %s has created an account at address %s", address(erc6551Registry), account2);
 
         vm.stopBroadcast();

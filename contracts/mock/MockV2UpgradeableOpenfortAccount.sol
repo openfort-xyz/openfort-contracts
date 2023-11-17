@@ -11,13 +11,13 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {BaseOpenfortAccount, IEntryPoint} from "../core/BaseOpenfortAccount.sol";
 
 /**
- * @title MockedV2UpgradeableOpenfortAccount
+ * @title MockV2UpgradeableOpenfortAccount
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
  *  - BaseOpenfortAccount
  *  - UUPSUpgradeable
  */
-contract MockedV2UpgradeableOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradeable, UUPSUpgradeable {
+contract MockV2UpgradeableOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradeable, UUPSUpgradeable {
     address internal entrypointContract;
     /*
      * @notice Initialize the smart contract wallet.
@@ -33,10 +33,6 @@ contract MockedV2UpgradeableOpenfortAccount is BaseOpenfortAccount, Ownable2Step
 
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
-    function version() external pure override returns (uint256) {
-        return 2;
-    }
-
     function owner() public view virtual override(BaseOpenfortAccount, OwnableUpgradeable) returns (address) {
         return OwnableUpgradeable.owner();
     }
@@ -44,7 +40,7 @@ contract MockedV2UpgradeableOpenfortAccount is BaseOpenfortAccount, Ownable2Step
     /**
      * Return the current EntryPoint
      */
-    function entryPoint() public view override returns (IEntryPoint) {
-        return IEntryPoint(entrypointContract);
+    function entryPoint() public pure override returns (IEntryPoint) {
+        return IEntryPoint(address(0));
     }
 }
