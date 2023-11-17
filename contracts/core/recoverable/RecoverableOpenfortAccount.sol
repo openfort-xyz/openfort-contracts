@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.19;
 
-// Base account contract to inherit from and EntryPoint interface
 import {
     Ownable2StepUpgradeable,
     OwnableUpgradeable
