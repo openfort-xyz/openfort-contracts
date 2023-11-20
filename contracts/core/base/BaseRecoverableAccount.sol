@@ -120,13 +120,6 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         emit GuardianAdded(_openfortGuardian);
     }
 
-    /**
-     * Return the current EntryPoint
-     */
-    function entryPoint() public view override returns (IEntryPoint) {
-        return IEntryPoint(entrypointContract);
-    }
-
     function owner() public view virtual override(BaseOpenfortAccount, OwnableUpgradeable) returns (address) {
         return OwnableUpgradeable.owner();
     }
