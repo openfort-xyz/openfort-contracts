@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.19;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
@@ -11,115 +11,13 @@ import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/Upgradeable
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {OpenfortUpgradeableProxy} from "contracts/core/upgradeable/OpenfortUpgradeableProxy.sol";
 import {MockV2UpgradeableOpenfortAccount} from "contracts/mock/MockV2UpgradeableOpenfortAccount.sol";
+import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
 
-contract UpgradeableOpenfortAccountTest is Test {
+contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
 
-    EntryPoint public entryPoint;
     UpgradeableOpenfortAccount public upgradeableOpenfortAccount;
     UpgradeableOpenfortFactory public upgradeableOpenfortFactory;
-    address public account;
-    TestCounter public testCounter;
-    MockERC20 public mockERC20;
-
-    // Testing addresses
-    address private factoryAdmin;
-    uint256 private factoryAdminPKey;
-
-    address private accountAdmin;
-    uint256 private accountAdminPKey;
-
-    address payable private beneficiary = payable(makeAddr("beneficiary"));
-
-    // bytes4(keccak256("isValidSignature(bytes32,bytes)")
-    bytes4 internal constant MAGICVALUE = 0x1626ba7e;
-    // keccak256("OpenfortMessage(bytes32 hashedMessage)");
-    bytes32 private constant OF_MSG_TYPEHASH = 0x57159f03b9efda178eab2037b2ec0b51ce11be0051b8a2a9992c29dc260e4a30;
-    bytes32 private constant _TYPE_HASH =
-        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-
-    event AccountCreated(address indexed account, address indexed accountAdmin);
-    event AccountImplementationDeployed(address indexed creator);
-
-    /*
-     * Auxiliary function to generate a userOP
-     */
-    function _setupUserOp(
-        address sender,
-        uint256 _signerPKey,
-        bytes memory _initCode,
-        bytes memory _callDataForEntrypoint
-    ) internal returns (UserOperation[] memory ops) {
-        uint256 nonce = entryPoint.getNonce(sender, 0);
-
-        // Get user op fields
-        UserOperation memory op = UserOperation({
-            sender: sender,
-            nonce: nonce,
-            initCode: _initCode,
-            callData: _callDataForEntrypoint,
-            callGasLimit: 500_000,
-            verificationGasLimit: 500_000,
-            preVerificationGas: 500_000,
-            maxFeePerGas: 0,
-            maxPriorityFeePerGas: 0,
-            paymasterAndData: bytes(""),
-            signature: bytes("")
-        });
-
-        // Sign UserOp
-        bytes32 opHash = EntryPoint(entryPoint).getUserOpHash(op);
-        bytes32 msgHash = ECDSA.toEthSignedMessageHash(opHash);
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_signerPKey, msgHash);
-        bytes memory userOpSignature = abi.encodePacked(r, s, v);
-
-        address recoveredSigner = ECDSA.recover(msgHash, v, r, s);
-        address expectedSigner = vm.addr(_signerPKey);
-        assertEq(recoveredSigner, expectedSigner);
-
-        op.signature = userOpSignature;
-
-        // Store UserOp
-        ops = new UserOperation[](1);
-        ops[0] = op;
-    }
-
-    /* 
-     * Auxiliary function to generate a userOP using the execute()
-     * from the account
-     */
-    function _setupUserOpExecute(
-        address sender,
-        uint256 _signerPKey,
-        bytes memory _initCode,
-        address _target,
-        uint256 _value,
-        bytes memory _callData
-    ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint =
-            abi.encodeWithSignature("execute(address,uint256,bytes)", _target, _value, _callData);
-
-        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
-    }
-
-    /* 
-     * Auxiliary function to generate a userOP using the executeBatch()
-     * from the account
-     */
-    function _setupUserOpExecuteBatch(
-        address sender,
-        uint256 _signerPKey,
-        bytes memory _initCode,
-        address[] memory _target,
-        uint256[] memory _value,
-        bytes[] memory _callData
-    ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint =
-            abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
-
-        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
-    }
 
     /**
      * @notice Initialize the UpgradeableOpenfortAccount testing contract.
@@ -130,11 +28,13 @@ contract UpgradeableOpenfortAccountTest is Test {
      * - testCounter is the counter used to test userOps
      */
     function setUp() public {
+        versionSalt = bytes32(0x0);
         // Setup and fund signers
         (factoryAdmin, factoryAdminPKey) = makeAddrAndKey("factoryAdmin");
         vm.deal(factoryAdmin, 100 ether);
         (accountAdmin, accountAdminPKey) = makeAddrAndKey("accountAdmin");
         vm.deal(accountAdmin, 100 ether);
+        (OPENFORT_GUARDIAN, OPENFORT_GUARDIAN_PKEY) = makeAddrAndKey("OPENFORT_GUARDIAN");
 
         vm.startPrank(factoryAdmin);
         // If we are in a fork
@@ -152,10 +52,18 @@ contract UpgradeableOpenfortAccountTest is Test {
         // deploy upgradeable account implementation
         vm.expectEmit(true, true, false, true);
         emit AccountImplementationDeployed(factoryAdmin);
-        upgradeableOpenfortAccount = new UpgradeableOpenfortAccount();
+        upgradeableOpenfortAccount = new UpgradeableOpenfortAccount{salt: versionSalt}();
         // deploy upgradeable account factory
-        upgradeableOpenfortFactory =
-            new UpgradeableOpenfortFactory(payable(address(entryPoint)), address(upgradeableOpenfortAccount));
+        upgradeableOpenfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(
+            factoryAdmin,
+            address(entryPoint),
+            address(upgradeableOpenfortAccount),
+            RECOVERY_PERIOD,
+            SECURITY_PERIOD,
+            SECURITY_WINDOW,
+            LOCK_PERIOD,
+            OPENFORT_GUARDIAN
+        );
 
         // Create an upgradeable account wallet and get its address
         account = upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
@@ -1058,8 +966,16 @@ contract UpgradeableOpenfortAccountTest is Test {
     function testUpdateEntryPoint() public {
         address oldEntryPoint = address(0x0576a174D229E3cFA37253523E645A78A0C91B57);
         address newEntryPoint = vm.envAddress("ENTRY_POINT_ADDRESS");
-        UpgradeableOpenfortFactory upgradeableOpenfortFactoryOld =
-            new UpgradeableOpenfortFactory(payable(oldEntryPoint), address(upgradeableOpenfortAccount));
+        UpgradeableOpenfortFactory upgradeableOpenfortFactoryOld = new UpgradeableOpenfortFactory{salt: versionSalt}(
+            factoryAdmin,
+            oldEntryPoint,
+            address(upgradeableOpenfortAccount),
+            RECOVERY_PERIOD,
+            SECURITY_PERIOD,
+            SECURITY_WINDOW,
+            LOCK_PERIOD,
+            OPENFORT_GUARDIAN
+        );
 
         // Create an upgradeable account wallet using the old EntryPoint and get its address
         address payable accountOld = payable(upgradeableOpenfortFactoryOld.createAccountWithNonce(accountAdmin, "999"));
@@ -1146,5 +1062,1291 @@ contract UpgradeableOpenfortAccountTest is Test {
 
         bytes4 valid = UpgradeableOpenfortAccount(payable(account)).isValidSignature(hash, signature);
         assertEq(valid, MAGICVALUE); // SHOULD PASS
+    }
+
+    /**
+     * Lock tests *
+     */
+
+    /*
+     * Test locking the Openfort account using the default guardian.
+     */
+    function testLockAccount() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        assertEq(openfortAccount.isLocked(), false);
+        assertEq(openfortAccount.getLock(), 0);
+
+        vm.expectRevert(MustBeGuardian.selector);
+        openfortAccount.lock();
+
+        vm.prank(OPENFORT_GUARDIAN);
+        openfortAccount.lock();
+
+        assertEq(openfortAccount.isLocked(), true);
+        assertEq(openfortAccount.getLock(), block.timestamp + LOCK_PERIOD);
+
+        vm.expectRevert(AccountLocked.selector);
+        vm.prank(OPENFORT_GUARDIAN);
+        openfortAccount.lock();
+
+        // Automatically unlock
+        skip(LOCK_PERIOD + 1);
+        assertEq(openfortAccount.isLocked(), false);
+        assertEq(openfortAccount.getLock(), 0);
+    }
+
+    /*
+     * Test unlocking the Openfort account using the default guardian.
+     */
+    function testUnlockAccount() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        assertEq(openfortAccount.isLocked(), false);
+        assertEq(openfortAccount.getLock(), 0);
+
+        vm.expectRevert(MustBeGuardian.selector);
+        openfortAccount.lock();
+
+        vm.prank(OPENFORT_GUARDIAN);
+        openfortAccount.lock();
+
+        assertEq(openfortAccount.isLocked(), true);
+        assertEq(openfortAccount.getLock(), block.timestamp + LOCK_PERIOD);
+
+        skip(LOCK_PERIOD / 2);
+
+        vm.expectRevert(MustBeGuardian.selector);
+        openfortAccount.unlock();
+        assertEq(openfortAccount.isLocked(), true);
+
+        vm.prank(OPENFORT_GUARDIAN);
+        openfortAccount.unlock();
+
+        assertEq(openfortAccount.isLocked(), false);
+        assertEq(openfortAccount.getLock(), 0);
+
+        vm.expectRevert(AccountNotLocked.selector);
+        vm.prank(OPENFORT_GUARDIAN);
+        openfortAccount.unlock();
+    }
+
+    /**
+     * Add guardians tests *
+     */
+
+    /*
+     * Test proposing a guardian (by the owner) and accepting it (by the owner).
+     * Successfully propose a guardian and confirm it after SECURITY_PERIOD
+     */
+    function testAddEOAGuardian() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        openfortAccount.getGuardians();
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Trying to proposa a guardian not using the owner
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+
+        // Test if zero address is a guardian
+        assertEq(openfortAccount.isGuardian(address(0)), false);
+
+        skip(1);
+
+        vm.expectRevert(PendingProposalNotOver.selector);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is now 2
+        assertEq(openfortAccount.guardianCount(), 2);
+
+        // Friend account should be a guardian now
+        assertEq(openfortAccount.isGuardian(friendAccount), true);
+    }
+
+    /*
+     * Test proposing a guardian, but its proposal expires before accepting.
+     * An expired proposal cannot be accepted. A proposal expires after SECURITY_PERIOD and SECURITY_WINDOW.
+     */
+    function testAddEOAGuardianExpired() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Trying to proposa a guardian not using the owner
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+
+        skip(1);
+
+        vm.expectRevert(PendingProposalNotOver.selector);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        skip(SECURITY_PERIOD + SECURITY_WINDOW);
+        vm.expectRevert(PendingProposalExpired.selector);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+    }
+
+    /*
+     * Test proposing a guardian, but its proposal expires before accepting. Re-add again
+     * An expired proposal cannot be accepted. A proposal expires after SECURITY_PERIOD and SECURITY_WINDOW.
+     */
+    function testAddEOAGuardianExpiredThenReAdd() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Trying to proposa a guardian not using the owner
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+
+        skip(1);
+
+        vm.expectRevert(PendingProposalNotOver.selector);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        skip(SECURITY_PERIOD + SECURITY_WINDOW);
+        vm.expectRevert(PendingProposalExpired.selector);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+
+        /* Let's try it again (re-add) */
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+
+        skip(1);
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is now 2
+        assertEq(openfortAccount.guardianCount(), 2);
+
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), true);
+    }
+
+    /*
+     * Test proposing a guardian twice. Make sure a new proposal is not created and the original still works.
+     * An expired proposal cannot be accepted. A proposal expires after SECURITY_PERIOD and SECURITY_WINDOW.
+     */
+    function testAddEOAGuardianDuplicatedPorposal() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+
+        skip(1);
+
+        vm.expectRevert();
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Now let's check that, even after the revert, it is possible to confirm the proposal (no DoS)
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is now 2
+        assertEq(openfortAccount.guardianCount(), 2);
+
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), true);
+    }
+
+    /*
+     * Test proposing a guardian and cancel its proposal before accepting or expiring
+     * Only the owner can cancel an ongoing proposal.
+     */
+    function testAddEOAGuardianCancel() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Trying to proposa a guardian not using the owner
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+
+        skip(1);
+        vm.expectRevert(PendingProposalNotOver.selector);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        skip(SECURITY_PERIOD);
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.cancelGuardianProposal(friendAccount);
+
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposalCancelled(friendAccount);
+        vm.prank(accountAdmin);
+        openfortAccount.cancelGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+
+        vm.prank(accountAdmin);
+        vm.expectRevert(UnknownProposal.selector);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+    }
+
+    /*
+     * Test proposing owner as guardian. It should revert.
+     * Successfully propose a guardian and confirm it after SECURITY_PERIOD
+     */
+    function testAddOwnerAsGuardianNotAllowed() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        openfortAccount.getGuardians();
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Expect revert because the owner cannot be proposed as guardian
+        vm.expectRevert();
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(accountAdmin);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Owner account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(accountAdmin), false);
+
+        // Expect revert because the default guardian cannot be proposed again
+        vm.expectRevert(DuplicatedGuardian.selector);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(OPENFORT_GUARDIAN);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // OPENFORT_GUARDIAN account should stil be a guardian
+        assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), true);
+    }
+
+    /*
+     * Test proposing multiple guardians (by the owner) and accepting them afterwards (by the owner).
+     * Successfully propose guardians and confirm them after SECURITY_PERIOD
+     */
+    function testAddMultipleEOAGuardians() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        openfortAccount.getGuardians();
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create multiple friend EOAs
+        address[] memory friends = new address[](5);
+        friends[0] = makeAddr("friend");
+        friends[1] = makeAddr("friend2");
+        friends[2] = makeAddr("friend3");
+        friends[3] = makeAddr("friend4");
+        friends[4] = makeAddr("friend5");
+
+        for (uint256 index = 0; index < friends.length; index++) {
+            // Expect that we will see an event containing the friend account and security period
+            vm.expectEmit(true, true, false, true);
+            emit GuardianProposed(friends[index], block.timestamp + SECURITY_PERIOD);
+            vm.prank(accountAdmin);
+            openfortAccount.proposeGuardian(friends[index]);
+        }
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friends[0]), false);
+
+        skip(1);
+        skip(SECURITY_PERIOD);
+
+        for (uint256 index = 0; index < friends.length; index++) {
+            openfortAccount.confirmGuardianProposal(friends[index]);
+        }
+
+        // Verify that the number of guardians is now 6
+        assertEq(openfortAccount.guardianCount(), 6);
+
+        // First friend account should be a guardian now
+        assertEq(openfortAccount.isGuardian(friends[0]), true);
+    }
+
+    /**
+     * Revoke guardians tests *
+     */
+
+    /*
+     * Test revoking a guardian using owner.
+     * Only the owner can revoke a guardian.
+     */
+    function testRevokeGuardian() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        skip(1);
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is now 2
+        assertEq(openfortAccount.guardianCount(), 2);
+
+        // Friend account should be a guardian now
+        assertEq(openfortAccount.isGuardian(friendAccount), true);
+
+        // Trying to revoke a guardian not using the owner
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.revokeGuardian(friendAccount);
+
+        // Trying to revoke a non-existen guardian (random beneficiary address)
+        vm.expectRevert(MustBeGuardian.selector);
+        vm.prank(accountAdmin);
+        openfortAccount.revokeGuardian(beneficiary);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.revokeGuardian(friendAccount);
+
+        // Anyone can confirm a revokation. However, the security period has not passed yet
+        skip(1);
+        vm.expectRevert(PendingRevokeNotOver.selector);
+        openfortAccount.confirmGuardianRevocation(friendAccount);
+
+        // Anyone can confirm a revokation after security period
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianRevocation(friendAccount);
+
+        // Friend account is not a guardian anymore
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+        // Verify that the number of guardians is 1 again
+        assertEq(openfortAccount.guardianCount(), 1);
+    }
+
+    /*
+     * Test revoking the default guardian when having registered another (custom) one.
+     * Only the owner can revoke a guardian.
+     */
+    function testRevokeDefaultGuardian() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        openfortAccount.getGuardians();
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        skip(1);
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is now 2
+        assertEq(openfortAccount.guardianCount(), 2);
+
+        // Friend account should be a guardian now
+        assertEq(openfortAccount.isGuardian(friendAccount), true);
+
+        // Trying to revoke a guardian not using the owner
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianRevocationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
+
+        // Anyone can confirm a revokation. However, the security period has not passed yet
+        skip(1);
+        vm.expectRevert(PendingRevokeNotOver.selector);
+        openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+
+        // Anyone can confirm a revokation after security period
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+
+        // Default account is not a guardian anymore
+        assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), false);
+        // Verify that the number of guardians is 1 again
+        assertEq(openfortAccount.guardianCount(), 1);
+    }
+
+    /*
+     * Test revoking all guardians using owner.
+     * Only the owner can revoke a guardian.
+     */
+    function testRevokeAllGuardians() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        skip(1);
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is now 2
+        assertEq(openfortAccount.guardianCount(), 2);
+
+        // Friend account should be a guardian now
+        assertEq(openfortAccount.isGuardian(friendAccount), true);
+
+        // Trying to revoke a guardian not using the owner
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.revokeGuardian(friendAccount);
+
+        // Trying to revoke a non-existen guardian (random beneficiary address)
+        vm.expectRevert(MustBeGuardian.selector);
+        vm.prank(accountAdmin);
+        openfortAccount.revokeGuardian(beneficiary);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.revokeGuardian(friendAccount);
+
+        // Anyone can confirm a revokation. However, the security period has not passed yet
+        skip(1);
+        vm.expectRevert(PendingRevokeNotOver.selector);
+        openfortAccount.confirmGuardianRevocation(friendAccount);
+
+        // Anyone can confirm a revokation after security period
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianRevocation(friendAccount);
+
+        // Friend account is not a guardian anymore
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+        // Verify that the number of guardians is 1 again
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianRevocationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
+
+        // Anyone can confirm a revokation. However, the security period has not passed yet
+        skip(1);
+        vm.expectRevert(PendingRevokeNotOver.selector);
+        openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+
+        // Anyone can confirm a revokation after security period
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+
+        // Default account is not a guardian anymore
+        assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), false);
+        // Verify that the number of guardians is 1 again
+        assertEq(openfortAccount.guardianCount(), 0);
+    }
+
+    /*
+     * Test revoking a guardian, but its revocation expired before confirming.
+     * An expired revocation cannot be confirmed. A revocation expires after SECURITY_PERIOD + SECURITY_WINDOW.
+     */
+    function testRevokeEOAGuardianExpired() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        skip(1);
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.revokeGuardian(friendAccount);
+
+        skip(1);
+        skip(SECURITY_PERIOD + SECURITY_WINDOW);
+        vm.expectRevert(PendingRevokeExpired.selector);
+        openfortAccount.confirmGuardianRevocation(friendAccount);
+
+        // Verify that the number of guardians is still 2. No revocation took place
+        assertEq(openfortAccount.guardianCount(), 2);
+
+        // Friend account should still be a guardian
+        assertEq(openfortAccount.isGuardian(friendAccount), true);
+    }
+
+    /*
+     * Test revoking a guardian twice. Make sure a new revocation is not created and the original still works.
+     * An expired revocation cannot be confirmed. A revocation expires after SECURITY_PERIOD and SECURITY_WINDOW.
+     */
+    function testRevokeEOAGuardianDuplicatedPorposal() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        skip(1);
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is now 2
+        assertEq(openfortAccount.guardianCount(), 2);
+        // Friend account should now be a guardian
+        assertEq(openfortAccount.isGuardian(friendAccount), true);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        // Now let's check that, even after the revert, it is possible to confirm the proposal (no DoS)
+        openfortAccount.revokeGuardian(friendAccount);
+
+        vm.expectRevert(DuplicatedRevoke.selector);
+        skip(1);
+        vm.prank(accountAdmin);
+        openfortAccount.revokeGuardian(friendAccount);
+
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianRevocation(friendAccount);
+
+        // Verify that the number of guardians is now 1
+        assertEq(openfortAccount.guardianCount(), 1);
+        // Friend account should not be a guardian anymore
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+    }
+
+    /*
+     * Test revoking the default guardian and add it back.
+     */
+    function testRevokeDefaultGuardianAndAddBack() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianRevocationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        // Now let's check that, even after the revert, it is possible to confirm the proposal (no DoS)
+        openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
+
+        skip(SECURITY_PERIOD + 1);
+        openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+
+        // Verify that the number of guardians is now 0
+        assertEq(openfortAccount.guardianCount(), 0);
+        // deault (openfort) account should not be a guardian anymore
+        assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), false);
+
+        // Expect that we will see an event containing the deault (openfort) account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(OPENFORT_GUARDIAN);
+
+        skip(SECURITY_PERIOD + 1);
+        openfortAccount.confirmGuardianProposal(OPENFORT_GUARDIAN);
+
+        // Verify that the number of guardians is now 1 again
+        assertEq(openfortAccount.guardianCount(), 1);
+        // deault (openfort) account should be a guardian again
+        assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), true);
+    }
+
+    /*
+     * Test revoking a guardian using owner and cancel before confirming.
+     * Only the owner can revoke a guardian and cancel its revocation before confirming.
+     */
+    function testCancelRevokeGuardian() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        skip(1);
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Verify that the number of guardians is now 2
+        assertEq(openfortAccount.guardianCount(), 2);
+        // Friend account should be a guardian now
+        assertEq(openfortAccount.isGuardian(friendAccount), true);
+
+        // Trying to revoke a guardian not using the owner
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.revokeGuardian(friendAccount);
+
+        // Trying to revoke a non-existen guardian (random beneficiary address)
+        vm.expectRevert(MustBeGuardian.selector);
+        vm.prank(accountAdmin);
+        openfortAccount.revokeGuardian(beneficiary);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.revokeGuardian(friendAccount);
+
+        // Anyone can confirm a revokation. However, the security period has not passed yet
+        skip(1);
+        vm.expectRevert(PendingRevokeNotOver.selector);
+        openfortAccount.confirmGuardianRevocation(friendAccount);
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.cancelGuardianRevocation(friendAccount);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianRevocationCancelled(friendAccount);
+        vm.prank(accountAdmin);
+        openfortAccount.cancelGuardianRevocation(friendAccount);
+
+        // Friend account is not a guardian anymore
+        assertEq(openfortAccount.isGuardian(friendAccount), true);
+        // Verify that the number of guardians is 1 again
+        assertEq(openfortAccount.guardianCount(), 2);
+
+        // Cancelled revocation should not be able to be confirmed now
+        skip(SECURITY_PERIOD);
+        vm.expectRevert(UnknownRevoke.selector);
+        openfortAccount.confirmGuardianRevocation(friendAccount);
+    }
+
+    /*
+     * Random extra tests to mess up with the logic
+     */
+    function testMessingUpWithGuardianRegister() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Create 4 friends
+        address friendAccount;
+        uint256 friendAccountPK;
+        (friendAccount, friendAccountPK) = makeAddrAndKey("friend");
+
+        address friendAccount2;
+        uint256 friendAccount2PK;
+        (friendAccount2, friendAccount2PK) = makeAddrAndKey("friend2");
+
+        // Adding and removing guardians
+        vm.startPrank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+        openfortAccount.proposeGuardian(friendAccount2);
+        vm.stopPrank();
+
+        skip(SECURITY_PERIOD + 1);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+        vm.expectRevert(MustBeGuardian.selector);
+        openfortAccount.confirmGuardianRevocation(friendAccount2); // Notice this tries to confirm a non-existent revocation!
+        vm.expectRevert(UnknownRevoke.selector);
+        openfortAccount.confirmGuardianRevocation(friendAccount); // Notice this tries to confirm a non-existent revocation!
+        vm.prank(accountAdmin);
+        vm.expectRevert(MustBeGuardian.selector);
+        openfortAccount.revokeGuardian(friendAccount2); // Notice this tries to revoke a non-existent guardian!
+        vm.expectRevert(DuplicatedGuardian.selector);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount); // Notice this tries to register a guardian AGAIN!
+        vm.prank(accountAdmin);
+        openfortAccount.revokeGuardian(friendAccount); // Starting a valid revocation process
+        skip(SECURITY_PERIOD + 1);
+        vm.expectRevert(DuplicatedGuardian.selector);
+        openfortAccount.confirmGuardianProposal(friendAccount); // Notice this tries to confirm a guardian that is already valid and pending to revoke!
+    }
+
+    /**
+     * Recovery tests *
+     */
+
+    /*
+     * Check the correct functionality of startRecovery()
+     */
+    function testStartRecovery() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        vm.expectRevert(MustBeGuardian.selector);
+        openfortAccount.startRecovery(OPENFORT_GUARDIAN);
+
+        vm.prank(OPENFORT_GUARDIAN);
+        vm.expectRevert(GuardianCannotBeOwner.selector);
+        openfortAccount.startRecovery(OPENFORT_GUARDIAN);
+
+        vm.prank(OPENFORT_GUARDIAN);
+        openfortAccount.startRecovery(address(beneficiary));
+
+        assertEq(openfortAccount.isLocked(), true);
+    }
+
+    /*
+     * Checks that incorrect parameters should always fail when trying to complete a recovery
+     */
+    function testBasicChecksCompleteRecovery() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        vm.prank(OPENFORT_GUARDIAN);
+        openfortAccount.startRecovery(address(beneficiary));
+
+        assertEq(openfortAccount.isLocked(), true);
+
+        // The recovery time period has not passed. The user should wait to recover.
+        vm.expectRevert(OngoingRecovery.selector);
+        bytes[] memory signatures = new bytes[](1);
+        openfortAccount.completeRecovery(signatures);
+
+        // Providing an empty array when it is expecting one guardian
+        skip(RECOVERY_PERIOD + 1);
+        vm.expectRevert(InvalidSignatureAmount.selector);
+        bytes[] memory signatures_wrong_length = new bytes[](3);
+        openfortAccount.completeRecovery(signatures_wrong_length);
+
+        // Since signatures are empty, it should return an ECDSA error
+        vm.expectRevert("ECDSA: invalid signature length");
+        openfortAccount.completeRecovery(signatures);
+    }
+
+    /*
+     * Most basic, yet complete, recovery flow
+     * The default Openfort guardian is used to start and complete a recovery process.
+     * Ownership is transferred to beneficiary
+     */
+    function testBasicCompleteRecovery() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Default Openfort guardian starts a recovery process because the owner lost the PK
+        vm.prank(OPENFORT_GUARDIAN);
+        openfortAccount.startRecovery(address(beneficiary));
+        assertEq(openfortAccount.isLocked(), true);
+
+        bytes32 structHash = keccak256(
+            abi.encode(RECOVER_TYPEHASH, address(beneficiary), uint64(block.timestamp + RECOVERY_PERIOD), uint32(1))
+        );
+
+        bytes[] memory signatures = new bytes[](1);
+        signatures[0] = getEIP712SignatureFrom(account, structHash, OPENFORT_GUARDIAN_PKEY);
+
+        skip(RECOVERY_PERIOD + 1);
+        openfortAccount.completeRecovery(signatures);
+
+        assertEq(openfortAccount.isLocked(), false);
+        assertEq(openfortAccount.owner(), address(beneficiary));
+    }
+
+    /*
+     * Case: User added 2 guardians and keeps the default (Openfort)
+     * The 2 added guardians (friends) are used to recover the account and transfer
+     * the ownership to beneficiary
+     * @notice Remember that signatures need to be ordered by the guardian's address.
+     */
+    function test3GuardiansCompleteRecovery() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Create two friends
+        address friendAccount;
+        uint256 friendAccountPK;
+        (friendAccount, friendAccountPK) = makeAddrAndKey("friend");
+
+        address friendAccount2;
+        uint256 friendAccount2PK;
+        (friendAccount2, friendAccount2PK) = makeAddrAndKey("friend2");
+
+        {
+            // Expect that we will see an event containing the friend account and security period
+            vm.expectEmit(true, true, false, true);
+            emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+            vm.prank(accountAdmin);
+            openfortAccount.proposeGuardian(friendAccount);
+            vm.expectEmit(true, true, false, true);
+            emit GuardianProposed(friendAccount2, block.timestamp + SECURITY_PERIOD);
+            vm.prank(accountAdmin);
+            openfortAccount.proposeGuardian(friendAccount2);
+
+            skip(1);
+            skip(SECURITY_PERIOD);
+            openfortAccount.confirmGuardianProposal(friendAccount);
+            openfortAccount.confirmGuardianProposal(friendAccount2);
+        }
+
+        {
+            // Default Openfort guardian starts a recovery process because the owner lost the PK
+            vm.prank(OPENFORT_GUARDIAN);
+            openfortAccount.startRecovery(address(beneficiary));
+            assertEq(openfortAccount.isLocked(), true);
+        }
+
+        bytes32 structHash = keccak256(
+            abi.encode(RECOVER_TYPEHASH, address(beneficiary), uint64(block.timestamp + RECOVERY_PERIOD), uint32(2))
+        );
+
+        bytes[] memory signatures = new bytes[](2);
+        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
+        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccountPK);
+
+        skip(RECOVERY_PERIOD + 1);
+        openfortAccount.completeRecovery(signatures);
+
+        assertEq(openfortAccount.isLocked(), false);
+        assertEq(openfortAccount.owner(), address(beneficiary));
+    }
+
+    /*
+     * Case: User added 2 guardians and keeps the default (Openfort)
+     * The 2 added guardians (friends) are used to recover the account and transfer
+     * the ownership to beneficiary. Faild due to unsorted signatures
+     * @notice Remember that signatures need to be ordered by the guardian's address.
+     */
+    function test3GuardiansUnorderedCompleteRecovery() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Create two friends
+        address friendAccount;
+        uint256 friendAccountPK;
+        (friendAccount, friendAccountPK) = makeAddrAndKey("friend");
+
+        address friendAccount2;
+        uint256 friendAccount2PK;
+        (friendAccount2, friendAccount2PK) = makeAddrAndKey("friend2");
+
+        {
+            // Expect that we will see an event containing the friend account and security period
+            vm.expectEmit(true, true, false, true);
+            emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+            vm.prank(accountAdmin);
+            openfortAccount.proposeGuardian(friendAccount);
+            vm.expectEmit(true, true, false, true);
+            emit GuardianProposed(friendAccount2, block.timestamp + SECURITY_PERIOD);
+            vm.prank(accountAdmin);
+            openfortAccount.proposeGuardian(friendAccount2);
+
+            skip(1);
+            skip(SECURITY_PERIOD);
+            openfortAccount.confirmGuardianProposal(friendAccount);
+            openfortAccount.confirmGuardianProposal(friendAccount2);
+        }
+
+        {
+            // Default Openfort guardian starts a recovery process because the owner lost the PK
+            vm.prank(OPENFORT_GUARDIAN);
+            openfortAccount.startRecovery(address(beneficiary));
+            assertEq(openfortAccount.isLocked(), true);
+        }
+
+        bytes32 structHash = keccak256(
+            abi.encode(RECOVER_TYPEHASH, address(beneficiary), uint64(block.timestamp + RECOVERY_PERIOD), uint32(2))
+        );
+
+        bytes[] memory signatures = new bytes[](2);
+        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccountPK); // Unsorted!
+        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccount2PK);
+
+        skip(RECOVERY_PERIOD + 1);
+        vm.expectRevert(InvalidRecoverySignatures.selector);
+        openfortAccount.completeRecovery(signatures);
+
+        // it should still be locked and the admin still be the same
+        assertEq(openfortAccount.isLocked(), true);
+        assertEq(openfortAccount.owner(), accountAdmin);
+    }
+
+    /*
+     * Case: User added 4 guardians and removes the default (Openfort)
+     * One guardian (friend) is used to start a recovery process
+     * The guardian that initiatied the recovery + another one are used to complete the flow.
+     * @notice Remember that signatures need to be ordered by the guardian's address.
+     */
+    function test4GuardiansNoDefaultCompleteRecovery() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Create 4 friends
+        address friendAccount;
+        uint256 friendAccountPK;
+        (friendAccount, friendAccountPK) = makeAddrAndKey("friend");
+
+        address friendAccount2;
+        uint256 friendAccount2PK;
+        (friendAccount2, friendAccount2PK) = makeAddrAndKey("friend2");
+
+        // Create 2 more friends. We don't need their PK now as they are not going to sign
+        address friendAccount3 = makeAddr("friend3");
+        address friendAccount4 = makeAddr("friend4");
+
+        // Adding and removing guardians
+        {
+            vm.startPrank(accountAdmin);
+            openfortAccount.proposeGuardian(friendAccount);
+            openfortAccount.proposeGuardian(friendAccount2);
+            openfortAccount.proposeGuardian(friendAccount3);
+            openfortAccount.proposeGuardian(friendAccount4);
+            vm.stopPrank();
+
+            skip(SECURITY_PERIOD + 1);
+            openfortAccount.confirmGuardianProposal(friendAccount);
+            openfortAccount.confirmGuardianProposal(friendAccount2);
+            openfortAccount.confirmGuardianProposal(friendAccount3);
+            openfortAccount.confirmGuardianProposal(friendAccount4);
+
+            vm.prank(accountAdmin);
+            openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
+            vm.expectRevert(PendingRevokeNotOver.selector);
+            openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+            skip(SECURITY_PERIOD + 1);
+            openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+        }
+
+        // Start the recovery process
+        {
+            // Default Openfort guardian tries starts a recovery process because the owner lost the PK
+            // It should not work as it is not a guardian anymore
+            vm.expectRevert(MustBeGuardian.selector);
+            vm.prank(OPENFORT_GUARDIAN);
+            openfortAccount.startRecovery(address(beneficiary));
+            vm.prank(friendAccount2);
+            openfortAccount.startRecovery(address(beneficiary));
+            assertEq(openfortAccount.isLocked(), true);
+        }
+
+        bytes32 structHash = keccak256(
+            abi.encode(RECOVER_TYPEHASH, address(beneficiary), uint64(block.timestamp + RECOVERY_PERIOD), uint32(2))
+        );
+
+        bytes[] memory signatures = new bytes[](2);
+        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
+        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccountPK);
+
+        skip(RECOVERY_PERIOD + 1);
+        openfortAccount.completeRecovery(signatures);
+
+        assertEq(openfortAccount.isLocked(), false);
+        assertEq(openfortAccount.owner(), address(beneficiary));
+    }
+
+    /*
+     * Case: User added 2 guardians and keeps the default (Openfort)
+     * The 2 added guardians (friends) are used to recover the account and transfer
+     * the ownership to beneficiary. Wrong signatures used
+     * @notice Remember that signatures need to be ordered by the guardian's address.
+     */
+    function test3GuardiansFailCompleteRecovery() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Create two friends
+        address friendAccount;
+        uint256 friendAccountPK;
+        (friendAccount, friendAccountPK) = makeAddrAndKey("friend");
+
+        address friendAccount2;
+        uint256 friendAccount2PK;
+        (friendAccount2, friendAccount2PK) = makeAddrAndKey("friend2");
+
+        {
+            // Expect that we will see an event containing the friend account and security period
+            vm.expectEmit(true, true, false, true);
+            emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+            vm.prank(accountAdmin);
+            openfortAccount.proposeGuardian(friendAccount);
+            vm.expectEmit(true, true, false, true);
+            emit GuardianProposed(friendAccount2, block.timestamp + SECURITY_PERIOD);
+            vm.prank(accountAdmin);
+            openfortAccount.proposeGuardian(friendAccount2);
+
+            skip(1);
+            skip(SECURITY_PERIOD);
+            openfortAccount.confirmGuardianProposal(friendAccount);
+            openfortAccount.confirmGuardianProposal(friendAccount2);
+        }
+
+        {
+            // Default Openfort guardian starts a recovery process because the owner lost the PK
+            vm.prank(OPENFORT_GUARDIAN);
+            openfortAccount.startRecovery(address(beneficiary));
+            assertEq(openfortAccount.isLocked(), true);
+        }
+
+        // notice: wrong new oner!!!
+        bytes32 structHash =
+            keccak256(abi.encode(RECOVER_TYPEHASH, factoryAdmin, uint64(block.timestamp + RECOVERY_PERIOD), uint32(2)));
+
+        bytes[] memory signatures = new bytes[](2);
+        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
+        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccountPK);
+
+        skip(RECOVERY_PERIOD + 1);
+        vm.expectRevert(InvalidRecoverySignatures.selector);
+        openfortAccount.completeRecovery(signatures);
+
+        // it should still be locked and the admin still be the same
+        assertEq(openfortAccount.isLocked(), true);
+        assertEq(openfortAccount.owner(), accountAdmin);
+    }
+
+    /*
+     * Testing the functionality to cancel a recovery process
+     */
+    function testCancelRecovery() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Default Openfort guardian starts a recovery process because the owner lost the PK
+        vm.prank(OPENFORT_GUARDIAN);
+        openfortAccount.startRecovery(address(beneficiary));
+        assertEq(openfortAccount.isLocked(), true);
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.cancelRecovery();
+
+        vm.prank(accountAdmin);
+        openfortAccount.cancelRecovery();
+
+        bytes32 structHash = keccak256(
+            abi.encode(RECOVER_TYPEHASH, address(beneficiary), uint64(block.timestamp + RECOVERY_PERIOD), uint32(1))
+        );
+
+        bytes[] memory signatures = new bytes[](1);
+        signatures[0] = getEIP712SignatureFrom(account, structHash, OPENFORT_GUARDIAN_PKEY);
+
+        skip(RECOVERY_PERIOD + 1);
+        vm.expectRevert(NoOngoingRecovery.selector);
+        openfortAccount.completeRecovery(signatures);
+
+        assertEq(openfortAccount.isLocked(), false);
+        assertEq(openfortAccount.owner(), accountAdmin);
+    }
+
+    /*
+     * Testing the startRecovery twice in a row
+     */
+    function testStartRecoveryTwice() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Default Openfort guardian starts a recovery process because the owner lost the PK
+        vm.prank(OPENFORT_GUARDIAN);
+        openfortAccount.startRecovery(address(beneficiary));
+        assertEq(openfortAccount.isLocked(), true);
+
+        // Calling startRecovery() again should revert and have no effect
+        vm.expectRevert(OngoingRecovery.selector);
+        vm.prank(OPENFORT_GUARDIAN);
+        openfortAccount.startRecovery(address(beneficiary));
+
+        // The accounts should still be locked
+        assertEq(openfortAccount.isLocked(), true);
+        assertEq(openfortAccount.owner(), accountAdmin);
+    }
+
+    /**
+     * Transfer ownership tests *
+     */
+
+    /*
+     * Try to transfer ownership to a guardian.
+     * Should not be allowed.
+     */
+    function testTransferOwnerNotGuardian() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(accountAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        skip(1);
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // It should fail as friendAccount is a guardian
+        vm.expectRevert(GuardianCannotBeOwner.selector);
+        openfortAccount.transferOwnership(friendAccount);
+    }
+
+    /*
+     * Try to transfer ownership to a valid account.
+     * Should be allowed.
+     */
+    function testTransferOwner() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+
+        // Create a new owner EOA
+        address newOwner = makeAddr("newOwner");
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.transferOwnership(newOwner);
+
+        vm.prank(accountAdmin);
+        openfortAccount.transferOwnership(newOwner);
+
+        vm.prank(newOwner);
+        openfortAccount.acceptOwnership();
+
+        // New owner should be now newOwner
+        assertEq(openfortAccount.owner(), address(newOwner));
+    }
+
+    /*
+     * Temporal test function for coverage purposes showing
+     * that isGuardianOrGuardianSigner() always returns false.
+     */
+    function testStubFakeMockTempisGuardian() public {
+        UpgradeableOpenfortAccount openfortAccount = UpgradeableOpenfortAccount(payable(account));
+        assertEq(openfortAccount.isGuardianOrGuardianSigner(OPENFORT_GUARDIAN), false);
     }
 }

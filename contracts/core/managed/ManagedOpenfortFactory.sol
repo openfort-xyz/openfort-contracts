@@ -71,17 +71,10 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, UpgradeableBeacon {
     function getAddressWithNonce(address _admin, bytes32 _nonce) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin, _nonce));
         return Create2.computeAddress(
-            salt,
-            keccak256(
-                abi.encodePacked(
-                    type(OpenfortManagedProxy).creationCode,
-                    abi.encode(address(this), "")
-                )
-            )
+            salt, keccak256(abi.encodePacked(type(OpenfortManagedProxy).creationCode, abi.encode(address(this), "")))
         );
     }
 
-    
     /**
      * @dev {See BaseOpenfortFactory}
      */
