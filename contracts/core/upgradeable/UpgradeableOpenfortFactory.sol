@@ -2,29 +2,44 @@
 pragma solidity =0.8.19;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
-// Smart wallet implementation to use
-import {UpgradeableOpenfortAccount} from "./UpgradeableOpenfortAccount.sol";
+import {
+    Ownable2StepUpgradeable,
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import {UpgradeableOpenfortAccount, IEntryPoint} from "./UpgradeableOpenfortAccount.sol";
 import {OpenfortUpgradeableProxy} from "./OpenfortUpgradeableProxy.sol";
-// Interfaces
-import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
+import {BaseOpenfortFactory} from "../base/BaseOpenfortFactory.sol";
 
 /**
  * @title UpgradeableOpenfortFactory (Non-upgradeable)
  * @notice Contract to create an on-chain factory to deploy new UpgradeableOpenfortAccounts.
  * It uses OpenZeppelin's Create2 and OpenfortUpgradeableProxy libraries.
  * It inherits from:
- *  - IBaseOpenfortFactory
+ *  - BaseOpenfortFactory
+ *  - Ownable2StepUpgradeable
  */
-contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
-    address public immutable entrypointContract;
-    address public immutable accountImplementation;
-
-    constructor(address _entrypoint, address _accountImplementation) {
-        if (_entrypoint == address(0) || _accountImplementation == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
-        entrypointContract = _entrypoint;
-        accountImplementation = _accountImplementation;
+contract UpgradeableOpenfortFactory is BaseOpenfortFactory, Ownable2StepUpgradeable {
+    constructor(
+        address _owner,
+        address _entrypoint,
+        address _accountImplementation,
+        uint256 _recoveryPeriod,
+        uint256 _securityPeriod,
+        uint256 _securityWindow,
+        uint256 _lockPeriod,
+        address _openfortGuardian
+    )
+        BaseOpenfortFactory(
+            _entrypoint,
+            _accountImplementation,
+            _recoveryPeriod,
+            _securityPeriod,
+            _securityWindow,
+            _lockPeriod,
+            _openfortGuardian
+        )
+    {
+        _transferOwnership(_owner);
     }
 
     /*
@@ -39,11 +54,9 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
         }
 
         emit AccountCreated(account, _admin);
-        account = address(
-            new OpenfortUpgradeableProxy{salt: salt}(
-                accountImplementation,
-                abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract))
-            )
+        account = address(new OpenfortUpgradeableProxy{salt: salt}(accountImplementation, ""));
+        UpgradeableOpenfortAccount(payable(account)).initialize(
+            _admin, entrypointContract, recoveryPeriod, securityPeriod, securityWindow, lockPeriod, openfortGuardian
         );
     }
 
@@ -55,14 +68,29 @@ contract UpgradeableOpenfortFactory is IBaseOpenfortFactory {
         return Create2.computeAddress(
             salt,
             keccak256(
-                abi.encodePacked(
-                    type(OpenfortUpgradeableProxy).creationCode,
-                    abi.encode(
-                        accountImplementation,
-                        abi.encodeCall(UpgradeableOpenfortAccount.initialize, (_admin, entrypointContract))
-                    )
-                )
+                abi.encodePacked(type(OpenfortUpgradeableProxy).creationCode, abi.encode(accountImplementation, ""))
             )
         );
+    }
+
+    /**
+     * @dev {See BaseOpenfortFactory}
+     */
+    function addStake(uint32 unstakeDelaySec) external payable onlyOwner {
+        IEntryPoint(entrypointContract).addStake{value: msg.value}(unstakeDelaySec);
+    }
+
+    /**
+     * @dev {See BaseOpenfortFactory}
+     */
+    function unlockStake() external onlyOwner {
+        IEntryPoint(entrypointContract).unlockStake();
+    }
+
+    /**
+     * @dev {See BaseOpenfortFactory}
+     */
+    function withdrawStake(address payable withdrawAddress) external onlyOwner {
+        IEntryPoint(entrypointContract).withdrawStake(withdrawAddress);
     }
 }

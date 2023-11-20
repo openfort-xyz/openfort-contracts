@@ -8,7 +8,7 @@ import {
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 // Base account contract to inherit from
-import {BaseOpenfortAccount, IEntryPoint} from "../core/BaseOpenfortAccount.sol";
+import {BaseOpenfortAccount, IEntryPoint} from "../core/base/BaseOpenfortAccount.sol";
 
 /**
  * @title MockV2UpgradeableOpenfortAccount

@@ -7,7 +7,7 @@ import {
 } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 // Base account contract to inherit from
-import {BaseOpenfortAccount, IEntryPoint} from "../core/BaseOpenfortAccount.sol";
+import {BaseOpenfortAccount, IEntryPoint} from "../core/base/BaseOpenfortAccount.sol";
 
 /**
  * @title ManagedOpenfortAccount (Upgradeable via Beacon)
