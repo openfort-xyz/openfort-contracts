@@ -8,8 +8,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC6551Account} from "erc6551/src/interfaces/IERC6551Account.sol";
 import {IERC6551Executable} from "erc6551/src/interfaces/IERC6551Executable.sol";
 import {ERC6551AccountLib} from "erc6551/src/lib/ERC6551AccountLib.sol";
-
-import {BaseOpenfortAccount, IEntryPoint, ECDSAUpgradeable} from "../BaseOpenfortAccount.sol";
+import {BaseOpenfortAccount, IEntryPoint, ECDSAUpgradeable} from "../base/BaseOpenfortAccount.sol";
 
 /**
  * @title EIP6551OpenfortAccount (Non-upgradeable)

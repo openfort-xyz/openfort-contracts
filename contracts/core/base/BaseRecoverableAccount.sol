@@ -5,19 +5,17 @@ import {
     Ownable2StepUpgradeable,
     OwnableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-
-import {BaseOpenfortAccount, IEntryPoint, SafeCastUpgradeable, ECDSAUpgradeable} from "../BaseOpenfortAccount.sol";
+import {BaseOpenfortAccount, IEntryPoint, ECDSAUpgradeable} from "../base/BaseOpenfortAccount.sol";
 
 /**
  * @title RecoverableOpenfortAccount
  * @notice Openfort account with session keys, guardians and pausability following the ERC-4337 standard.
  * It inherits from:
  *  - BaseOpenfortAccount
- *  - UUPSUpgradeable
+ *  - Ownable2StepUpgradeable
  */
-contract RecoverableOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradeable, UUPSUpgradeable {
+abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpgradeable {
     using ECDSAUpgradeable for bytes32;
 
     address internal entrypointContract;
@@ -122,8 +120,6 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradea
         emit GuardianAdded(_openfortGuardian);
     }
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
-
     /**
      * Return the current EntryPoint
      */
@@ -133,15 +129,6 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradea
 
     function owner() public view virtual override(BaseOpenfortAccount, OwnableUpgradeable) returns (address) {
         return OwnableUpgradeable.owner();
-    }
-
-    /**
-     * Update the EntryPoint address
-     */
-    function updateEntryPoint(address _newEntrypoint) external onlyOwner {
-        if (_newEntrypoint == address(0)) revert ZeroAddressNotAllowed();
-        emit EntryPointUpdated(entrypointContract, _newEntrypoint);
-        entrypointContract = _newEntrypoint;
     }
 
     /**
@@ -238,7 +225,7 @@ contract RecoverableOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradea
 
     /**
      * @notice Lets the owner propose a guardian to its Openfort account.
-     * The first guardian is added immediately (see constructor). All following proposals must be confirmed
+     * The first guardians are added when the account is created. All following proposals must be confirmed
      * by calling the confirmGuardianProposal() method. Only the owner can add guardians.
      * Guardians must either be an EOA or a contract with an owner() (ERC-173).
      * @param _guardian The guardian to propose.

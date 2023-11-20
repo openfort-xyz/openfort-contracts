@@ -16,4 +16,24 @@ interface IBaseOpenfortFactory {
 
     /// @notice Returns the address of an Account that would be deployed with the given admin and nonce.
     function getAddressWithNonce(address _admin, bytes32 _nonce) external view returns (address);
+
+    /**
+     * Add to the factory's stake - amount and delay
+     * any pending unstake is first cancelled.
+     * @param _unstakeDelaySec the new lock duration before the deposit can be withdrawn.
+     */
+    function addStake(uint32 _unstakeDelaySec) external payable;
+
+    /**
+     * Attempt to unlock the stake.
+     * the value can be withdrawn (using withdrawStake) after the unstake delay.
+     */
+    function unlockStake() external;
+
+    /**
+     * Withdraw from the (unlocked) stake.
+     * must first call unlockStake and wait for the unstakeDelay to pass
+     * @param withdrawAddress the address to send withdrawn value.
+     */
+    function withdrawStake(address payable withdrawAddress) external;
 }
