@@ -6,31 +6,46 @@ import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/Upgradeabl
 
 // Smart wallet implementation to use
 import {ManagedOpenfortAccount} from "./ManagedOpenfortAccount.sol";
-import {OpenfortBeaconProxy} from "./OpenfortBeaconProxy.sol";
+import {OpenfortManagedProxy} from "./OpenfortManagedProxy.sol";
 
 // Interfaces
-import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
+import {BaseOpenfortFactory} from "../base/BaseOpenfortFactory.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 
 /**
  * @title ManagedOpenfortFactory (Non-upgradeable)
  * @notice Contract to create an on-chain factory to deploy new ManagedOpenfortAccounts.
- * It uses OpenZeppelin's Create2 and OpenfortBeaconProxy libraries.
+ * It uses OpenZeppelin's Create2 and OpenfortManagedProxy libraries.
  * It inherits from:
  *  - IBaseOpenfortFactory
  *  - UpgradeableBeacon to also work as the beacon
  */
-contract ManagedOpenfortFactory is IBaseOpenfortFactory, UpgradeableBeacon {
-    address internal entrypointContract;
-
-    constructor(address _owner, address _entrypoint, address _accountImplementation)
+contract ManagedOpenfortFactory is BaseOpenfortFactory, UpgradeableBeacon {
+    constructor(
+        address _owner,
+        address _entrypoint,
+        address _accountImplementation,
+        uint256 _recoveryPeriod,
+        uint256 _securityPeriod,
+        uint256 _securityWindow,
+        uint256 _lockPeriod,
+        address _openfortGuardian
+    )
+        BaseOpenfortFactory(
+            _entrypoint,
+            _accountImplementation,
+            _recoveryPeriod,
+            _securityPeriod,
+            _securityWindow,
+            _lockPeriod,
+            _openfortGuardian
+        )
         UpgradeableBeacon(_accountImplementation)
     {
-        if (_owner == address(0) || _entrypoint == address(0) || _accountImplementation == address(0)) {
+        if (_owner == address(0)) {
             revert ZeroAddressNotAllowed();
         }
         _transferOwnership(_owner);
-        entrypointContract = _entrypoint;
     }
 
     /*
@@ -43,11 +58,10 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory, UpgradeableBeacon {
         if (account.code.length != 0) return account;
 
         emit AccountCreated(account, _admin);
-        account = address(
-            new OpenfortBeaconProxy{salt: salt}(
-                address(this),
-                abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin))
-            )
+
+        account = address(new OpenfortManagedProxy{salt: salt}(address(this), ""));
+        ManagedOpenfortAccount(payable(account)).initialize(
+            _admin, entrypointContract, recoveryPeriod, securityPeriod, securityWindow, lockPeriod, openfortGuardian
         );
     }
 
@@ -60,23 +74,32 @@ contract ManagedOpenfortFactory is IBaseOpenfortFactory, UpgradeableBeacon {
             salt,
             keccak256(
                 abi.encodePacked(
-                    type(OpenfortBeaconProxy).creationCode,
-                    abi.encode(address(this), abi.encodeCall(ManagedOpenfortAccount.initialize, (_admin)))
+                    type(OpenfortManagedProxy).creationCode,
+                    abi.encode(address(this), "")
                 )
             )
         );
     }
 
-    function accountImplementation() external view override returns (address) {
-        return implementation();
-    }
-
+    
     /**
-     * Add stake for this factory.
-     * This method can also carry eth value to add to the current stake.
-     * @param unstakeDelaySec - the unstake delay for this factory. Can only be increased.
+     * @dev {See BaseOpenfortFactory}
      */
     function addStake(uint32 unstakeDelaySec) external payable onlyOwner {
         IEntryPoint(entrypointContract).addStake{value: msg.value}(unstakeDelaySec);
+    }
+
+    /**
+     * @dev {See BaseOpenfortFactory}
+     */
+    function unlockStake() external onlyOwner {
+        IEntryPoint(entrypointContract).unlockStake();
+    }
+
+    /**
+     * @dev {See BaseOpenfortFactory}
+     */
+    function withdrawStake(address payable withdrawAddress) external onlyOwner {
+        IEntryPoint(entrypointContract).withdrawStake(withdrawAddress);
     }
 }

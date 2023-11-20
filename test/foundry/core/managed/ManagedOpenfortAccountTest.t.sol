@@ -8,7 +8,7 @@ import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {MockERC20} from "contracts/mock/MockERC20.sol";
 import {ManagedOpenfortAccount} from "contracts/core/managed/ManagedOpenfortAccount.sol";
 import {ManagedOpenfortFactory} from "contracts/core/managed/ManagedOpenfortFactory.sol";
-import {OpenfortBeaconProxy} from "contracts/core/managed/OpenfortBeaconProxy.sol";
+import {OpenfortManagedProxy} from "contracts/core/managed/OpenfortManagedProxy.sol";
 import {MockV2ManagedOpenfortAccount} from "contracts/mock/MockV2ManagedOpenfortAccount.sol";
 
 contract ManagedOpenfortAccountTest is Test {
@@ -1023,7 +1023,7 @@ contract ManagedOpenfortAccountTest is Test {
         assertEq(managedAccount.owner(), accountAdmin);
         assertEq(address(managedAccount.entryPoint()), address(entryPoint));
 
-        OpenfortBeaconProxy p = OpenfortBeaconProxy(payable(account));
+        OpenfortManagedProxy p = OpenfortManagedProxy(payable(account));
         // Printing account address and the implementation address
         console.log(account);
         console.log(p.implementation());
