@@ -17,12 +17,17 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  *  - UUPSUpgradeable
  */
 contract UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgradeable {
-    event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
-
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
-    function owner() public view virtual override(BaseRecoverableAccount, OwnableUpgradeable) returns (address) {
-        return OwnableUpgradeable.owner();
+    function owner() public view virtual override returns (address) {
+        return super.owner();
+    }
+
+    /**
+     * Return the current EntryPoint
+     */
+    function entryPoint() public view override returns (IEntryPoint) {
+        return IEntryPoint(entrypointContract);
     }
 
     /**
@@ -35,6 +40,4 @@ contract UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgradeable {
         emit EntryPointUpdated(entrypointContract, _newEntrypoint);
         entrypointContract = _newEntrypoint;
     }
-
-    function _authorizeUpgrade(address) internal override onlyOwner {}
 }
