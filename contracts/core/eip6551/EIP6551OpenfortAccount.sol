@@ -30,8 +30,6 @@ contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
 
     error OperationNotAllowed();
 
-    event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
-
     receive() external payable override(BaseOpenfortAccount, IERC6551Account) {}
 
     /*

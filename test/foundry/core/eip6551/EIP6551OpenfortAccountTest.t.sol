@@ -1,113 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.19;
 
-import {Test, console} from "lib/forge-std/src/Test.sol";
+import {console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {ERC6551Registry, IERC6551Registry} from "erc6551/src/ERC6551Registry.sol";
 import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {MockERC721} from "contracts/mock/MockERC721.sol";
 import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAccount.sol";
-import {SigUtils} from "../../utils/SigUtils.sol";
+import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
 
-contract EIP6551OpenfortAccountTest is Test {
+contract EIP6551OpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
 
-    EntryPoint public entryPoint;
     ERC6551Registry public erc6551Registry;
     EIP6551OpenfortAccount public eip6551OpenfortAccount;
     EIP6551OpenfortAccount public implEIP6551OpenfortAccount;
-    bytes32 public versionSalt = vm.envBytes32("VERSION_SALT");
-    address public account;
     MockERC721 public mockERC721;
-
-    // Testing addresses
-    address private factoryAdmin;
-    uint256 private factoryAdminPKey;
-
-    address private accountAdmin;
-    uint256 private accountAdminPKey;
-
-    address payable private beneficiary = payable(makeAddr("beneficiary"));
-
-    /*
-     * Auxiliary function to generate a userOP
-     */
-    function _setupUserOp(
-        address sender,
-        uint256 _signerPKey,
-        bytes memory _initCode,
-        bytes memory _callDataForEntrypoint
-    ) internal returns (UserOperation[] memory ops) {
-        uint256 nonce = entryPoint.getNonce(sender, 0);
-
-        // Get user op fields
-        UserOperation memory op = UserOperation({
-            sender: sender,
-            nonce: nonce,
-            initCode: _initCode,
-            callData: _callDataForEntrypoint,
-            callGasLimit: 500_000,
-            verificationGasLimit: 500_000,
-            preVerificationGas: 500_000,
-            maxFeePerGas: 0,
-            maxPriorityFeePerGas: 0,
-            paymasterAndData: bytes(""),
-            signature: bytes("")
-        });
-
-        // Sign UserOp
-        bytes32 opHash = EntryPoint(entryPoint).getUserOpHash(op);
-        bytes32 msgHash = ECDSA.toEthSignedMessageHash(opHash);
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_signerPKey, msgHash);
-        bytes memory userOpSignature = abi.encodePacked(r, s, v);
-
-        address recoveredSigner = ECDSA.recover(msgHash, v, r, s);
-        address expectedSigner = vm.addr(_signerPKey);
-        assertEq(recoveredSigner, expectedSigner);
-
-        op.signature = userOpSignature;
-
-        // Store UserOp
-        ops = new UserOperation[](1);
-        ops[0] = op;
-    }
-
-    /*
-     * Auxiliary function to generate a userOP using the execute()
-     * from the account
-     */
-    function _setupUserOpExecute(
-        address sender,
-        uint256 _signerPKey,
-        bytes memory _initCode,
-        address _target,
-        uint256 _value,
-        bytes memory _callData
-    ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint =
-            abi.encodeWithSignature("execute(address,uint256,bytes)", _target, _value, _callData);
-
-        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
-    }
-
-    /*
-     * Auxiliary function to generate a userOP using the executeBatch()
-     * from the account
-     */
-    function _setupUserOpExecuteBatch(
-        address sender,
-        uint256 _signerPKey,
-        bytes memory _initCode,
-        address[] memory _target,
-        uint256[] memory _value,
-        bytes[] memory _callData
-    ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint =
-            abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
-
-        return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
-    }
 
     /**
      * @notice Initialize the StaticOpenfortAccount testing contract.
@@ -118,6 +26,7 @@ contract EIP6551OpenfortAccountTest is Test {
      * - testCounter is the counter used to test userOps
      */
     function setUp() public {
+        versionSalt = bytes32(0x0);
         // Setup and fund signers
         (factoryAdmin, factoryAdminPKey) = makeAddrAndKey("factoryAdmin");
         vm.deal(factoryAdmin, 100 ether);
@@ -158,9 +67,9 @@ contract EIP6551OpenfortAccountTest is Test {
         }
 
         // deploy a new MockERC721 collection
-        mockERC721 = new MockERC721();
+        mockERC721 = new MockERC721{salt: versionSalt}();
 
-        implEIP6551OpenfortAccount = new EIP6551OpenfortAccount();
+        implEIP6551OpenfortAccount = new EIP6551OpenfortAccount{salt: versionSalt}();
 
         address eip6551OpenfortAccountAddress = erc6551Registry.createAccount(
             address(implEIP6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1
@@ -225,9 +134,9 @@ contract EIP6551OpenfortAccountTest is Test {
         );
 
         EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
-        eip6551OpenfortAccount2.initialize(address(entryPoint));
         IEntryPoint e = eip6551OpenfortAccount2.entryPoint();
         assertEq(address(e), address(entryPoint));
+        assertNotEq(address(e), eip6551OpenfortAccountAddress2);
     }
 
     /*

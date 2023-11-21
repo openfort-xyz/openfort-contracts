@@ -2,7 +2,6 @@
 pragma solidity =0.8.19;
 
 import {Test, console} from "lib/forge-std/src/Test.sol";
-import {SigUtils} from "../../utils/SigUtils.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {MockERC721} from "contracts/mock/MockERC721.sol";

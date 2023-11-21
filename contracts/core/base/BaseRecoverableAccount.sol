@@ -53,7 +53,6 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
     // keccak256("Recover(address recoveryAddress,uint64 executeAfter,uint32 guardiansRequired)");
     bytes32 private constant RECOVER_TYPEHASH = 0x9f7aca777caf11405930359f601a4db01fad1b2d79ef3f2f9e93c835e9feffa5;
 
-    event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
     event Locked(bool isLocked);
     event GuardianProposed(address indexed guardian, uint256 executeAfter);
     event GuardianAdded(address indexed guardian);
@@ -63,7 +62,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
     event GuardianRevocationCancelled(address indexed guardian);
     event RecoveryExecuted(address indexed recoveryAddress, uint64 executeAfter);
     event RecoveryCompleted(address indexed recoveryAddress);
-    event RecoveryCanceled(address indexed recoveryAddress);
+    event RecoveryCancelled(address indexed recoveryAddress);
 
     error AccountLocked();
     error AccountNotLocked();
@@ -410,7 +409,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
     function cancelRecovery() external onlyOwner {
         _requireRecovery(true);
         address recoveryOwner = recoveryDetails.recoveryAddress;
-        emit RecoveryCanceled(recoveryOwner);
+        emit RecoveryCancelled(recoveryOwner);
         delete recoveryDetails;
         _setLock(0);
     }
