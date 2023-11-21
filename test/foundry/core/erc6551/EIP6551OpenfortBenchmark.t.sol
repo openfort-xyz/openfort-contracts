@@ -11,9 +11,9 @@ import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/Upgradeable
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 
 import {ERC6551Registry} from "lib/erc6551/src/ERC6551Registry.sol";
-import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAccount.sol";
+import {ERC6551OpenfortAccount} from "contracts/core/erc6551/ERC6551OpenfortAccount.sol";
 
-// contract EIP6551OpenfortBenchmark is Test {
+// contract ERC6551OpenfortBenchmark is Test {
 //     using ECDSA for bytes32;
 
 //     EntryPoint public entryPoint;
@@ -23,8 +23,8 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //     UpgradeableOpenfortAccount public upgradeableOpenfortAccount;
 
 //     ERC6551Registry public erc6551Registry;
-//     EIP6551OpenfortAccount public eip6551OpenfortAccount;
-//     EIP6551OpenfortAccount implEIP6551OpenfortAccount;
+//     ERC6551OpenfortAccount public erc6551OpenfortAccount;
+//     ERC6551OpenfortAccount implERC6551OpenfortAccount;
 
 //     uint256 public chainId;
 
@@ -41,8 +41,8 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //     address public upgradeableOpenfortAddressComplex;
 //     UpgradeableOpenfortAccount public upgradeableOpenfortAccountComplex;
 
-//     address public eip6551OpenfortAddressComplex;
-//     EIP6551OpenfortAccount public eip6551OpenfortAccountComplex;
+//     address public erc6551OpenfortAddressComplex;
+//     ERC6551OpenfortAccount public erc6551OpenfortAccountComplex;
 
 //     address payable private beneficiary = payable(makeAddr("beneficiary"));
 
@@ -183,15 +183,15 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //         // deploy a new MockERC721 collection
 //         nft721 = new MockERC721();
 
-//         implEIP6551OpenfortAccount = new EIP6551OpenfortAccount();
+//         implERC6551OpenfortAccount = new ERC6551OpenfortAccount();
 
 //         erc6551Registry = new ERC6551Registry();
 
-//         address eip6551OpenfortAccountAddress =
-//             erc6551Registry.createAccount(address(implEIP6551OpenfortAccount), chainId, address(nft721), 1, 1, "");
+//         address erc6551OpenfortAccountAddress =
+//             erc6551Registry.createAccount(address(implERC6551OpenfortAccount), chainId, address(nft721), 1, 1, "");
 
-//         eip6551OpenfortAccount = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress));
-//         eip6551OpenfortAccount.initialize(address(entryPoint));
+//         erc6551OpenfortAccount = ERC6551OpenfortAccount(payable(erc6551OpenfortAccountAddress));
+//         erc6551OpenfortAccount.initialize(address(entryPoint));
 
 //         nft721.mint(accountAdmin, 1);
 
@@ -205,9 +205,9 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 
 //         nft721.mint(upgradeableOpenfortAddressComplex, 2);
 
-//         eip6551OpenfortAddressComplex =
-//             erc6551Registry.createAccount(address(implEIP6551OpenfortAccount), chainId, address(nft721), 2, 2, "");
-//         eip6551OpenfortAccountComplex = EIP6551OpenfortAccount(payable(eip6551OpenfortAddressComplex));
+//         erc6551OpenfortAddressComplex =
+//             erc6551Registry.createAccount(address(implERC6551OpenfortAccount), chainId, address(nft721), 2, 2, "");
+//         erc6551OpenfortAccountComplex = ERC6551OpenfortAccount(payable(erc6551OpenfortAddressComplex));
 
 //         vm.stopPrank();
 //     }
@@ -225,32 +225,32 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //     }
 
 //     /*
-//      * Create a 2nd EIP6551 account with nft721 as the owner and initialize later
+//      * Create a 2nd ERC6551 account with nft721 as the owner and initialize later
 //      */
-//     function test1CreateEIP6551AccountInitAfter() public {
-//         address eip6551OpenfortAccountAddress2 =
-//             erc6551Registry.createAccount(address(implEIP6551OpenfortAccount), chainId, address(nft721), 1, 2, "");
+//     function test1CreateERC6551AccountInitAfter() public {
+//         address erc6551OpenfortAccountAddress2 =
+//             erc6551Registry.createAccount(address(implERC6551OpenfortAccount), chainId, address(nft721), 1, 2, "");
 
-//         EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
-//         eip6551OpenfortAccount2.initialize(address(entryPoint));
-//         IEntryPoint e = eip6551OpenfortAccount2.entryPoint();
+//         ERC6551OpenfortAccount erc6551OpenfortAccount2 = ERC6551OpenfortAccount(payable(erc6551OpenfortAccountAddress2));
+//         erc6551OpenfortAccount2.initialize(address(entryPoint));
+//         IEntryPoint e = erc6551OpenfortAccount2.entryPoint();
 //         assertEq(address(e), address(entryPoint));
 //     }
 
 //     /*
-//      * Create a 2nd EIP6551 account with nft721 as the owner and initialize during creation
+//      * Create a 2nd ERC6551 account with nft721 as the owner and initialize during creation
 //      */
-//     function test1CreateEIP6551AccountInitDuringCreation() public {
-//         address eip6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
-//             address(implEIP6551OpenfortAccount),
+//     function test1CreateERC6551AccountInitDuringCreation() public {
+//         address erc6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
+//             address(implERC6551OpenfortAccount),
 //             chainId,
 //             address(nft721),
 //             3,
 //             1,
 //             abi.encodeWithSignature("initialize(address)", address(entryPoint))
 //         );
-//         EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
-//         IEntryPoint e = eip6551OpenfortAccount2.entryPoint();
+//         ERC6551OpenfortAccount erc6551OpenfortAccount2 = ERC6551OpenfortAccount(payable(erc6551OpenfortAccountAddress2));
+//         IEntryPoint e = erc6551OpenfortAccount2.entryPoint();
 //         assertEq(address(e), address(entryPoint));
 //     }
 
@@ -264,10 +264,10 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 
 //     /*
 //      * Test owner() function.
-//      * Check that the owner of the eip6551 account is the owner of the NFT
+//      * Check that the owner of the erc6551 account is the owner of the NFT
 //      */
-//     function test2OwnerEIP6551() public {
-//         assertEq(eip6551OpenfortAccount.owner(), nft721.ownerOf(1));
+//     function test2OwnerERC6551() public {
+//         assertEq(erc6551OpenfortAccount.owner(), nft721.ownerOf(1));
 //     }
 
 //     /*
@@ -289,31 +289,31 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //     }
 
 //     /*
-//      * Test transferOwnership() function using EIP6551 accounts.
+//      * Test transferOwnership() function using ERC6551 accounts.
 //      */
-//     function test3TransferOwnerEIP6551() public {
-//         assertEq(eip6551OpenfortAccount.owner(), accountAdmin);
+//     function test3TransferOwnerERC6551() public {
+//         assertEq(erc6551OpenfortAccount.owner(), accountAdmin);
 
 //         vm.prank(accountAdmin);
 //         nft721.safeTransferFrom(accountAdmin, factoryAdmin, 1);
 
-//         assertEq(eip6551OpenfortAccount.owner(), factoryAdmin);
+//         assertEq(erc6551OpenfortAccount.owner(), factoryAdmin);
 //     }
 
 //     /*
-//      * Test transferOwnership() function using EIP6551 account with a userOp
+//      * Test transferOwnership() function using ERC6551 account with a userOp
 //      * It will fail because the msg.sender doing the transferFrom() is the EntryPoint
 //      * the user should do it with a regular TX or approving the EntryPoint to spend
 //      */
-//     function testFailTransferOwnerEIP6551UserOp() public {
-//         assertEq(eip6551OpenfortAccount.owner(), accountAdmin);
+//     function testFailTransferOwnerERC6551UserOp() public {
+//         assertEq(erc6551OpenfortAccount.owner(), accountAdmin);
 
 //         address _target = address(nft721);
 //         bytes memory _callData =
 //             abi.encodeWithSignature("transferFrom(address,address,uint256)", accountAdmin, factoryAdmin, 1);
 
 //         UserOperation[] memory userOp = _setupUserOpExecute(
-//             address(eip6551OpenfortAccount),
+//             address(erc6551OpenfortAccount),
 //             accountAdminPKey,
 //             bytes(""),
 //             address(nft721),
@@ -321,13 +321,13 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //             abi.encodeWithSignature("execute(address,uint256,bytes)", _target, 0, _callData)
 //         );
 
-//         entryPoint.depositTo{value: 1000000000000000000}(address(eip6551OpenfortAccount));
+//         entryPoint.depositTo{value: 1000000000000000000}(address(erc6551OpenfortAccount));
 
 //         vm.expectRevert();
 //         entryPoint.simulateValidation(userOp[0]);
 //         entryPoint.handleOps(userOp, beneficiary);
 
-//         assertEq(eip6551OpenfortAccount.owner(), factoryAdmin);
+//         assertEq(erc6551OpenfortAccount.owner(), factoryAdmin);
 //     }
 
 //     /*
@@ -352,24 +352,24 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //     }
 
 //     /*
-//      * Test transfer funds function using EIP6551 accounts.
+//      * Test transfer funds function using ERC6551 accounts.
 //      */
-//     function test4TransferFundsEIP6551() public {
-//         address eip6551OpenfortAddress = payable(address((eip6551OpenfortAccount)));
+//     function test4TransferFundsERC6551() public {
+//         address erc6551OpenfortAddress = payable(address((erc6551OpenfortAccount)));
 //         console.log("Admin balance: ", accountAdmin.balance);
-//         console.log("EIP6551 Openfort Account balance: ", eip6551OpenfortAddress.balance);
+//         console.log("ERC6551 Openfort Account balance: ", erc6551OpenfortAddress.balance);
 
 //         vm.prank(accountAdmin);
-//         (bool ok,) = eip6551OpenfortAddress.call{value: 50 ether}("");
+//         (bool ok,) = erc6551OpenfortAddress.call{value: 50 ether}("");
 //         assert(ok);
 //         console.log("Admin balance: ", accountAdmin.balance);
-//         console.log("EIP6551 Openfort Account balance: ", eip6551OpenfortAddress.balance);
+//         console.log("ERC6551 Openfort Account balance: ", erc6551OpenfortAddress.balance);
 
 //         vm.prank(accountAdmin);
-//         eip6551OpenfortAccount.execute(accountAdmin, 40 ether, "");
+//         erc6551OpenfortAccount.execute(accountAdmin, 40 ether, "");
 
 //         console.log("Admin balance: ", accountAdmin.balance);
-//         console.log("EIP6551 Openfort Account balance: ", eip6551OpenfortAddress.balance);
+//         console.log("ERC6551 Openfort Account balance: ", erc6551OpenfortAddress.balance);
 //     }
 
 //     /*
@@ -394,24 +394,24 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //     }
 
 //     /*
-//      * Test transfer ERC20 function using EIP6551 accounts.
+//      * Test transfer ERC20 function using ERC6551 accounts.
 //      */
-//     function test5TransferERC20EIP6551() public {
-//         address eip6551OpenfortAddress = payable(address((eip6551OpenfortAccount)));
+//     function test5TransferERC20ERC6551() public {
+//         address erc6551OpenfortAddress = payable(address((erc6551OpenfortAccount)));
 //         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
-//         console.log("Upgradeable Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
+//         console.log("Upgradeable Openfort Account balance: ", testUSDC.balanceOf(erc6551OpenfortAddress));
 
 //         vm.prank(accountAdmin);
-//         testUSDC.transfer(eip6551OpenfortAddress, 50 ether);
+//         testUSDC.transfer(erc6551OpenfortAddress, 50 ether);
 //         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
-//         console.log("EIP6551 Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
+//         console.log("ERC6551 Openfort Account balance: ", testUSDC.balanceOf(erc6551OpenfortAddress));
 
 //         vm.prank(accountAdmin);
-//         eip6551OpenfortAccount.execute(
+//         erc6551OpenfortAccount.execute(
 //             address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 50 ether)
 //         );
 //         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
-//         console.log("EIP6551 Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
+//         console.log("ERC6551 Openfort Account balance: ", testUSDC.balanceOf(erc6551OpenfortAddress));
 //     }
 
 //     /*
@@ -465,72 +465,72 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //     }
 
 //     /*
-//      * Test multiple transfers ERC20 function using EIP6551 accounts.
+//      * Test multiple transfers ERC20 function using ERC6551 accounts.
 //      */
-//     function test6TransferMultipleERC20EIP6551() public {
-//         address eip6551OpenfortAddress = payable(address((eip6551OpenfortAccount)));
+//     function test6TransferMultipleERC20ERC6551() public {
+//         address erc6551OpenfortAddress = payable(address((erc6551OpenfortAccount)));
 //         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
-//         console.log("Upgradeable Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
+//         console.log("Upgradeable Openfort Account balance: ", testUSDC.balanceOf(erc6551OpenfortAddress));
 
 //         vm.prank(accountAdmin);
-//         testUSDC.transfer(eip6551OpenfortAddress, 50 ether);
+//         testUSDC.transfer(erc6551OpenfortAddress, 50 ether);
 //         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
-//         console.log("EIP6551 Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
+//         console.log("ERC6551 Openfort Account balance: ", testUSDC.balanceOf(erc6551OpenfortAddress));
 
 //         vm.startPrank(accountAdmin);
-//         eip6551OpenfortAccount.execute(
+//         erc6551OpenfortAccount.execute(
 //             address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
 //         );
-//         eip6551OpenfortAccount.execute(
+//         erc6551OpenfortAccount.execute(
 //             address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
 //         );
-//         eip6551OpenfortAccount.execute(
+//         erc6551OpenfortAccount.execute(
 //             address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
 //         );
-//         eip6551OpenfortAccount.execute(
+//         erc6551OpenfortAccount.execute(
 //             address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
 //         );
-//         eip6551OpenfortAccount.execute(
+//         erc6551OpenfortAccount.execute(
 //             address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
 //         );
-//         eip6551OpenfortAccount.execute(
+//         erc6551OpenfortAccount.execute(
 //             address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
 //         );
-//         eip6551OpenfortAccount.execute(
+//         erc6551OpenfortAccount.execute(
 //             address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
 //         );
-//         eip6551OpenfortAccount.execute(
+//         erc6551OpenfortAccount.execute(
 //             address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
 //         );
-//         eip6551OpenfortAccount.execute(
+//         erc6551OpenfortAccount.execute(
 //             address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
 //         );
-//         eip6551OpenfortAccount.execute(
+//         erc6551OpenfortAccount.execute(
 //             address(testUSDC), 0, abi.encodeWithSignature("transfer(address,uint256)", accountAdmin, 5 ether)
 //         );
 //         vm.stopPrank();
 //         console.log("Admin balance: ", testUSDC.balanceOf(accountAdmin));
-//         console.log("EIP6551 Openfort Account balance: ", testUSDC.balanceOf(eip6551OpenfortAddress));
+//         console.log("ERC6551 Openfort Account balance: ", testUSDC.balanceOf(erc6551OpenfortAddress));
 //     }
 
 //     /*
 //      * Test owner() function.
-//      * Check that the owner of the eip6551 account is the owner of the NFT
+//      * Check that the owner of the erc6551 account is the owner of the NFT
 //      */
 //     function test7ComplexOwner() public {
-//         assertEq(eip6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
+//         assertEq(erc6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
 //     }
 
 //     /*
-//      * Test transferOwnership() function using upgradeable account that have EIP6551 accounts.
+//      * Test transferOwnership() function using upgradeable account that have ERC6551 accounts.
 //      * Scenario: a complex account changes the ownership; all NFTs are manageable by the new owner
 //      */
 //     function test8TransferOwner4337Complex() public {
 //         // The EOA is the owner of the Upgradeable account
 //         assertEq(upgradeableOpenfortAccountComplex.owner(), accountAdmin);
 
-//         // The upgradeable account is the owner of the EIP6551 accounts because it holds the NFT
-//         assertEq(eip6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
+//         // The upgradeable account is the owner of the ERC6551 accounts because it holds the NFT
+//         assertEq(erc6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
 //         assertEq(nft721.ownerOf(2), upgradeableOpenfortAddressComplex);
 
 //         vm.prank(accountAdmin);
@@ -543,19 +543,19 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //         upgradeableOpenfortAccountComplex.acceptOwnership();
 
 //         assertEq(upgradeableOpenfortAccountComplex.owner(), factoryAdmin);
-//         assertEq(eip6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
+//         assertEq(erc6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
 //         assertEq(nft721.ownerOf(2), upgradeableOpenfortAddressComplex);
 //     }
 
 //     /*
-//      * Test transferOwnership() function using upgradeable account that have EIP6551 accounts.
-//      * Scenario: a complex account transfer an NFT to send an EIP6551 account to another user
+//      * Test transferOwnership() function using upgradeable account that have ERC6551 accounts.
+//      * Scenario: a complex account transfer an NFT to send an ERC6551 account to another user
 //      */
-//     function test9TransferOwnerEIP6551Complex() public {
+//     function test9TransferOwnerERC6551Complex() public {
 //         // The EOA is the owner of the Upgradeable account
 //         assertEq(upgradeableOpenfortAccountComplex.owner(), accountAdmin);
-//         // The upgradeable account is the owner of the EIP6551 accounts because it holds the NFT
-//         assertEq(eip6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
+//         // The upgradeable account is the owner of the ERC6551 accounts because it holds the NFT
+//         assertEq(erc6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
 //         assertEq(nft721.ownerOf(2), upgradeableOpenfortAddressComplex);
 
 //         vm.prank(accountAdmin);
@@ -567,17 +567,17 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //             )
 //         );
 //         assertEq(nft721.ownerOf(2), factoryAdmin);
-//         assertEq(eip6551OpenfortAccountComplex.owner(), factoryAdmin);
+//         assertEq(erc6551OpenfortAccountComplex.owner(), factoryAdmin);
 //     }
 
 //     /*
-//      * Test transferOwnership() function using upgradeable account that have EIP6551 accounts.
+//      * Test transferOwnership() function using upgradeable account that have ERC6551 accounts.
 //      */
-//     function test9TransferOwnerEIP6551ComplexUserOp() public {
+//     function test9TransferOwnerERC6551ComplexUserOp() public {
 //         // The EOA is the owner of the Upgradeable account
 //         assertEq(upgradeableOpenfortAccountComplex.owner(), accountAdmin);
-//         // The upgradeable account is the owner of the EIP6551 accounts because it holds the NFT
-//         assertEq(eip6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
+//         // The upgradeable account is the owner of the ERC6551 accounts because it holds the NFT
+//         assertEq(erc6551OpenfortAccountComplex.owner(), upgradeableOpenfortAddressComplex);
 //         assertEq(nft721.ownerOf(2), upgradeableOpenfortAddressComplex);
 
 //         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -597,6 +597,6 @@ import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAcco
 //         entryPoint.handleOps(userOp, beneficiary);
 
 //         assertEq(nft721.ownerOf(2), factoryAdmin);
-//         assertEq(eip6551OpenfortAccountComplex.owner(), factoryAdmin);
+//         assertEq(erc6551OpenfortAccountComplex.owner(), factoryAdmin);
 //     }
 // }

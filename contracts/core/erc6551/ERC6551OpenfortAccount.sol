@@ -11,14 +11,14 @@ import {ERC6551AccountLib} from "erc6551/src/lib/ERC6551AccountLib.sol";
 import {BaseOpenfortAccount, IEntryPoint, ECDSAUpgradeable} from "../base/BaseOpenfortAccount.sol";
 
 /**
- * @title EIP6551OpenfortAccount (Non-upgradeable)
+ * @title ERC6551OpenfortAccount (Non-upgradeable)
  * @notice Smart contract wallet with session keys following the ERC-4337 and EIP-6551 standards.
  * It inherits from:
  *  - BaseOpenfortAccount to comply with ERC-4337
  *  - IERC6551Account to have permissions using ERC-721 tokens
  *  - IERC6551Executable
  */
-contract EIP6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC6551Executable {
+contract ERC6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC6551Executable {
     using ECDSAUpgradeable for bytes32;
 
     address internal entrypointContract;
