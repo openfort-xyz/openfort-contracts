@@ -130,7 +130,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
     /**
      * @notice Helper method to check if a wallet is locked.
      */
-    function isLocked() public view returns (bool) {
+    function isLocked() public view virtual returns (bool) {
         return guardiansConfig.lock > block.timestamp;
     }
 
@@ -138,14 +138,14 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      * @notice Returns the release time of a wallet lock or 0 if the wallet is unlocked.
      * @return _releaseAfter The epoch time at which the lock will release (in seconds).
      */
-    function getLock() external view returns (uint256 _releaseAfter) {
+    function getLock() external view virtual returns (uint256 _releaseAfter) {
         _releaseAfter = isLocked() ? guardiansConfig.lock : 0;
     }
 
     /**
      * @notice Lets a guardian lock a wallet.
      */
-    function lock() external {
+    function lock() external virtual {
         if (!isGuardian(msg.sender)) revert MustBeGuardian();
         if (isLocked()) revert AccountLocked();
         _setLock(block.timestamp + lockPeriod);
@@ -154,7 +154,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
     /**
      * @notice Lets a guardian unlock a locked wallet.
      */
-    function unlock() external {
+    function unlock() external virtual {
         if (!isGuardian(msg.sender)) revert MustBeGuardian();
         if (!isLocked()) revert AccountNotLocked();
         _setLock(0);
@@ -176,7 +176,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      * @notice Returns the number of guardians for the Openfort account.
      * @return the number of guardians.
      */
-    function guardianCount() public view returns (uint256) {
+    function guardianCount() public view virtual returns (uint256) {
         return guardiansConfig.guardians.length;
     }
 
@@ -184,7 +184,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      * @notice Gets the list of guardians for the Openfort account.
      * @return the list of guardians.
      */
-    function getGuardians() external view returns (address[] memory) {
+    function getGuardians() external view virtual returns (address[] memory) {
         address[] memory guardians = new address[](guardiansConfig.guardians.length);
         uint256 i;
         for (i; i < guardiansConfig.guardians.length;) {
@@ -340,7 +340,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      * Must be confirmed by N guardians, where N = ceil(Nb Guardians / 2).
      * @param _recoveryAddress The address to which ownership should be transferred.
      */
-    function startRecovery(address _recoveryAddress) external {
+    function startRecovery(address _recoveryAddress) external virtual {
         if (!isGuardian(msg.sender)) revert MustBeGuardian();
         _requireRecovery(false);
         if (isGuardian(_recoveryAddress)) revert GuardianCannotBeOwner();
@@ -356,7 +356,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      * @param _signatures Array of guardian signatures concatenated.
      * @notice The arguments should be ordered by the address of the guardian signing the message
      */
-    function completeRecovery(bytes[] calldata _signatures) external {
+    function completeRecovery(bytes[] calldata _signatures) external virtual {
         _requireRecovery(true);
         if (recoveryDetails.executeAfter > uint64(block.timestamp)) revert OngoingRecovery();
 

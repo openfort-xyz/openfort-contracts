@@ -3,12 +3,8 @@ pragma solidity =0.8.19;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-
-// Smart wallet implementation to use
 import {ManagedOpenfortAccount} from "./ManagedOpenfortAccount.sol";
 import {OpenfortManagedProxy} from "./OpenfortManagedProxy.sol";
-
-// Interfaces
 import {BaseOpenfortFactory} from "../base/BaseOpenfortFactory.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 

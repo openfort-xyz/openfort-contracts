@@ -7,8 +7,8 @@ import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/crypt
 import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
 import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 import {BaseAccount, UserOperation, IEntryPoint, UserOperationLib} from "account-abstraction/core/BaseAccount.sol";
-import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
 import {_packValidationData} from "account-abstraction/core/Helpers.sol";
+import {TokenCallbackHandler} from "./TokenCallbackHandler.sol";
 import {OpenfortErrorsAndEvents} from "../../interfaces/OpenfortErrorsAndEvents.sol";
 
 /**
@@ -46,7 +46,7 @@ abstract contract BaseOpenfortAccount is
      * @param validUntil this sessionKey is valid only until this timestamp.
      * @param limit limit of uses remaining
      * @param masterSessionKey if set to true, the session key does not have any limitation other than the validity time
-     * @param whitelising if set to true, the session key has to follow whitelisting rules
+     * @param whitelisting if set to true, the session key has to follow whitelisting rules
      * @param whitelist - this session key can only interact with the addresses in the whitelist.
      */
     struct SessionKeyStruct {
@@ -54,7 +54,7 @@ abstract contract BaseOpenfortAccount is
         uint48 validUntil;
         uint48 limit;
         bool masterSessionKey;
-        bool whitelising;
+        bool whitelisting;
         mapping(address contractAddress => bool allowed) whitelist;
         address registrarAddress;
     }
@@ -71,7 +71,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * Require the function call went through EntryPoint or owner
      */
-    function _requireFromEntryPointOrOwner() internal view {
+    function _requireFromEntryPointOrOwner() internal view virtual {
         if (msg.sender != address(entryPoint()) && msg.sender != owner()) {
             revert NotOwnerOrEntrypoint();
         }
@@ -91,14 +91,14 @@ abstract contract BaseOpenfortAccount is
     /**
      * Check current account deposit in the entryPoint
      */
-    function getDeposit() public view returns (uint256) {
+    function getDeposit() public view virtual returns (uint256) {
         return entryPoint().balanceOf(address(this));
     }
 
     /*
      * @notice Return whether a sessionKey is valid.
      */
-    function isValidSessionKey(address _sessionKey, bytes calldata _callData) public returns (bool) {
+    function isValidSessionKey(address _sessionKey, bytes calldata _callData) public virtual returns (bool) {
         SessionKeyStruct storage sessionKey = sessionKeys[_sessionKey];
         // If not owner and the session key is revoked, return false
         if (sessionKey.validUntil == 0) return false;
@@ -132,7 +132,7 @@ abstract contract BaseOpenfortAccount is
             } // Only masterSessionKey can reenter
 
             // If there is no whitelist or there is, but the target is whitelisted, return true
-            if (!sessionKey.whitelising || sessionKey.whitelist[toContract]) {
+            if (!sessionKey.whitelisting || sessionKey.whitelist[toContract]) {
                 return true;
             }
 
@@ -152,7 +152,7 @@ abstract contract BaseOpenfortAccount is
                 if (toContracts[i] == address(this)) {
                     return false;
                 } // Only masterSessionKey can reenter
-                if (sessionKey.whitelising && !sessionKey.whitelist[toContracts[i]]) {
+                if (sessionKey.whitelisting && !sessionKey.whitelist[toContracts[i]]) {
                     return false;
                 } // One contract's not in the sessionKey's whitelist (if any)
                 unchecked {
@@ -170,7 +170,7 @@ abstract contract BaseOpenfortAccount is
      * @notice See EIP-1271
      * Owner and session keys need to sign using EIP712.
      */
-    function isValidSignature(bytes32 _hash, bytes memory _signature) public view override returns (bytes4) {
+    function isValidSignature(bytes32 _hash, bytes memory _signature) public view virtual override returns (bytes4) {
         bytes32 structHash = keccak256(abi.encode(OF_MSG_TYPEHASH, _hash));
         bytes32 digest = _hashTypedDataV4(structHash);
         address signer = digest.recover(_signature);
@@ -222,7 +222,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * Deposit funds for this account in the EntryPoint
      */
-    function addDeposit() public payable {
+    function addDeposit() public payable virtual {
         entryPoint().depositTo{value: msg.value}(address(this));
     }
 
@@ -232,7 +232,7 @@ abstract contract BaseOpenfortAccount is
      * @param _amount to withdraw
      * @notice ONLY the owner can call this function (it's not using _requireFromEntryPointOrOwner())
      */
-    function withdrawDepositTo(address payable _withdrawAddress, uint256 _amount) external {
+    function withdrawDepositTo(address payable _withdrawAddress, uint256 _amount) external virtual {
         _requireFromOwner();
         entryPoint().withdrawTo(_withdrawAddress, _amount);
     }
@@ -240,7 +240,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * @dev Call a target contract and reverts if it fails.
      */
-    function _call(address _target, uint256 _value, bytes calldata _calldata) internal {
+    function _call(address _target, uint256 _value, bytes calldata _calldata) internal virtual {
         (bool success, bytes memory result) = _target.call{value: _value}(_calldata);
         if (!success) {
             assembly {
@@ -254,6 +254,7 @@ abstract contract BaseOpenfortAccount is
      */
     function _validateSignature(UserOperation calldata userOp, bytes32 userOpHash)
         internal
+        virtual
         override
         returns (uint256 validationData)
     {
@@ -286,7 +287,7 @@ abstract contract BaseOpenfortAccount is
         uint48 _validUntil,
         uint48 _limit,
         address[] calldata _whitelist
-    ) public {
+    ) public virtual {
         _requireFromEntryPointOrOwner();
 
         require(_whitelist.length < 11, "Whitelist too big");
@@ -299,7 +300,7 @@ abstract contract BaseOpenfortAccount is
         }
         if (i != 0) {
             // If there was some whitelisting, it is not a masterSessionKey
-            sessionKeys[_key].whitelising = true;
+            sessionKeys[_key].whitelisting = true;
             sessionKeys[_key].masterSessionKey = false;
         } else {
             if (_limit == ((2 ** 48) - 1)) sessionKeys[_key].masterSessionKey = true;
@@ -318,7 +319,7 @@ abstract contract BaseOpenfortAccount is
      * Revoke a session key from the account
      * @param _key session key to revoke
      */
-    function revokeSessionKey(address _key) external {
+    function revokeSessionKey(address _key) external virtual {
         _requireFromEntryPointOrOwner();
         if (sessionKeys[_key].validUntil != 0) {
             sessionKeys[_key].validUntil = 0;
