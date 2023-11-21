@@ -6,15 +6,15 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {ERC6551Registry, IERC6551Registry} from "erc6551/src/ERC6551Registry.sol";
 import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {MockERC721} from "contracts/mock/MockERC721.sol";
-import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAccount.sol";
+import {ERC6551OpenfortAccount} from "contracts/core/erc6551/ERC6551OpenfortAccount.sol";
 import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
 
-contract EIP6551OpenfortAccountTest is OpenfortBaseTest {
+contract ERC6551OpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
 
     ERC6551Registry public erc6551Registry;
-    EIP6551OpenfortAccount public eip6551OpenfortAccount;
-    EIP6551OpenfortAccount public implEIP6551OpenfortAccount;
+    ERC6551OpenfortAccount public erc6551OpenfortAccount;
+    ERC6551OpenfortAccount public implERC6551OpenfortAccount;
     MockERC721 public mockERC721;
 
     /**
@@ -69,16 +69,16 @@ contract EIP6551OpenfortAccountTest is OpenfortBaseTest {
         // deploy a new MockERC721 collection
         mockERC721 = new MockERC721{salt: versionSalt}();
 
-        implEIP6551OpenfortAccount = new EIP6551OpenfortAccount{salt: versionSalt}();
+        implERC6551OpenfortAccount = new ERC6551OpenfortAccount{salt: versionSalt}();
 
-        address eip6551OpenfortAccountAddress = erc6551Registry.createAccount(
-            address(implEIP6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1
+        address erc6551OpenfortAccountAddress = erc6551Registry.createAccount(
+            address(implERC6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1
         );
 
-        eip6551OpenfortAccount = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress));
-        eip6551OpenfortAccount.initialize(address(entryPoint));
+        erc6551OpenfortAccount = ERC6551OpenfortAccount(payable(erc6551OpenfortAccountAddress));
+        erc6551OpenfortAccount.initialize(address(entryPoint));
 
-        mockERC721.mint(eip6551OpenfortAccountAddress, 1);
+        mockERC721.mint(erc6551OpenfortAccountAddress, 1);
 
         vm.stopPrank();
     }
@@ -87,7 +87,7 @@ contract EIP6551OpenfortAccountTest is OpenfortBaseTest {
      * Test reinitialize. It should fail.
      */
     function testFailReinitialize() public {
-        eip6551OpenfortAccount.initialize(address(entryPoint));
+        erc6551OpenfortAccount.initialize(address(entryPoint));
     }
 
     /*
@@ -95,12 +95,12 @@ contract EIP6551OpenfortAccountTest is OpenfortBaseTest {
      */
     function testERC6551Deploy() public {
         address deployedAccount =
-            erc6551Registry.createAccount(address(implEIP6551OpenfortAccount), 0, block.chainid, address(0), 0);
+            erc6551Registry.createAccount(address(implERC6551OpenfortAccount), 0, block.chainid, address(0), 0);
 
         assertTrue(deployedAccount != address(0));
 
         address predictedAccount =
-            erc6551Registry.account(address(implEIP6551OpenfortAccount), 0, block.chainid, address(0), 0);
+            erc6551Registry.account(address(implERC6551OpenfortAccount), 0, block.chainid, address(0), 0);
 
         assertEq(predictedAccount, deployedAccount);
     }
@@ -109,7 +109,7 @@ contract EIP6551OpenfortAccountTest is OpenfortBaseTest {
      * Test initialize implementation. It should fail.
      */
     function testFailInitializeImplementation() public {
-        implEIP6551OpenfortAccount.initialize(address(entryPoint));
+        implERC6551OpenfortAccount.initialize(address(entryPoint));
     }
 
     /*
@@ -117,7 +117,7 @@ contract EIP6551OpenfortAccountTest is OpenfortBaseTest {
      * EntryPoint address should be 0. Should pass.
      */
     function testImplementationNoEntryPointAddr() public {
-        IEntryPoint e = implEIP6551OpenfortAccount.entryPoint();
+        IEntryPoint e = implERC6551OpenfortAccount.entryPoint();
         assertEq(address(e), address(0));
     }
 
@@ -129,14 +129,14 @@ contract EIP6551OpenfortAccountTest is OpenfortBaseTest {
         assembly {
             chainId := chainid()
         }
-        address eip6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
-            address(implEIP6551OpenfortAccount), bytes32(0), chainId, address(mockERC721), 1
+        address erc6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
+            address(implERC6551OpenfortAccount), bytes32(0), chainId, address(mockERC721), 1
         );
 
-        EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
-        IEntryPoint e = eip6551OpenfortAccount2.entryPoint();
+        ERC6551OpenfortAccount erc6551OpenfortAccount2 = ERC6551OpenfortAccount(payable(erc6551OpenfortAccountAddress2));
+        IEntryPoint e = erc6551OpenfortAccount2.entryPoint();
         assertEq(address(e), address(entryPoint));
-        assertNotEq(address(e), eip6551OpenfortAccountAddress2);
+        assertNotEq(address(e), erc6551OpenfortAccountAddress2);
     }
 
     /*
@@ -147,11 +147,11 @@ contract EIP6551OpenfortAccountTest is OpenfortBaseTest {
         assembly {
             chainId := chainid()
         }
-        address eip6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
-            address(implEIP6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1
+        address erc6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
+            address(implERC6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1
         );
-        EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
-        IEntryPoint e = eip6551OpenfortAccount2.entryPoint();
+        ERC6551OpenfortAccount erc6551OpenfortAccount2 = ERC6551OpenfortAccount(payable(erc6551OpenfortAccountAddress2));
+        IEntryPoint e = erc6551OpenfortAccount2.entryPoint();
         assertEq(address(e), address(entryPoint));
     }
 
@@ -164,55 +164,55 @@ contract EIP6551OpenfortAccountTest is OpenfortBaseTest {
         assembly {
             chainId := chainid()
         }
-        address eip6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
-            address(implEIP6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1
+        address erc6551OpenfortAccountAddress2 = erc6551Registry.createAccount(
+            address(implERC6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1
         );
 
-        EIP6551OpenfortAccount eip6551OpenfortAccount2 = EIP6551OpenfortAccount(payable(eip6551OpenfortAccountAddress2));
-        eip6551OpenfortAccount2.initialize(address(entryPoint));
+        ERC6551OpenfortAccount erc6551OpenfortAccount2 = ERC6551OpenfortAccount(payable(erc6551OpenfortAccountAddress2));
+        erc6551OpenfortAccount2.initialize(address(entryPoint));
     }
 
     /*
      * Test getDeposit() function.
-     * First ERC4337 function called by this EIP6551-compatible account.
+     * First ERC4337 function called by this ERC6551-compatible account.
      */
     function testGetDeposit() public {
         uint256 deposit;
-        deposit = eip6551OpenfortAccount.getDeposit();
+        deposit = erc6551OpenfortAccount.getDeposit();
         assertEq(deposit, 0);
 
         // We can add deposit by directly calling the EntryPoint
-        entryPoint.depositTo{value: 1}(address(eip6551OpenfortAccount));
-        deposit = eip6551OpenfortAccount.getDeposit();
+        entryPoint.depositTo{value: 1}(address(erc6551OpenfortAccount));
+        deposit = erc6551OpenfortAccount.getDeposit();
         assertEq(deposit, 1);
 
         // We can ALSO add deposit by calling the EntryPoint addDeposit() function of the account
-        eip6551OpenfortAccount.addDeposit{value: 1}();
-        deposit = eip6551OpenfortAccount.getDeposit();
+        erc6551OpenfortAccount.addDeposit{value: 1}();
+        deposit = erc6551OpenfortAccount.getDeposit();
         assertEq(deposit, 2);
     }
 
     /*
      * Test owner() function.
-     * Check that the owner of the eip6551 account is the owner of the NFT
+     * Check that the owner of the erc6551 account is the owner of the NFT
      */
     function testOwner() public {
-        assertEq(eip6551OpenfortAccount.owner(), mockERC721.ownerOf(1));
-        assertEq(eip6551OpenfortAccount.owner(), address(eip6551OpenfortAccount));
+        assertEq(erc6551OpenfortAccount.owner(), mockERC721.ownerOf(1));
+        assertEq(erc6551OpenfortAccount.owner(), address(erc6551OpenfortAccount));
     }
 
     /*
      * Test owner() function.
-     * Check that the owner of the eip6551 account is the owner of the NFT
+     * Check that the owner of the erc6551 account is the owner of the NFT
      */
     function testNotOwner() public {
         // Burning the NFT
-        vm.prank(address(eip6551OpenfortAccount));
-        mockERC721.transferFrom(address(eip6551OpenfortAccount), address(1), 1);
+        vm.prank(address(erc6551OpenfortAccount));
+        mockERC721.transferFrom(address(erc6551OpenfortAccount), address(1), 1);
 
-        assertEq(eip6551OpenfortAccount.owner(), mockERC721.ownerOf(1));
-        assertNotEq(eip6551OpenfortAccount.owner(), address(eip6551OpenfortAccount));
-        assertEq(eip6551OpenfortAccount.owner(), address(1));
+        assertEq(erc6551OpenfortAccount.owner(), mockERC721.ownerOf(1));
+        assertNotEq(erc6551OpenfortAccount.owner(), address(erc6551OpenfortAccount));
+        assertEq(erc6551OpenfortAccount.owner(), address(1));
     }
 
     /*
@@ -226,36 +226,36 @@ contract EIP6551OpenfortAccountTest is OpenfortBaseTest {
 
         // Get the counterfactual address
         vm.prank(factoryAdmin);
-        address eip6551OpenfortAccountAddress2 =
-            erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1);
+        address erc6551OpenfortAccountAddress2 =
+            erc6551Registry.account(address(erc6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1);
 
         // Expect that we will see an event containing the account and admin
         // vm.expectEmit(true, true, false, true);
         // emit IERC6551Registry.ERC6551AccountCreated(
-        //     eip6551OpenfortAccountAddress2, address(eip6551OpenfortAccount), chainId, address(mockERC721), 1, 2
+        //     erc6551OpenfortAccountAddress2, address(erc6551OpenfortAccount), chainId, address(mockERC721), 1, 2
         // );
 
         // Deploy a static account to the counterfactual address
         vm.prank(factoryAdmin);
-        erc6551Registry.createAccount(address(eip6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1);
+        erc6551Registry.createAccount(address(erc6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1);
 
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
         assertEq(
-            eip6551OpenfortAccountAddress2,
-            erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1)
+            erc6551OpenfortAccountAddress2,
+            erc6551Registry.account(address(erc6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1)
         );
         // assertNotEq(
-        //     eip6551OpenfortAccountAddress2,
-        //     erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1)
+        //     erc6551OpenfortAccountAddress2,
+        //     erc6551Registry.account(address(erc6551OpenfortAccount), versionSalt, chainId, address(mockERC721), 1)
         // );
         assertNotEq(
-            eip6551OpenfortAccountAddress2,
-            erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId + 1, address(mockERC721), 1)
+            erc6551OpenfortAccountAddress2,
+            erc6551Registry.account(address(erc6551OpenfortAccount), versionSalt, chainId + 1, address(mockERC721), 1)
         );
         assertNotEq(
-            eip6551OpenfortAccountAddress2,
-            erc6551Registry.account(address(eip6551OpenfortAccount), versionSalt, chainId, address(0), 1)
+            erc6551OpenfortAccountAddress2,
+            erc6551Registry.account(address(erc6551OpenfortAccount), versionSalt, chainId, address(0), 1)
         );
     }
 }
