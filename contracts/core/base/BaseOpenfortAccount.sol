@@ -9,6 +9,7 @@ import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/mat
 import {BaseAccount, UserOperation, IEntryPoint, UserOperationLib} from "account-abstraction/core/BaseAccount.sol";
 import {TokenCallbackHandler} from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
 import {_packValidationData} from "account-abstraction/core/Helpers.sol";
+import {OpenfortErrorsAndEvents} from "../../interfaces/OpenfortErrorsAndEvents.sol";
 
 /**
  * @title BaseOpenfortAccount (Non upgradeable by default)
@@ -25,7 +26,8 @@ abstract contract BaseOpenfortAccount is
     Initializable,
     EIP712Upgradeable,
     IERC1271Upgradeable,
-    TokenCallbackHandler
+    TokenCallbackHandler,
+    OpenfortErrorsAndEvents
 {
     using ECDSAUpgradeable for bytes32;
 
@@ -58,15 +60,6 @@ abstract contract BaseOpenfortAccount is
     }
 
     mapping(address sessionKey => SessionKeyStruct sessionKeyData) public sessionKeys;
-
-    event AccountImplementationDeployed(address indexed creator);
-    event SessionKeyRegistered(address indexed key);
-    event SessionKeyRevoked(address indexed key);
-
-    error ZeroAddressNotAllowed();
-    error NotOwnerOrEntrypoint();
-    error NotOwner();
-    error InvalidParameterLength();
 
     receive() external payable virtual {}
 

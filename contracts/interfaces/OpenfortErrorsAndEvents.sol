@@ -11,6 +11,16 @@ interface OpenfortErrorsAndEvents {
     /// @notice Error when a function requires msg.value to be different than owner()
     error OwnerNotAllowed();
 
+    error ZeroAddressNotAllowed();
+    error NotOwnerOrEntrypoint();
+    error NotOwner();
+    error InvalidParameterLength();
+
+    event AccountImplementationDeployed(address indexed creator);
+    event SessionKeyRegistered(address indexed key);
+    event SessionKeyRevoked(address indexed key);
+    event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
+
     // Paymaster specifics
 
     /**
