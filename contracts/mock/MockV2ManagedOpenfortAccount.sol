@@ -1,41 +1,37 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.19;
 
-import {
-    Ownable2StepUpgradeable,
-    OwnableUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-
-// Base account contract to inherit from
-import {BaseOpenfortAccount, IEntryPoint} from "../core/base/BaseOpenfortAccount.sol";
+import {BaseRecoverableAccount, IEntryPoint} from "../core/base/BaseRecoverableAccount.sol";
 
 /**
- * @title ManagedOpenfortAccount (Upgradeable via Beacon)
+ * @title MockV2ManagedOpenfortAccount (Upgradeable via Beacon)
  * @notice Smart contract wallet managed via Beacon with session keys following the ERC-4337 standard.
  * It inherits from:
- *  - BaseOpenfortAccount
+ *  - BaseRecoverableAccount
  */
-contract MockV2ManagedOpenfortAccount is BaseOpenfortAccount, Ownable2StepUpgradeable {
-    address private constant ENTRYPOINTCONTRACT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
-
-    /*
-     * @notice Initialize the smart contract wallet.
-     */
-    function initialize(address _defaultAdmin) public initializer {
-        if (_defaultAdmin == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
-        _transferOwnership(_defaultAdmin);
-    }
-
-    function owner() public view virtual override(BaseOpenfortAccount, OwnableUpgradeable) returns (address) {
-        return OwnableUpgradeable.owner();
-    }
+contract MockV2ManagedOpenfortAccount is BaseRecoverableAccount {
+    address private constant ENTRYPOINTCONTRACT = 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF;
 
     /**
      * Return the current EntryPoint
      */
     function entryPoint() public pure override returns (IEntryPoint) {
-        return IEntryPoint(address(0));
+        return IEntryPoint(ENTRYPOINTCONTRACT);
+    }
+
+    /**
+     * Disabled method to avoid recoverability
+     */
+    function getLock() external pure override returns (uint256 _releaseAfter) {
+        (_releaseAfter);
+        revert("disabled!");
+    }
+
+    /**
+     * Disabled method to avoid recoverability
+     */
+    function startRecovery(address _recoveryAddress) external pure override {
+        (_recoveryAddress);
+        revert("disabled!");
     }
 }

@@ -2,10 +2,6 @@
 pragma solidity =0.8.19;
 
 import {BaseRecoverableAccount, IEntryPoint} from "../base/BaseRecoverableAccount.sol";
-import {
-    Ownable2StepUpgradeable,
-    OwnableUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 /**
  * @title ManagedOpenfortAccount (Upgradeable via Beacon)
@@ -15,10 +11,6 @@ import {
  */
 contract ManagedOpenfortAccount is BaseRecoverableAccount {
     address private constant ENTRYPOINTCONTRACT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
-
-    function owner() public view virtual override returns (address) {
-        return OwnableUpgradeable.owner();
-    }
 
     /**
      * Return the current EntryPoint

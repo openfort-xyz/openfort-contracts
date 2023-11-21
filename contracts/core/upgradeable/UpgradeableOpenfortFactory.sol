@@ -2,10 +2,7 @@
 pragma solidity =0.8.19;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
-import {
-    Ownable2StepUpgradeable,
-    OwnableUpgradeable
-} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {UpgradeableOpenfortAccount, IEntryPoint} from "./UpgradeableOpenfortAccount.sol";
 import {OpenfortUpgradeableProxy} from "./OpenfortUpgradeableProxy.sol";
 import {BaseOpenfortFactory} from "../base/BaseOpenfortFactory.sol";

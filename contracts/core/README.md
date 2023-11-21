@@ -1,5 +1,9 @@
 # Openfort Accounts
 
+There are three types of Openfort accounts:
+1. Upgradeable accounts (with recoverable features)
+2. Managed accounts (with recoverable features)
+3. ERC6551 accounts (experiment)
 
 ## Recoverable Accounts
 Recoverable accounts are a special type of accounts that support social recovery.

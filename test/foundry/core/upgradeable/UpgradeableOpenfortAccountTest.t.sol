@@ -137,7 +137,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Create an account using the factory and make it call count() directly.
      */
     function testIncrementCounterDirect() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         // Make the admin of the upgradeable account wallet (deployer) call "count"
@@ -152,10 +152,10 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
     /*
      * Create an account by directly calling the factory and make it call count()
-     * using the execute() function using the EntryPoint (userOp). Leaveraging ERC-4337.
+     * using the execute() function using the EntryPoint (userOp). Leveraging ERC-4337.
      */
     function testIncrementCounterViaEntrypoint() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -173,10 +173,10 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
     /*
      * Create an account by directly calling the factory and make it call count()
-     * using the executeBatching() function using the EntryPoint (userOp). Leaveraging ERC-4337.
+     * using the executeBatching() function using the EntryPoint (userOp). Leveraging ERC-4337.
      */
     function testIncrementCounterViaEntrypointBatching() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         uint256 count = 3;
@@ -206,7 +206,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      *  Should fail, try to use a sessionKey that is not registered.
      */
     function testFailIncrementCounterViaSessionKeyNotregistered() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -230,7 +230,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Use a sessionKey that is registered.
      */
     function testIncrementCounterViaSessionKey() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -259,7 +259,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * using the EntryPoint (userOp). Then use the sessionKey to count
      */
     function testRegisterSessionKeyViaEntrypoint() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -308,7 +308,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Should not be allowed: session keys cannot register new session keys!
      */
     function testFailRegisterSessionKeyViaEntrypoint2ndKey() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -379,7 +379,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * using the EntryPoint (userOp). Then use that sessionKey to register a second one
      */
     function testFailAttackRegisterSessionKeyViaEntrypoint2ndKey() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -445,7 +445,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      *  Should fail, try to use a sessionKey that is expired.
      */
     function testIncrementCounterViaSessionKeyExpired() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -475,7 +475,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      *  Should fail, try to use a sessionKey that is revoked.
      */
     function testFailIncrementCounterViaSessionKeyRevoked() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -504,7 +504,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      *  Should fail, try to use a sessionKey that reached its limit.
      */
     function testFailIncrementCounterViaSessionKeyReachLimit() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -543,7 +543,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      *  Should fail, try to use a sessionKey that reached its limit.
      */
     function testFailIncrementCounterViaSessionKeyReachLimitBatching() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -583,7 +583,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      *  Should fail, try to revoke a sessionKey using a non-privileged user
      */
     function testFailRevokeSessionKeyInvalidUser() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -613,7 +613,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Use a sessionKey with whitelisting to call Execute().
      */
     function testIncrementCounterViaSessionKeyWhitelisting() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -642,7 +642,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Should fail, try to register a sessionKey with a large whitelist.
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingTooBig() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -670,7 +670,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Use a sessionKey with whitelisting to call ExecuteBatch().
      */
     function testIncrementCounterViaSessionKeyWhitelistingBatch() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -716,7 +716,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Should fail, try to use a sessionKey with invalid whitelisting to call Execute().
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingWrongAddress() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -745,7 +745,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Should fail, try to use a sessionKey with invalid whitelisting to call ExecuteBatch().
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingBatchWrongAddress() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         address sessionKey;
@@ -810,7 +810,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.prank(accountAdmin2);
         UpgradeableOpenfortAccount(payable(account)).acceptOwnership();
 
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         // Make the admin of the upgradeable account wallet (deployer) call "count"
@@ -836,7 +836,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.prank(accountAdmin2);
         UpgradeableOpenfortAccount(payable(account)).acceptOwnership();
 
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -856,7 +856,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Test an account with mockERC20 instead of TestCount.
      */
     function testMintTokenAccount() public {
-        // Verify that the totalSupply is stil 0
+        // Verify that the totalSupply is still 0
         assertEq(mockERC20.totalSupply(), 0);
 
         // Mint 1 to beneficiary
@@ -917,7 +917,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Basic test of simulateValidation() to check that it always reverts.
      */
     function testSimulateValidation() public {
-        // Verify that the counter is stil set to 0
+        // Verify that the counter is still set to 0
         assertEq(testCounter.counters(account), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -942,21 +942,29 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         MockV2UpgradeableOpenfortAccount newAccountImplementation = new MockV2UpgradeableOpenfortAccount();
         OpenfortUpgradeableProxy p = OpenfortUpgradeableProxy(payable(account));
         // Printing account address and the implementation address
-        console.log(account);
-        console.log(p.implementation());
+        console.log("Account address (proxy): ", account);
+        console.log("Implementation address (old): ", p.implementation());
 
         vm.expectRevert("Ownable: caller is not the owner");
         UpgradeableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
 
+        vm.expectRevert();
+        MockV2UpgradeableOpenfortAccount(payable(account)).easterEgg();
+
         vm.prank(accountAdmin);
         UpgradeableOpenfortAccount(payable(account)).upgradeTo(address(newAccountImplementation));
 
-        // Notice that, even though we bind the address to the old implementation, entryPoint() is now 0
-        assertEq(address(UpgradeableOpenfortAccount(payable(account)).entryPoint()), address(0));
+        // Notice that, even though we bind the address to the old implementation, entryPoint() is now changed
+        assertEq(
+            address(UpgradeableOpenfortAccount(payable(account)).entryPoint()),
+            address(0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF)
+        );
+
+        assertEq(MockV2UpgradeableOpenfortAccount(payable(account)).easterEgg(), 42);
 
         // Printing account address and the implementation address. Impl address should have changed
-        console.log(account);
-        console.log(p.implementation());
+        console.log("Account address (proxy): ", account);
+        console.log("Implementation address (new): ", p.implementation());
     }
 
     /*
@@ -1150,7 +1158,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Create a friend EOA
         address friendAccount = makeAddr("friend");
 
-        // Trying to proposa a guardian not using the owner
+        // Trying to propose a guardian not using the owner
         vm.expectRevert("Ownable: caller is not the owner");
         openfortAccount.proposeGuardian(friendAccount);
 
@@ -1197,7 +1205,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Create a friend EOA
         address friendAccount = makeAddr("friend");
 
-        // Trying to proposa a guardian not using the owner
+        // Trying to propose a guardian not using the owner
         vm.expectRevert("Ownable: caller is not the owner");
         openfortAccount.proposeGuardian(friendAccount);
 
@@ -1242,7 +1250,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Create a friend EOA
         address friendAccount = makeAddr("friend");
 
-        // Trying to proposa a guardian not using the owner
+        // Trying to propose a guardian not using the owner
         vm.expectRevert("Ownable: caller is not the owner");
         openfortAccount.proposeGuardian(friendAccount);
 
@@ -1352,7 +1360,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Create a friend EOA
         address friendAccount = makeAddr("friend");
 
-        // Trying to proposa a guardian not using the owner
+        // Trying to propose a guardian not using the owner
         vm.expectRevert("Ownable: caller is not the owner");
         openfortAccount.proposeGuardian(friendAccount);
 
@@ -1426,7 +1434,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Verify that the number of guardians is still 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
 
-        // OPENFORT_GUARDIAN account should stil be a guardian
+        // OPENFORT_GUARDIAN account should still be a guardian
         assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), true);
     }
 
@@ -1514,7 +1522,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.expectRevert("Ownable: caller is not the owner");
         openfortAccount.revokeGuardian(friendAccount);
 
-        // Trying to revoke a non-existen guardian (random beneficiary address)
+        // Trying to revoke a non-existent guardian (random beneficiary address)
         vm.expectRevert(MustBeGuardian.selector);
         vm.prank(accountAdmin);
         openfortAccount.revokeGuardian(beneficiary);
@@ -1525,12 +1533,12 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.prank(accountAdmin);
         openfortAccount.revokeGuardian(friendAccount);
 
-        // Anyone can confirm a revokation. However, the security period has not passed yet
+        // Anyone can confirm a revocation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert(PendingRevokeNotOver.selector);
         openfortAccount.confirmGuardianRevocation(friendAccount);
 
-        // Anyone can confirm a revokation after security period
+        // Anyone can confirm a revocation after security period
         skip(SECURITY_PERIOD);
         openfortAccount.confirmGuardianRevocation(friendAccount);
 
@@ -1581,12 +1589,12 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.prank(accountAdmin);
         openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
 
-        // Anyone can confirm a revokation. However, the security period has not passed yet
+        // Anyone can confirm a revocation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert(PendingRevokeNotOver.selector);
         openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
 
-        // Anyone can confirm a revokation after security period
+        // Anyone can confirm a revocation after security period
         skip(SECURITY_PERIOD);
         openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
 
@@ -1629,7 +1637,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.expectRevert("Ownable: caller is not the owner");
         openfortAccount.revokeGuardian(friendAccount);
 
-        // Trying to revoke a non-existen guardian (random beneficiary address)
+        // Trying to revoke a non-existent guardian (random beneficiary address)
         vm.expectRevert(MustBeGuardian.selector);
         vm.prank(accountAdmin);
         openfortAccount.revokeGuardian(beneficiary);
@@ -1640,12 +1648,12 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.prank(accountAdmin);
         openfortAccount.revokeGuardian(friendAccount);
 
-        // Anyone can confirm a revokation. However, the security period has not passed yet
+        // Anyone can confirm a revocation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert(PendingRevokeNotOver.selector);
         openfortAccount.confirmGuardianRevocation(friendAccount);
 
-        // Anyone can confirm a revokation after security period
+        // Anyone can confirm a revocation after security period
         skip(SECURITY_PERIOD);
         openfortAccount.confirmGuardianRevocation(friendAccount);
 
@@ -1660,12 +1668,12 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.prank(accountAdmin);
         openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
 
-        // Anyone can confirm a revokation. However, the security period has not passed yet
+        // Anyone can confirm a revocation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert(PendingRevokeNotOver.selector);
         openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
 
-        // Anyone can confirm a revokation after security period
+        // Anyone can confirm a revocation after security period
         skip(SECURITY_PERIOD);
         openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
 
@@ -1786,10 +1794,10 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Verify that the number of guardians is now 0
         assertEq(openfortAccount.guardianCount(), 0);
-        // deault (openfort) account should not be a guardian anymore
+        // default (openfort) account should not be a guardian anymore
         assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), false);
 
-        // Expect that we will see an event containing the deault (openfort) account and security period
+        // Expect that we will see an event containing the default (openfort) account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
         vm.prank(accountAdmin);
@@ -1800,7 +1808,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Verify that the number of guardians is now 1 again
         assertEq(openfortAccount.guardianCount(), 1);
-        // deault (openfort) account should be a guardian again
+        // default (openfort) account should be a guardian again
         assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), true);
     }
 
@@ -1836,7 +1844,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.expectRevert("Ownable: caller is not the owner");
         openfortAccount.revokeGuardian(friendAccount);
 
-        // Trying to revoke a non-existen guardian (random beneficiary address)
+        // Trying to revoke a non-existent guardian (random beneficiary address)
         vm.expectRevert(MustBeGuardian.selector);
         vm.prank(accountAdmin);
         openfortAccount.revokeGuardian(beneficiary);
@@ -1847,7 +1855,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.prank(accountAdmin);
         openfortAccount.revokeGuardian(friendAccount);
 
-        // Anyone can confirm a revokation. However, the security period has not passed yet
+        // Anyone can confirm a revocation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert(PendingRevokeNotOver.selector);
         openfortAccount.confirmGuardianRevocation(friendAccount);
@@ -1895,10 +1903,14 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         skip(SECURITY_PERIOD + 1);
         openfortAccount.confirmGuardianProposal(friendAccount);
+
+        // Try to confirm a non-existent revocation
         vm.expectRevert(MustBeGuardian.selector);
-        openfortAccount.confirmGuardianRevocation(friendAccount2); // Notice this tries to confirm a non-existent revocation!
+        openfortAccount.confirmGuardianRevocation(friendAccount2);
+        // Try to confirm a non-existent revocation
         vm.expectRevert(UnknownRevoke.selector);
-        openfortAccount.confirmGuardianRevocation(friendAccount); // Notice this tries to confirm a non-existent revocation!
+        openfortAccount.confirmGuardianRevocation(friendAccount);
+
         vm.prank(accountAdmin);
         vm.expectRevert(MustBeGuardian.selector);
         openfortAccount.revokeGuardian(friendAccount2); // Notice this tries to revoke a non-existent guardian!
@@ -1908,8 +1920,10 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.prank(accountAdmin);
         openfortAccount.revokeGuardian(friendAccount); // Starting a valid revocation process
         skip(SECURITY_PERIOD + 1);
+
+        // Try to confirm a guardian that is already valid and pending to revoke
         vm.expectRevert(DuplicatedGuardian.selector);
-        openfortAccount.confirmGuardianProposal(friendAccount); // Notice this tries to confirm a guardian that is already valid and pending to revoke!
+        openfortAccount.confirmGuardianProposal(friendAccount);
     }
 
     /**
@@ -2036,7 +2050,8 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         );
 
         bytes[] memory signatures = new bytes[](2);
-        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
+        // Using friendAccount2 first because it has a lower address
+        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK);
         signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccountPK);
 
         skip(RECOVERY_PERIOD + 1);
@@ -2108,7 +2123,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     /*
      * Case: User added 4 guardians and removes the default (Openfort)
      * One guardian (friend) is used to start a recovery process
-     * The guardian that initiatied the recovery + another one are used to complete the flow.
+     * The guardian that initiated the recovery + another one are used to complete the flow.
      * @notice Remember that signatures need to be ordered by the guardian's address.
      */
     function test4GuardiansNoDefaultCompleteRecovery() public {
