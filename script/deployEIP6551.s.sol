@@ -4,10 +4,10 @@ pragma solidity =0.8.19;
 import {Script, console} from "forge-std/Script.sol";
 import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {MockERC721} from "contracts/mock/MockERC721.sol";
-import {EIP6551OpenfortAccount} from "contracts/core/eip6551/EIP6551OpenfortAccount.sol";
+import {ERC6551OpenfortAccount} from "contracts/core/erc6551/ERC6551OpenfortAccount.sol";
 import {IERC6551Registry} from "lib/erc6551/src/ERC6551Registry.sol";
 
-contract EIP6551OpenfortDeploy is Script {
+contract ERC6551OpenfortDeploy is Script {
     uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC"), 0);
     address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
@@ -19,7 +19,7 @@ contract EIP6551OpenfortDeploy is Script {
         vm.startBroadcast(deployPrivKey);
 
         // Create an acccount to serve as implementation
-        EIP6551OpenfortAccount eip6551OpenfortAccount = new EIP6551OpenfortAccount{salt: versionSalt}();
+        ERC6551OpenfortAccount erc6551OpenfortAccount = new ERC6551OpenfortAccount{salt: versionSalt}();
 
         uint256 chainId;
         assembly {
@@ -31,7 +31,7 @@ contract EIP6551OpenfortDeploy is Script {
 
         // The first call should create a new account, while the second will just return the corresponding account address
         address account2 =
-            erc6551Registry.createAccount(address(eip6551OpenfortAccount), versionSalt, chainId, address(nft721), 1);
+            erc6551Registry.createAccount(address(erc6551OpenfortAccount), versionSalt, chainId, address(nft721), 1);
         console.log("Registry at address %s has created an account at address %s", address(erc6551Registry), account2);
 
         vm.stopBroadcast();

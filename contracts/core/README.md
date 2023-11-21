@@ -1,8 +1,11 @@
-# Recoverable Accounts
+# Openfort Accounts
+
+
+## Recoverable Accounts
 Recoverable accounts are a special type of accounts that support social recovery.
 They let owners define a set of guardians to help recover the account in case the private key of the owner is compromised (forgotten, disclosed, stolen...).
 
-## Context 
+### Context 
 
 As explained by Vitalik in a famous post (https://vitalik.ca/general/2021/01/11/recovery.html), guardians are the next thing after multisig wallets.
 
@@ -14,7 +17,7 @@ Observe the image below from the mentioned blog post to visualize how guardians 
 
 If enough guardians confirm the recovery of an account, they can help the legitimate owner of the account update the signing key (aka owner).
 
-## How do Recoverable Accounts Work
+### How do Recoverable Accounts Work
 
 The owner can:
  - Propose a new guardian.
@@ -34,10 +37,16 @@ Anyone can:
  - When in recovery mode, submit the list of needed signatures (from half of the guardians) to complete the recovery of the account.
 
 
-## More Information
+### More Information
  - https://vitalik.ca/general/2021/01/11/recovery.html
  - https://old.reddit.com/r/ethereum/comments/11tijiv/how_i_think_about_choosing_guardians_for_multisig/
  - https://medium.com/nightlycrypto/smart-wallets-guardians-756d27a749c7
  - https://www.makeuseof.com/what-is-crypto-social-recovery-wallet-how-does-it-work/
  - https://support.argent.xyz/hc/en-us/articles/360022631992-About-guardians
  - https://docs-wallet.loopring.io/security/guardians
+
+## ERC6551 Accounts
+
+### Context 
+
+### How do ERC6551 Accounts work
