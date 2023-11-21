@@ -36,9 +36,8 @@ contract ERC6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
      * @notice Initialize the smart contract wallet.
      */
     function initialize(address _entrypoint) public initializer {
-        if (_entrypoint == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
+        _requireFromOwner();
+        if (_entrypoint == address(0)) revert ZeroAddressNotAllowed();
         emit EntryPointUpdated(entrypointContract, _entrypoint);
         entrypointContract = _entrypoint;
         __EIP712_init("Openfort", "0.5");
@@ -135,5 +134,51 @@ contract ERC6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
                 || _interfaceId == type(IERC1155Receiver).interfaceId || _interfaceId == type(IERC721Receiver).interfaceId
                 || _interfaceId == type(IERC165).interfaceId
         );
+    }
+
+    function onERC721Received(address, address, uint256 receivedTokenId, bytes memory)
+        external
+        view
+        override
+        returns (bytes4)
+    {
+        _revertIfOwnershipCycle(msg.sender, receivedTokenId);
+        return IERC721Receiver.onERC721Received.selector;
+    }
+
+    /**
+     * @dev Helper method to check if a received token is in the ownership chain of the wallet.
+     * @param receivedTokenAddress The address of the token being received.
+     * @param receivedTokenId The ID of the token being received.
+     */
+    function _revertIfOwnershipCycle(address receivedTokenAddress, uint256 receivedTokenId) internal view virtual {
+        (uint256 _chainId, address _contractAddress, uint256 _tokenId) = token();
+        require(
+            _chainId != block.chainid || receivedTokenAddress != _contractAddress || receivedTokenId != _tokenId,
+            "Cannot own yourself"
+        );
+
+        address currentOwner = owner();
+        require(currentOwner != address(this), "Token in ownership chain");
+        uint256 depth = 0;
+        while (currentOwner.code.length > 0) {
+            try IERC6551Account(payable(currentOwner)).token() returns (
+                uint256 chainId, address contractAddress, uint256 tokenId
+            ) {
+                require(
+                    chainId != block.chainid || contractAddress != receivedTokenAddress || tokenId != receivedTokenId,
+                    "Token in ownership chain"
+                );
+                // Advance up the ownership chain
+                currentOwner = IERC721(contractAddress).ownerOf(tokenId);
+                require(currentOwner != address(this), "Token in ownership chain");
+            } catch {
+                break;
+            }
+            unchecked {
+                ++depth;
+            }
+            if (depth == 5) revert("Ownership chain too deep");
+        }
     }
 }
