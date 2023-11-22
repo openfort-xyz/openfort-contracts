@@ -2,7 +2,6 @@
 pragma solidity =0.8.19;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
-import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import {UpgradeableOpenfortAccount, IEntryPoint} from "./UpgradeableOpenfortAccount.sol";
 import {OpenfortUpgradeableProxy} from "./OpenfortUpgradeableProxy.sol";
 import {BaseOpenfortFactory} from "../base/BaseOpenfortFactory.sol";
@@ -13,9 +12,8 @@ import {BaseOpenfortFactory} from "../base/BaseOpenfortFactory.sol";
  * It uses OpenZeppelin's Create2 and OpenfortUpgradeableProxy libraries.
  * It inherits from:
  *  - BaseOpenfortFactory
- *  - Ownable2StepUpgradeable
  */
-contract UpgradeableOpenfortFactory is BaseOpenfortFactory, Ownable2StepUpgradeable {
+contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
     constructor(
         address _owner,
         address _entrypoint,
@@ -27,6 +25,7 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory, Ownable2StepUpgradea
         address _openfortGuardian
     )
         BaseOpenfortFactory(
+            _owner,
             _entrypoint,
             _accountImplementation,
             _recoveryPeriod,
@@ -35,9 +34,7 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory, Ownable2StepUpgradea
             _lockPeriod,
             _openfortGuardian
         )
-    {
-        _transferOwnership(_owner);
-    }
+    {}
 
     /*
      * @notice Deploy a new account for _admin with a nonce.
@@ -46,9 +43,7 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory, Ownable2StepUpgradea
         bytes32 salt = keccak256(abi.encode(_admin, _nonce));
         account = getAddressWithNonce(_admin, _nonce);
 
-        if (account.code.length > 0) {
-            return account;
-        }
+        if (account.code.length > 0) return account;
 
         emit AccountCreated(account, _admin);
         account = address(new OpenfortUpgradeableProxy{salt: salt}(accountImplementation, ""));
@@ -68,26 +63,5 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory, Ownable2StepUpgradea
                 abi.encodePacked(type(OpenfortUpgradeableProxy).creationCode, abi.encode(accountImplementation, ""))
             )
         );
-    }
-
-    /**
-     * @dev {See BaseOpenfortFactory}
-     */
-    function addStake(uint32 unstakeDelaySec) external payable onlyOwner {
-        IEntryPoint(entrypointContract).addStake{value: msg.value}(unstakeDelaySec);
-    }
-
-    /**
-     * @dev {See BaseOpenfortFactory}
-     */
-    function unlockStake() external onlyOwner {
-        IEntryPoint(entrypointContract).unlockStake();
-    }
-
-    /**
-     * @dev {See BaseOpenfortFactory}
-     */
-    function withdrawStake(address payable withdrawAddress) external onlyOwner {
-        IEntryPoint(entrypointContract).withdrawStake(withdrawAddress);
     }
 }

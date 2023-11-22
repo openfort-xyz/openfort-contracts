@@ -2,21 +2,30 @@
 pragma solidity =0.8.19;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
-import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import {IBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import {ManagedOpenfortAccount} from "./ManagedOpenfortAccount.sol";
 import {OpenfortManagedProxy} from "./OpenfortManagedProxy.sol";
-import {BaseOpenfortFactory} from "../base/BaseOpenfortFactory.sol";
-import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
+import {BaseOpenfortFactory, AddressUpgradeable} from "../base/BaseOpenfortFactory.sol";
 
 /**
  * @title ManagedOpenfortFactory (Non-upgradeable)
  * @notice Contract to create an on-chain factory to deploy new ManagedOpenfortAccounts.
- * It uses OpenZeppelin's Create2 and OpenfortManagedProxy libraries.
  * It inherits from:
- *  - IBaseOpenfortFactory
- *  - UpgradeableBeacon to also work as the beacon
+ *  - BaseOpenfortFactory
+ *  - IBeacon to work as the beacon
  */
-contract ManagedOpenfortFactory is BaseOpenfortFactory, UpgradeableBeacon {
+contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
+    address private _implementation;
+
+    /**
+     * @dev Emitted when the implementation returned by the beacon is changed.
+     */
+    event Upgraded(address indexed implementation);
+
+    /**
+     * @dev Sets the address of the initial implementation, and the deployer account as the owner who can upgrade the
+     * beacon.
+     */
     constructor(
         address _owner,
         address _entrypoint,
@@ -28,6 +37,7 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, UpgradeableBeacon {
         address _openfortGuardian
     )
         BaseOpenfortFactory(
+            _owner,
             _entrypoint,
             _accountImplementation,
             _recoveryPeriod,
@@ -36,12 +46,8 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, UpgradeableBeacon {
             _lockPeriod,
             _openfortGuardian
         )
-        UpgradeableBeacon(_accountImplementation)
     {
-        if (_owner == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
-        _transferOwnership(_owner);
+        _setImplementation(_accountImplementation);
     }
 
     /*
@@ -72,23 +78,38 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, UpgradeableBeacon {
     }
 
     /**
-     * @dev {See BaseOpenfortFactory}
+     * @dev Returns the current implementation address.
      */
-    function addStake(uint32 unstakeDelaySec) external payable onlyOwner {
-        IEntryPoint(entrypointContract).addStake{value: msg.value}(unstakeDelaySec);
+    function implementation() public view virtual override returns (address) {
+        return _implementation;
     }
 
     /**
-     * @dev {See BaseOpenfortFactory}
+     * @dev Upgrades the beacon to a new implementation.
+     *
+     * Emits an {Upgraded} event.
+     *
+     * Requirements:
+     *
+     * - msg.sender must be the owner of the contract.
+     * - `newImplementation` must be a contract.
      */
-    function unlockStake() external onlyOwner {
-        IEntryPoint(entrypointContract).unlockStake();
+    function upgradeTo(address newImplementation) public virtual onlyOwner {
+        _setImplementation(newImplementation);
+        emit Upgraded(newImplementation);
     }
 
     /**
-     * @dev {See BaseOpenfortFactory}
+     * @dev Sets the implementation contract address for this beacon
+     *
+     * Requirements:
+     *
+     * - `newImplementation` must be a contract.
      */
-    function withdrawStake(address payable withdrawAddress) external onlyOwner {
-        IEntryPoint(entrypointContract).withdrawStake(withdrawAddress);
+    function _setImplementation(address newImplementation) private {
+        require(
+            AddressUpgradeable.isContract(newImplementation), "ManagedOpenfortFactory: implementation is not a contract"
+        );
+        _implementation = newImplementation;
     }
 }
