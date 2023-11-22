@@ -7,6 +7,7 @@ import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {MockERC20} from "contracts/mock/MockERC20.sol";
+import {IBaseOpenfortAccount} from "contracts/interfaces/IBaseOpenfortAccount.sol";
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {OpenfortUpgradeableProxy} from "contracts/core/upgradeable/OpenfortUpgradeableProxy.sol";
@@ -963,7 +964,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      */
     function testUpgradeAccount() public {
         assertEq(UpgradeableOpenfortAccount(payable(account)).owner(), address(accountAdmin));
-        assertEq(address(UpgradeableOpenfortAccount(payable(account)).entryPoint()), address(entryPoint));
+        assertEq(address(IBaseOpenfortAccount(payable(account)).entryPoint()), address(entryPoint));
         MockV2UpgradeableOpenfortAccount newAccountImplementation = new MockV2UpgradeableOpenfortAccount();
         OpenfortUpgradeableProxy p = OpenfortUpgradeableProxy(payable(account));
         // Printing account address and the implementation address
@@ -981,7 +982,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Notice that, even though we bind the address to the old implementation, entryPoint() is now changed
         assertEq(
-            address(UpgradeableOpenfortAccount(payable(account)).entryPoint()),
+            address(IBaseOpenfortAccount(payable(account)).entryPoint()),
             address(0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF)
         );
 
