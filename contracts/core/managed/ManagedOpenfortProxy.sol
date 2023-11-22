@@ -10,7 +10,7 @@ import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol"
  *  - BeaconProxy
  */
 contract ManagedOpenfortProxy is BeaconProxy {
-    constructor(address beacon, bytes memory data) BeaconProxy(beacon, data) {}
+    constructor(address _beaconAddress, bytes memory _data) BeaconProxy(_beaconAddress, _data) {}
 
     function implementation() external view returns (address) {
         return _implementation();
