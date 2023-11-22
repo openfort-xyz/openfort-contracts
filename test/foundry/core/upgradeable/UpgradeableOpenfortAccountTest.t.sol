@@ -8,6 +8,7 @@ import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/E
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {MockERC20} from "contracts/mock/MockERC20.sol";
 import {IBaseRecoverableAccount} from "contracts/interfaces/IBaseRecoverableAccount.sol";
+import {IUpgradeableOpenfortAccount} from "contracts/interfaces/IUpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {UpgradeableOpenfortProxy} from "contracts/core/upgradeable/UpgradeableOpenfortProxy.sol";
@@ -18,7 +19,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
 
     UpgradeableOpenfortAccount public upgradeableOpenfortAccountImpl;
-    UpgradeableOpenfortFactory public upgradeableOpenfortFactory;
+    UpgradeableOpenfortFactory public openfortFactory;
 
     /**
      * @notice Initialize the UpgradeableOpenfortAccount testing contract.
@@ -55,7 +56,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         emit AccountImplementationDeployed(factoryAdmin);
         upgradeableOpenfortAccountImpl = new UpgradeableOpenfortAccount{salt: versionSalt}();
         // deploy upgradeable account factory
-        upgradeableOpenfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(
+        openfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(
             factoryAdmin,
             address(entryPoint),
             address(upgradeableOpenfortAccountImpl),
@@ -67,7 +68,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         );
 
         // Create an upgradeable account wallet and get its address
-        accountAddress = upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
+        accountAddress = openfortFactory.createAccountWithNonce(accountAdmin, "1");
 
         // deploy a new TestCounter
         testCounter = new TestCounter();
@@ -98,7 +99,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     function testCreateAccountWithNonceViaFactory() public {
         // Get the counterfactual address
         vm.prank(factoryAdmin);
-        address accountAddress2 = upgradeableOpenfortFactory.getAddressWithNonce(accountAdmin, "2");
+        address accountAddress2 = openfortFactory.getAddressWithNonce(accountAdmin, "2");
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
@@ -106,15 +107,15 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Deploy a upgradeable account to the counterfactual address
         vm.prank(factoryAdmin);
-        upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
+        openfortFactory.createAccountWithNonce(accountAdmin, "2");
 
         // Calling it again should just return the address and not create another account
         vm.prank(factoryAdmin);
-        upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
+        openfortFactory.createAccountWithNonce(accountAdmin, "2");
 
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
-        assertEq(accountAddress2, upgradeableOpenfortFactory.getAddressWithNonce(accountAdmin, "2"));
+        assertEq(accountAddress2, openfortFactory.getAddressWithNonce(accountAdmin, "2"));
     }
 
     /*
@@ -123,7 +124,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     function testFuzzCreateAccountWithNonceViaFactory(address _adminAddress, bytes32 _nonce) public {
         // Get the counterfactual address
         vm.prank(factoryAdmin);
-        address accountAddress2 = upgradeableOpenfortFactory.getAddressWithNonce(_adminAddress, _nonce);
+        address accountAddress2 = openfortFactory.getAddressWithNonce(_adminAddress, _nonce);
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
@@ -131,15 +132,15 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Deploy a upgradeable account to the counterfactual address
         vm.prank(factoryAdmin);
-        upgradeableOpenfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+        openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
 
         // Calling it again should just return the address and not create another account
         vm.prank(factoryAdmin);
-        upgradeableOpenfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+        openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
 
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
-        assertEq(accountAddress2, upgradeableOpenfortFactory.getAddressWithNonce(_adminAddress, _nonce));
+        assertEq(accountAddress2, openfortFactory.getAddressWithNonce(_adminAddress, _nonce));
     }
 
     /*
@@ -152,12 +153,12 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // revert();
 
         // Make sure the smart account does not have any code yet
-        address account2 = upgradeableOpenfortFactory.getAddressWithNonce(accountAdmin, bytes32("2"));
+        address account2 = openfortFactory.getAddressWithNonce(accountAdmin, bytes32("2"));
         assertEq(account2.code.length, 0);
 
         bytes memory initCallData =
             abi.encodeWithSignature("createAccountWithNonce(address,bytes32)", accountAdmin, bytes32("2"));
-        bytes memory initCode = abi.encodePacked(abi.encodePacked(address(upgradeableOpenfortFactory)), initCallData);
+        bytes memory initCode = abi.encodePacked(abi.encodePacked(address(openfortFactory)), initCallData);
 
         UserOperation[] memory userOpCreateAccount =
             _setupUserOpExecute(account2, accountAdminPKey, initCode, address(0), 0, bytes(""));
@@ -172,7 +173,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assert(account2.code.length > 0);
 
         // Make sure the counterfactual address has not been altered
-        assertEq(account2, upgradeableOpenfortFactory.getAddressWithNonce(accountAdmin, bytes32("2")));
+        assertEq(account2, openfortFactory.getAddressWithNonce(accountAdmin, bytes32("2")));
     }
 
     /*
@@ -1018,7 +1019,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     function testUpdateEntryPoint() public {
         address oldEntryPoint = address(0x0576a174D229E3cFA37253523E645A78A0C91B57);
         address newEntryPoint = vm.envAddress("ENTRY_POINT_ADDRESS");
-        UpgradeableOpenfortFactory upgradeableOpenfortFactoryOld = new UpgradeableOpenfortFactory{salt: versionSalt}(
+        UpgradeableOpenfortFactory openfortFactoryOld = new UpgradeableOpenfortFactory{salt: versionSalt}(
             factoryAdmin,
             oldEntryPoint,
             address(upgradeableOpenfortAccountImpl),
@@ -1030,8 +1031,8 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         );
 
         // Create an upgradeable account wallet using the old EntryPoint and get its address
-        address payable accountOld = payable(upgradeableOpenfortFactoryOld.createAccountWithNonce(accountAdmin, "999"));
-        UpgradeableOpenfortAccount upgradeableAccount = UpgradeableOpenfortAccount(accountOld);
+        address payable oldAccountAddress = payable(openfortFactoryOld.createAccountWithNonce(accountAdmin, "999"));
+        IUpgradeableOpenfortAccount upgradeableAccount = IUpgradeableOpenfortAccount(oldAccountAddress);
         assertEq(address(upgradeableAccount.entryPoint()), oldEntryPoint);
 
         vm.expectRevert("Ownable: caller is not the owner");
