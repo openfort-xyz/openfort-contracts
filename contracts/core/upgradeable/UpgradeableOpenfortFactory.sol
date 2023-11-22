@@ -2,14 +2,13 @@
 pragma solidity =0.8.19;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
-import {UpgradeableOpenfortAccount, IEntryPoint} from "./UpgradeableOpenfortAccount.sol";
+import {UpgradeableOpenfortAccount} from "./UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortProxy} from "./UpgradeableOpenfortProxy.sol";
 import {BaseOpenfortFactory} from "../base/BaseOpenfortFactory.sol";
 
 /**
  * @title UpgradeableOpenfortFactory (Non-upgradeable)
  * @notice Contract to create an on-chain factory to deploy new UpgradeableOpenfortAccounts.
- * It uses OpenZeppelin's Create2 and UpgradeableOpenfortProxy libraries.
  * It inherits from:
  *  - BaseOpenfortFactory
  */

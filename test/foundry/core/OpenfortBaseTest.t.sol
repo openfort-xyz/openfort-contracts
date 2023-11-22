@@ -150,4 +150,10 @@ contract OpenfortBaseTest is Test {
 
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
+
+    /**
+     * AA events
+     */
+
+    event Deposited(address indexed account, uint256 totalDeposit);
 }

@@ -36,8 +36,10 @@ interface IBaseOpenfortAccount is IAccount {
             uint256[] memory extensions
         );
     function entryPoint() external view returns (address);
-    function execute(address dest, uint256 value, bytes memory func) external;
-    function executeBatch(address[] memory _target, uint256[] memory _value, bytes[] memory _calldata) external;
+    function execute(address dest, uint256 value, bytes memory func) external payable;
+    function executeBatch(address[] memory _target, uint256[] memory _value, bytes[] memory _calldata)
+        external
+        payable;
     function getDeposit() external view returns (uint256);
     function getNonce() external view returns (uint256);
     function isValidSessionKey(address _sessionKey, bytes memory _callData) external returns (bool);

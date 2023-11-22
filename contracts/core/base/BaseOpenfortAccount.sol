@@ -176,7 +176,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * Execute a transaction (called directly from owner, or by entryPoint)
      */
-    function execute(address dest, uint256 value, bytes calldata func) public virtual {
+    function execute(address dest, uint256 value, bytes calldata func) public payable virtual {
         _requireFromEntryPointOrOwner();
         _call(dest, value, func);
     }
@@ -186,6 +186,7 @@ abstract contract BaseOpenfortAccount is
      */
     function executeBatch(address[] calldata _target, uint256[] calldata _value, bytes[] calldata _calldata)
         public
+        payable
         virtual
     {
         _requireFromEntryPointOrOwner();

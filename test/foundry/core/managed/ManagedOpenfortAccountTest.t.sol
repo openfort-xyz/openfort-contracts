@@ -200,7 +200,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -231,7 +231,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         UserOperation[] memory userOp =
             _setupUserOpExecuteBatch(accountAddress, accountAdminPKey, bytes(""), targets, values, callData);
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -255,7 +255,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -285,7 +285,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -321,7 +321,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             )
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -333,7 +333,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -370,7 +370,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             )
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -382,7 +382,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -408,7 +408,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             )
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -434,7 +434,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         vm.expectRevert();
@@ -464,7 +464,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -494,7 +494,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -503,7 +503,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -543,7 +543,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         UserOperation[] memory userOp =
             _setupUserOpExecuteBatch(accountAddress, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -573,7 +573,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -602,7 +602,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -630,7 +630,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -676,7 +676,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         UserOperation[] memory userOp =
             _setupUserOpExecuteBatch(accountAddress, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -722,7 +722,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         UserOperation[] memory userOp =
             _setupUserOpExecuteBatch(accountAddress, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -751,7 +751,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -796,7 +796,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             callData
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -863,7 +863,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, accountAdmin2PKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -892,7 +892,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             abi.encodeWithSignature("mint(address,uint256)", beneficiary, 1)
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -944,7 +944,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     //         account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
     //     );
 
-    //     entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+    //     entryPoint.depositTo{value: 1 ether}(accountAddress);
 
     //     // Expect the simulateValidation() to always revert
     //     vm.expectRevert();

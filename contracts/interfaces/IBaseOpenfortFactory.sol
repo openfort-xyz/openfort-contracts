@@ -8,6 +8,9 @@ interface IBaseOpenfortFactory {
     /// @notice Error when an address parameter is 0.
     error ZeroAddressNotAllowed();
 
+    /// @notice Error when an address is not a contract.
+    error NotAContract();
+
     /// @notice Deploys a new Account for admin.
     function createAccountWithNonce(address _admin, bytes32 _nonce) external returns (address account);
 

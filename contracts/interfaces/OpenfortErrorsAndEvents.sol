@@ -11,6 +11,9 @@ interface OpenfortErrorsAndEvents {
     /// @notice Error when a function requires msg.value to be different than owner()
     error OwnerNotAllowed();
 
+    /// @notice Error when an address is not a contract.
+    error NotAContract();
+
     error ZeroAddressNotAllowed();
     error NotOwnerOrEntrypoint();
     error NotOwner();
