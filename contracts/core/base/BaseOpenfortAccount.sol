@@ -71,7 +71,7 @@ abstract contract BaseOpenfortAccount is
     function owner() public view virtual returns (address);
 
     /**
-     * Check current account deposit in the entryPoint
+     * Check current account deposit in the EntryPoint
      */
     function getDeposit() external view virtual returns (uint256) {
         return entryPoint().balanceOf(address(this));

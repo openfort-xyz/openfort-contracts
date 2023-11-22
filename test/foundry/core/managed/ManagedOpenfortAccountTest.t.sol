@@ -16,13 +16,13 @@ import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
 contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
 
-    ManagedOpenfortAccount public managedOpenfortAccount;
+    ManagedOpenfortAccount public managedOpenfortAccountImpl;
     ManagedOpenfortFactory public managedOpenfortFactory;
 
     /**
      * @notice Initialize the ManagedOpenfortAccount testing contract.
      * Scenario:
-     * - factoryAdmin is the deployer (and owner) of the managedOpenfortAccount and managedOpenfortFactory/Beacon
+     * - factoryAdmin is the deployer (and owner) of the managedOpenfortAccountImpl and managedOpenfortFactory/Beacon
      * - accountAdmin is the account used to deploy new managed accounts using the factory
      * - entryPoint is the singleton EntryPoint
      * - testCounter is the counter used to test userOps
@@ -49,12 +49,12 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             entryPoint = EntryPoint(payable(targetAddr));
         }
         // deploy account implementation
-        managedOpenfortAccount = new ManagedOpenfortAccount{salt: versionSalt}();
+        managedOpenfortAccountImpl = new ManagedOpenfortAccount{salt: versionSalt}();
         // deploy account factory (beacon)
         managedOpenfortFactory = new ManagedOpenfortFactory{salt: versionSalt}(
             factoryAdmin,
             address(entryPoint),
-            address(managedOpenfortAccount),
+            address(managedOpenfortAccountImpl),
             RECOVERY_PERIOD,
             SECURITY_PERIOD,
             SECURITY_WINDOW,
@@ -68,6 +68,22 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         // deploy a new MockERC20 (ERC20)
         mockERC20 = new MockERC20{salt: versionSalt}();
         vm.stopPrank();
+    }
+
+    /*
+     * Should not be able to initialize the implementation
+     */
+    function testInitializeImplementation() public {
+        vm.expectRevert("Initializable: contract is already initialized");
+        managedOpenfortAccountImpl.initialize(
+            accountAdmin,
+            address(entryPoint),
+            RECOVERY_PERIOD,
+            SECURITY_PERIOD,
+            SECURITY_WINDOW,
+            LOCK_PERIOD,
+            OPENFORT_GUARDIAN
+        );
     }
 
     /*
@@ -957,7 +973,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address newEntryPoint = 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF;
 
         // Check addressess
-        assertEq(address(managedOpenfortAccount.entryPoint()), address(entryPoint));
+        assertEq(address(managedOpenfortAccountImpl.entryPoint()), address(entryPoint));
 
         // Try to use the old and new implementation before upgrade (should always behave with current values)
         assertEq(MockV2ManagedOpenfortAccount(payable(account)).getLock(), 0);
