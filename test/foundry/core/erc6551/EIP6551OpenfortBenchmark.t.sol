@@ -321,7 +321,7 @@ import {ERC6551OpenfortAccount} from "contracts/core/erc6551/ERC6551OpenfortAcco
 //             abi.encodeWithSignature("execute(address,uint256,bytes)", _target, 0, _callData)
 //         );
 
-//         entryPoint.depositTo{value: 1000000000000000000}(address(erc6551OpenfortAccount));
+//         entryPoint.depositTo{value: 1 ether}(address(erc6551OpenfortAccount));
 
 //         vm.expectRevert();
 //         entryPoint.simulateValidation(userOp[0]);
@@ -591,7 +591,7 @@ import {ERC6551OpenfortAccount} from "contracts/core/erc6551/ERC6551OpenfortAcco
 //             )
 //         );
 
-//         entryPoint.depositTo{value: 1000000000000000000}(upgradeableOpenfortAddressComplex);
+//         entryPoint.depositTo{value: 1 ether}(upgradeableOpenfortAddressComplex);
 //         vm.expectRevert();
 //         entryPoint.simulateValidation(userOp[0]);
 //         entryPoint.handleOps(userOp, beneficiary);

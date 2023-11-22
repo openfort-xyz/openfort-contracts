@@ -92,7 +92,7 @@ contract ERC6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
     /**
      * Execute a transaction (called directly from owner, or by entryPoint)
      */
-    function execute(address _dest, uint256 _value, bytes calldata _func) public override {
+    function execute(address _dest, uint256 _value, bytes calldata _func) public payable override {
         ++state;
         super.execute(_dest, _value, _func);
     }
@@ -102,6 +102,7 @@ contract ERC6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
      */
     function executeBatch(address[] calldata _target, uint256[] calldata _value, bytes[] calldata _calldata)
         public
+        payable
         override
     {
         state += _target.length;

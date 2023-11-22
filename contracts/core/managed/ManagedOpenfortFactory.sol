@@ -101,7 +101,7 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
      * - `newImplementation` must be a contract.
      */
     function _setImplementation(address newImplementation) private {
-        require(Address.isContract(newImplementation), "ManagedOpenfortFactory: implementation is not a contract");
+        if (!Address.isContract(newImplementation)) revert NotAContract();
         _implementation = newImplementation;
     }
 }

@@ -34,12 +34,8 @@ abstract contract BaseOpenfortFactory is IBaseOpenfortFactory, Ownable2Step {
         uint256 _lockPeriod,
         address _openfortGuardian
     ) {
-        if (
-            _owner == address(0) || _entrypoint == address(0) || _accountImplementation == address(0)
-                || _openfortGuardian == address(0)
-        ) {
-            revert ZeroAddressNotAllowed();
-        }
+        if (_owner == address(0) || _openfortGuardian == address(0)) revert ZeroAddressNotAllowed();
+        if (!Address.isContract(_entrypoint) || !Address.isContract(_accountImplementation)) revert NotAContract();
         if (_lockPeriod < _recoveryPeriod || _recoveryPeriod < _securityPeriod + _securityWindow) {
             revert InsecurePeriod();
         }

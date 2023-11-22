@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.19;
 
-// Base account contract to inherit from and EntryPoint interface
-import {BaseRecoverableAccount, IEntryPoint} from "../base/BaseRecoverableAccount.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {BaseRecoverableAccount, IEntryPoint} from "../base/BaseRecoverableAccount.sol";
 
 /**
  * @title UpgradeableOpenfortAccount
@@ -26,7 +26,7 @@ contract UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgradeable {
      * Update the EntryPoint address
      */
     function updateEntryPoint(address _newEntrypoint) external onlyOwner {
-        if (_newEntrypoint == address(0)) revert ZeroAddressNotAllowed();
+        if (!Address.isContract(_newEntrypoint)) revert NotAContract();
         emit EntryPointUpdated(entrypointContract, _newEntrypoint);
         entrypointContract = _newEntrypoint;
     }
