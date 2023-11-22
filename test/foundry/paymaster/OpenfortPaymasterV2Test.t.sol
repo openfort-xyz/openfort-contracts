@@ -211,9 +211,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         mockERC20 = new MockERC20();
         mockERC20.mint(address(this), 1_000 * 10 ** 18);
 
-        // Create an static account wallet and get its address
+        // Create an Openfort account and get its address
         vm.prank(factoryAdmin);
-        account = upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
+        accountAddress = upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
     }
 
     /*
@@ -447,7 +447,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, "0x1234");
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(testCounter),
@@ -461,7 +461,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         entryPoint.simulateValidation(userOp[0]);
 
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
     }
 
     /*
@@ -473,7 +473,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
 
         bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, MOCKSIG, "1", MOCKSIG); // MOCKSIG, "1", MOCKSIG to make sure we send 65 bytes as sig
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(testCounter),
@@ -487,7 +487,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         entryPoint.simulateValidation(userOp[0]);
 
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
     }
 
     /*
@@ -500,7 +500,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, MOCKSIG, "1", MOCKSIG);
 
         UserOperation[] memory userOps = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(testCounter),
@@ -555,7 +555,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
         //Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -568,7 +568,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         bytes memory paymasterAndData = abi.encodePacked(address(openfortPaymaster), dataEncoded, MOCKSIG, "1", MOCKSIG);
 
         UserOperation[] memory userOps = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(testCounter),
@@ -623,7 +623,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore == openfortPaymaster.getDeposit());
         //Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
     }
 
     /*
@@ -631,9 +631,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
      * Using ERC20. Should work
      */
     function testPaymasterUserOpERC20ValidSigDiffMaxPriorityFeePerGas() public {
-        assertEq(mockERC20.balanceOf(account), 0);
-        mockERC20.mint(account, TESTTOKEN_ACCOUNT_PREFUND);
-        assertEq(mockERC20.balanceOf(account), TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), 0);
+        mockERC20.mint(accountAddress, TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), TESTTOKEN_ACCOUNT_PREFUND);
 
         bytes memory dataEncoded = mockPaymasterDataERC20Dynamic(paymasterAdmin);
 
@@ -641,7 +641,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
 
         // Create a userOp to let the paymaster use our mockERC20s
         UserOperation[] memory userOps = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(mockERC20),
@@ -697,7 +697,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
         // Verify that the balance of the smart account has decreased
-        assert(mockERC20.balanceOf(account) < TESTTOKEN_ACCOUNT_PREFUND);
+        assert(mockERC20.balanceOf(accountAddress) < TESTTOKEN_ACCOUNT_PREFUND);
     }
 
     /*
@@ -705,9 +705,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
      * Using ERC20. Should work
      */
     function testPaymasterUserOpERC20ValidSig() public {
-        assertEq(mockERC20.balanceOf(account), 0);
-        mockERC20.mint(account, TESTTOKEN_ACCOUNT_PREFUND);
-        assertEq(mockERC20.balanceOf(account), TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), 0);
+        mockERC20.mint(accountAddress, TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), TESTTOKEN_ACCOUNT_PREFUND);
 
         bytes memory dataEncoded = mockPaymasterDataERC20Dynamic(paymasterAdmin);
 
@@ -715,7 +715,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
 
         // Create a userOp to let the paymaster use our mockERC20s
         UserOperation[] memory userOps = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(mockERC20),
@@ -770,7 +770,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
         // Verify that the balance of the smart account has decreased
-        assert(mockERC20.balanceOf(account) < TESTTOKEN_ACCOUNT_PREFUND);
+        assert(mockERC20.balanceOf(accountAddress) < TESTTOKEN_ACCOUNT_PREFUND);
     }
 
     /*
@@ -778,9 +778,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
      * Using FIXED ERC20. Should work
      */
     function testPaymasterUserOpERC20FixedValidSig() public {
-        assertEq(mockERC20.balanceOf(account), 0);
-        mockERC20.mint(account, TESTTOKEN_ACCOUNT_PREFUND);
-        assertEq(mockERC20.balanceOf(account), TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), 0);
+        mockERC20.mint(accountAddress, TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), TESTTOKEN_ACCOUNT_PREFUND);
         uint256 pricePerTransaction = 10 ** 18;
 
         bytes memory dataEncoded = mockPaymasterDataERC20Fixed(paymasterAdmin, pricePerTransaction);
@@ -789,7 +789,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
 
         // Create a userOp to let the paymaster use our mockERC20s
         UserOperation[] memory userOps = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(mockERC20),
@@ -844,7 +844,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
         // Verify that the balance of the smart account has decreased
-        assert(mockERC20.balanceOf(account) == TESTTOKEN_ACCOUNT_PREFUND - pricePerTransaction);
+        assert(mockERC20.balanceOf(accountAddress) == TESTTOKEN_ACCOUNT_PREFUND - pricePerTransaction);
     }
 
     /*
@@ -852,11 +852,11 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
      * ExecBatch. Using dynamic ERC20. Should work
      */
     function testPaymasterUserOpERC20ValidSigExecBatch() public {
-        assertEq(mockERC20.balanceOf(account), 0);
-        mockERC20.mint(account, TESTTOKEN_ACCOUNT_PREFUND);
-        assertEq(mockERC20.balanceOf(account), TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), 0);
+        mockERC20.mint(accountAddress, TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), TESTTOKEN_ACCOUNT_PREFUND);
 
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         bytes memory dataEncoded = mockPaymasterDataERC20Dynamic(paymasterAdmin);
 
@@ -876,8 +876,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         callData[1] = abi.encodeWithSignature("count()");
 
         // Create a userOp to let the paymaster use our mockERC20s
-        UserOperation[] memory userOps =
-            _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
+        UserOperation[] memory userOps = _setupUserOpExecuteBatch(
+            accountAddress, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData
+        );
 
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
@@ -925,8 +926,8 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
         // Verify that the balance of the smart account has decreased
-        assert(mockERC20.balanceOf(account) < TESTTOKEN_ACCOUNT_PREFUND);
-        assertEq(testCounter.counters(account), 1);
+        assert(mockERC20.balanceOf(accountAddress) < TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -934,11 +935,11 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
      * ExecBatch. Using fixed ERC20. Should work
      */
     function testPaymasterUserOpERC20FixedValidSigExecBatch() public {
-        assertEq(mockERC20.balanceOf(account), 0);
-        mockERC20.mint(account, TESTTOKEN_ACCOUNT_PREFUND);
-        assertEq(mockERC20.balanceOf(account), TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), 0);
+        mockERC20.mint(accountAddress, TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), TESTTOKEN_ACCOUNT_PREFUND);
 
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         uint256 pricePerTransaction = 10 ** 18;
 
@@ -960,8 +961,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         callData[1] = abi.encodeWithSignature("count()");
 
         // Create a userOp to let the paymaster use our mockERC20s
-        UserOperation[] memory userOps =
-            _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
+        UserOperation[] memory userOps = _setupUserOpExecuteBatch(
+            accountAddress, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData
+        );
 
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.FixedRate;
@@ -1009,8 +1011,8 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
         // Verify that the balance of the smart account has decreased
-        assert(mockERC20.balanceOf(account) == TESTTOKEN_ACCOUNT_PREFUND - pricePerTransaction);
-        assertEq(testCounter.counters(account), 1);
+        assert(mockERC20.balanceOf(accountAddress) == TESTTOKEN_ACCOUNT_PREFUND - pricePerTransaction);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -1018,11 +1020,11 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
      * ExecBatch. Using fixed ERC20 expensive. Should work
      */
     function testPaymasterUserOpERC20FixedExpensiveValidSigExecBatch() public {
-        assertEq(mockERC20.balanceOf(account), 0);
-        mockERC20.mint(account, TESTTOKEN_ACCOUNT_PREFUND);
-        assertEq(mockERC20.balanceOf(account), TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), 0);
+        mockERC20.mint(accountAddress, TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), TESTTOKEN_ACCOUNT_PREFUND);
 
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         uint256 pricePerTransaction = 10;
 
@@ -1044,8 +1046,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         callData[1] = abi.encodeWithSignature("count()");
 
         // Create a userOp to let the paymaster use our mockERC20s
-        UserOperation[] memory userOps =
-            _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
+        UserOperation[] memory userOps = _setupUserOpExecuteBatch(
+            accountAddress, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData
+        );
 
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.FixedRate;
@@ -1093,8 +1096,8 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
         // Verify that the balance of the smart account has decreased
-        assert(mockERC20.balanceOf(account) == TESTTOKEN_ACCOUNT_PREFUND - pricePerTransaction);
-        assertEq(testCounter.counters(account), 1);
+        assert(mockERC20.balanceOf(accountAddress) == TESTTOKEN_ACCOUNT_PREFUND - pricePerTransaction);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -1120,8 +1123,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         callData[1] = abi.encodeWithSignature("count()");
 
         // Create a userOp to let the paymaster use our mockERC20s
-        UserOperation[] memory userOps =
-            _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
+        UserOperation[] memory userOps = _setupUserOpExecuteBatch(
+            accountAddress, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData
+        );
 
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.PayForUser;
@@ -1170,7 +1174,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
         //Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -1179,11 +1183,11 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
      * Test showing that failing to repay in ERC20 still spends some of Paymaster's deposit (DoS)
      */
     function testFailPaymasterUserOpERC20ValidSigExecBatchInsufficientERC20() public {
-        assertEq(mockERC20.balanceOf(account), 0);
-        mockERC20.mint(account, 100);
-        assertEq(mockERC20.balanceOf(account), 100);
+        assertEq(mockERC20.balanceOf(accountAddress), 0);
+        mockERC20.mint(accountAddress, 100);
+        assertEq(mockERC20.balanceOf(accountAddress), 100);
 
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         bytes memory dataEncoded = mockPaymasterDataERC20Dynamic(paymasterAdmin);
 
@@ -1203,8 +1207,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         callData[1] = abi.encodeWithSignature("count()");
 
         // Create a userOp to let the paymaster use our mockERC20s
-        UserOperation[] memory userOps =
-            _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData);
+        UserOperation[] memory userOps = _setupUserOpExecuteBatch(
+            accountAddress, accountAdminPKey, bytes(""), targets, values, callData, paymasterAndData
+        );
 
         OpenfortPaymasterV2.PolicyStrategy memory strategy;
         strategy.paymasterMode = OpenfortPaymasterV2.Mode.DynamicRate;
@@ -1252,9 +1257,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has the same deposit
         assert(paymasterDepositBefore == openfortPaymaster.getDeposit());
         // Verify that the balance of the smart account has not decreased
-        assertEq(mockERC20.balanceOf(account), 100);
+        assertEq(mockERC20.balanceOf(accountAddress), 100);
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         // If this fails, it would mean:
         // 1- That the paymaster has spent some of its deposit
@@ -1267,9 +1272,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
      * Using ERC20. Should work.
      */
     function testFailPaymasterUserOpERC20ValidSigSmallApprove() public {
-        assertEq(mockERC20.balanceOf(account), 0);
-        mockERC20.mint(account, TESTTOKEN_ACCOUNT_PREFUND);
-        assertEq(mockERC20.balanceOf(account), TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), 0);
+        mockERC20.mint(accountAddress, TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), TESTTOKEN_ACCOUNT_PREFUND);
 
         bytes memory dataEncoded = mockPaymasterDataERC20Dynamic(paymasterAdmin);
 
@@ -1277,7 +1282,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
 
         // Create a userOp to let the paymaster use our mockERC20s
         UserOperation[] memory userOps = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(mockERC20),
@@ -1332,9 +1337,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has the same deposit
         assert(paymasterDepositBefore == openfortPaymaster.getDeposit());
         // Verify that the balance of the smart account has not decreased
-        assertEq(mockERC20.balanceOf(account), TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), TESTTOKEN_ACCOUNT_PREFUND);
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         // If this fails, it would mean:
         // 1- That the paymaster has spent some of its deposit
@@ -1347,9 +1352,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
      * Using ERC20 and a 3rd party depositor. Should work
      */
     function testPaymasterUserOpERC20ValidSigDepositor() public {
-        assertEq(mockERC20.balanceOf(account), 0);
-        mockERC20.mint(account, TESTTOKEN_ACCOUNT_PREFUND);
-        assertEq(mockERC20.balanceOf(account), TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), 0);
+        mockERC20.mint(accountAddress, TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), TESTTOKEN_ACCOUNT_PREFUND);
 
         vm.prank(factoryAdmin);
         openfortPaymaster.depositFor{value: 50 ether}(factoryAdmin);
@@ -1363,7 +1368,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
 
         // Create a userOp to let the paymaster use our mockERC20s
         UserOperation[] memory userOps = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(mockERC20),
@@ -1418,7 +1423,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
         // Verify that the balance of the smart account has decreased
-        assert(mockERC20.balanceOf(account) < TESTTOKEN_ACCOUNT_PREFUND);
+        assert(mockERC20.balanceOf(accountAddress) < TESTTOKEN_ACCOUNT_PREFUND);
 
         assert(openfortPaymaster.getDeposit() < 100 ether);
         assert(openfortPaymaster.getDepositFor(factoryAdmin) < 50 ether);
@@ -1431,9 +1436,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
      * Using ERC20 (fixed rate) and a 3rd party depositor. Should work
      */
     function testPaymasterUserOpERC20FixedValidSigDepositor() public {
-        assertEq(mockERC20.balanceOf(account), 0);
-        mockERC20.mint(account, TESTTOKEN_ACCOUNT_PREFUND);
-        assertEq(mockERC20.balanceOf(account), TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), 0);
+        mockERC20.mint(accountAddress, TESTTOKEN_ACCOUNT_PREFUND);
+        assertEq(mockERC20.balanceOf(accountAddress), TESTTOKEN_ACCOUNT_PREFUND);
 
         vm.prank(factoryAdmin);
         openfortPaymaster.depositFor{value: 50 ether}(factoryAdmin);
@@ -1449,7 +1454,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
 
         // Create a userOp to let the paymaster use our mockERC20s
         UserOperation[] memory userOps = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(mockERC20),
@@ -1504,7 +1509,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
         // Verify that the balance of the smart account has decreased
-        assert(mockERC20.balanceOf(account) < TESTTOKEN_ACCOUNT_PREFUND);
+        assert(mockERC20.balanceOf(accountAddress) < TESTTOKEN_ACCOUNT_PREFUND);
 
         assert(openfortPaymaster.getDeposit() < 100 ether);
         assert(openfortPaymaster.getDepositFor(factoryAdmin) < 50 ether);
@@ -1534,7 +1539,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
      */
     function test_requireFromEntryPoint() public {
         UserOperation[] memory userOpAux = _setupUserOpExecute(
-            account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()"), ""
+            accountAddress, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()"), ""
         );
 
         vm.prank(paymasterAdmin);
@@ -1626,7 +1631,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         console.logBytes(paymasterAndData);
 
         UserOperation[] memory userOps = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(testCounter),
@@ -1685,7 +1690,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         // Verify that the paymaster has less deposit now
         assert(paymasterDepositBefore > openfortPaymaster.getDeposit());
         //Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
 
         assert(openfortPaymaster.getDeposit() < 53 ether); // less than 53 because the total cost have decreased
         assert(openfortPaymaster.getDepositFor(paymasterAdmin) > 50 ether); // more than 50 because the dust has gone to the owner deposit
