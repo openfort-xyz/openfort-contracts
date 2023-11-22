@@ -17,12 +17,12 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
 
     ManagedOpenfortAccount public managedOpenfortAccountImpl;
-    ManagedOpenfortFactory public managedOpenfortFactory;
+    ManagedOpenfortFactory public openfortFactory;
 
     /**
      * @notice Initialize the ManagedOpenfortAccount testing contract.
      * Scenario:
-     * - factoryAdmin is the deployer (and owner) of the managedOpenfortAccountImpl and managedOpenfortFactory/Beacon
+     * - factoryAdmin is the deployer (and owner) of the managedOpenfortAccountImpl and openfortFactory/Beacon
      * - accountAdmin is the account used to deploy new managed accounts using the factory
      * - entryPoint is the singleton EntryPoint
      * - testCounter is the counter used to test userOps
@@ -51,7 +51,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         // deploy account implementation
         managedOpenfortAccountImpl = new ManagedOpenfortAccount{salt: versionSalt}();
         // deploy account factory (beacon)
-        managedOpenfortFactory = new ManagedOpenfortFactory{salt: versionSalt}(
+        openfortFactory = new ManagedOpenfortFactory{salt: versionSalt}(
             factoryAdmin,
             address(entryPoint),
             address(managedOpenfortAccountImpl),
@@ -62,7 +62,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             OPENFORT_GUARDIAN
         );
         // Create an managed account wallet and get its address
-        accountAddress = managedOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
+        accountAddress = openfortFactory.createAccountWithNonce(accountAdmin, "1");
         // deploy a new TestCounter
         testCounter = new TestCounter{salt: versionSalt}();
         // deploy a new MockERC20 (ERC20)
@@ -92,7 +92,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     function testCreateAccountWithNonceViaFactory() public {
         // Get the counterfactual address
         vm.prank(factoryAdmin);
-        address account2 = managedOpenfortFactory.getAddressWithNonce(accountAdmin, "2");
+        address account2 = openfortFactory.getAddressWithNonce(accountAdmin, "2");
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
@@ -100,15 +100,15 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         // Deploy a managed account to the counterfactual address
         vm.prank(factoryAdmin);
-        managedOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
+        openfortFactory.createAccountWithNonce(accountAdmin, "2");
 
         // Calling it again should just return the address and not create another account
         vm.prank(factoryAdmin);
-        managedOpenfortFactory.createAccountWithNonce(accountAdmin, "2");
+        openfortFactory.createAccountWithNonce(accountAdmin, "2");
 
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
-        assertEq(account2, managedOpenfortFactory.getAddressWithNonce(accountAdmin, "2"));
+        assertEq(account2, openfortFactory.getAddressWithNonce(accountAdmin, "2"));
     }
 
     /*
@@ -117,7 +117,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     function testFuzzCreateAccountWithNonceViaFactory(address _adminAddress, bytes32 _nonce) public {
         // Get the counterfactual address
         vm.prank(factoryAdmin);
-        address account2 = managedOpenfortFactory.getAddressWithNonce(_adminAddress, _nonce);
+        address account2 = openfortFactory.getAddressWithNonce(_adminAddress, _nonce);
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
@@ -125,15 +125,15 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         // Deploy a managed account to the counterfactual address
         vm.prank(factoryAdmin);
-        managedOpenfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+        openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
 
         // Calling it again should just return the address and not create another account
         vm.prank(factoryAdmin);
-        managedOpenfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+        openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
 
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
-        assertEq(account2, managedOpenfortFactory.getAddressWithNonce(_adminAddress, _nonce));
+        assertEq(account2, openfortFactory.getAddressWithNonce(_adminAddress, _nonce));
     }
 
     /*
@@ -146,12 +146,12 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         // revert();
 
         // Make sure the smart account does not have any code yet
-        address account2 = managedOpenfortFactory.getAddressWithNonce(accountAdmin, bytes32("2"));
+        address account2 = openfortFactory.getAddressWithNonce(accountAdmin, bytes32("2"));
         assertEq(account2.code.length, 0);
 
         bytes memory initCallData =
             abi.encodeWithSignature("createAccountWithNonce(address,bytes32)", accountAdmin, bytes32("2"));
-        bytes memory initCode = abi.encodePacked(abi.encodePacked(address(managedOpenfortFactory)), initCallData);
+        bytes memory initCode = abi.encodePacked(abi.encodePacked(address(openfortFactory)), initCallData);
 
         UserOperation[] memory userOpCreateAccount =
             _setupUserOpExecute(account2, accountAdminPKey, initCode, address(0), 0, bytes(""));
@@ -168,7 +168,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         assert(account2.code.length > 0);
 
         // Make sure the counterfactual address has not been altered
-        assertEq(account2, managedOpenfortFactory.getAddressWithNonce(accountAdmin, bytes32("2")));
+        assertEq(account2, openfortFactory.getAddressWithNonce(accountAdmin, bytes32("2")));
     }
 
     /*
@@ -952,12 +952,12 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
     //     // Test addStake. Make sure it checks for owner and alue passed.
     //     vm.expectRevert("Ownable: caller is not the owner");
-    //     managedOpenfortFactory.addStake{value: 10000000000000000}(99);
+    //     openfortFactory.addStake{value: 10000000000000000}(99);
     //     vm.prank(factoryAdmin);
     //     vm.expectRevert("no stake specified");
-    //     managedOpenfortFactory.addStake(99);
+    //     openfortFactory.addStake(99);
     //     vm.prank(factoryAdmin);
-    //     managedOpenfortFactory.addStake{value: 10000000000000000}(99);
+    //     openfortFactory.addStake{value: 10000000000000000}(99);
 
     //     // expectRevert as simulateValidation() always reverts
     //     vm.expectRevert();
@@ -995,11 +995,11 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         // Try to upgrade
         vm.expectRevert("Ownable: caller is not the owner");
-        managedOpenfortFactory.upgradeTo(address(mockV2ManagedOpenfortAccount));
+        openfortFactory.upgradeTo(address(mockV2ManagedOpenfortAccount));
 
         // Finally upgrade
         vm.prank(factoryAdmin);
-        managedOpenfortFactory.upgradeTo(address(mockV2ManagedOpenfortAccount));
+        openfortFactory.upgradeTo(address(mockV2ManagedOpenfortAccount));
 
         // Try to use the old and new implementation before upgrade (should always behave with current values)
         vm.expectRevert("disabled!");
