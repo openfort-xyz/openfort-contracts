@@ -16,7 +16,7 @@ contract OpenfortBaseTest is Test {
 
     EntryPoint public entryPoint;
 
-    address public account;
+    address public accountAddress;
     TestCounter public testCounter;
     MockERC20 public mockERC20;
 

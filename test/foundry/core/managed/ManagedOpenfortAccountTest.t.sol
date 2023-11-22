@@ -62,7 +62,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             OPENFORT_GUARDIAN
         );
         // Create an managed account wallet and get its address
-        account = managedOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
+        accountAddress = managedOpenfortFactory.createAccountWithNonce(accountAdmin, "1");
         // deploy a new TestCounter
         testCounter = new TestCounter{salt: versionSalt}();
         // deploy a new MockERC20 (ERC20)
@@ -176,14 +176,16 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testIncrementCounterDirect() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         // Make the admin of the managed account wallet (deployer) call "count"
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
+        ManagedOpenfortAccount(payable(accountAddress)).execute(
+            address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -192,19 +194,19 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testIncrementCounterViaEntrypoint() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -213,7 +215,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testIncrementCounterViaEntrypointBatching() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
@@ -227,15 +229,15 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         }
 
         UserOperation[] memory userOp =
-            _setupUserOpExecuteBatch(account, accountAdminPKey, bytes(""), targets, values, callData);
+            _setupUserOpExecuteBatch(accountAddress, accountAdminPKey, bytes(""), targets, values, callData);
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 3);
+        assertEq(testCounter.counters(accountAddress), 3);
     }
 
     /*
@@ -243,23 +245,23 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testFailIncrementCounterViaSessionKeyNotregistered() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
     }
 
     /*
@@ -267,7 +269,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testIncrementCounterViaSessionKey() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -275,19 +277,21 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address[] memory emptyWhitelist;
 
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist);
-
-        UserOperation[] memory userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(
+            sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
+
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -296,7 +300,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testRegisterSessionKeyViaEntrypoint() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -304,7 +308,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address[] memory emptyWhitelist;
 
         UserOperation[] memory userOp = _setupUserOp(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             abi.encodeWithSignature(
@@ -317,25 +321,25 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             )
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -345,7 +349,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testFailRegisterSessionKeyViaEntrypoint2ndKey() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -353,7 +357,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address[] memory emptyWhitelist;
 
         UserOperation[] memory userOp = _setupUserOp(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             abi.encodeWithSignature(
@@ -366,32 +370,32 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             )
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
 
         address sessionKeyAttack;
         uint256 sessionKeyPrivKeyAttack;
         (sessionKeyAttack, sessionKeyPrivKeyAttack) = makeAddrAndKey("sessionKeyAttack");
 
         userOp = _setupUserOp(
-            account,
+            accountAddress,
             sessionKeyPrivKey,
             bytes(""),
             abi.encodeWithSignature(
@@ -404,7 +408,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             )
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -415,7 +419,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testIncrementCounterViaSessionKeyExpired() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -424,20 +428,20 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         vm.warp(100);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 99, 100, emptyWhitelist);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 99, 100, emptyWhitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         vm.expectRevert();
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
     }
 
     /*
@@ -445,7 +449,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testFailIncrementCounterViaSessionKeyRevoked() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -453,20 +457,20 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address[] memory emptyWhitelist;
 
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 0, 100, emptyWhitelist);
-        ManagedOpenfortAccount(payable(account)).revokeSessionKey(sessionKey);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 0, 100, emptyWhitelist);
+        ManagedOpenfortAccount(payable(accountAddress)).revokeSessionKey(sessionKey);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -474,7 +478,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testFailIncrementCounterViaSessionKeyReachLimit() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -484,28 +488,28 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         // We are now in block 100, but our session key is valid until block 150
         vm.warp(100);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 150, 1, emptyWhitelist);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 150, 1, emptyWhitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has only increased by one
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -513,7 +517,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testFailIncrementCounterViaSessionKeyReachLimitBatching() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -523,7 +527,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         // We are now in block 100, but our session key is valid until block 150
         vm.warp(100);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 150, 2, emptyWhitelist);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 150, 2, emptyWhitelist);
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
@@ -537,15 +541,15 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         }
 
         UserOperation[] memory userOp =
-            _setupUserOpExecuteBatch(account, sessionKeyPrivKey, bytes(""), targets, values, callData);
+            _setupUserOpExecuteBatch(accountAddress, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
     }
 
     /*
@@ -553,7 +557,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testFailRevokeSessionKeyInvalidUser() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -561,21 +565,21 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address[] memory emptyWhitelist;
 
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 0, 100, emptyWhitelist);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 0, 100, emptyWhitelist);
         vm.prank(beneficiary);
-        ManagedOpenfortAccount(payable(account)).revokeSessionKey(sessionKey);
+        ManagedOpenfortAccount(payable(accountAddress)).revokeSessionKey(sessionKey);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -583,7 +587,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testIncrementCounterViaSessionKeyWhitelisting() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -592,19 +596,19 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(testCounter);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -612,7 +616,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingTooBig() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -620,19 +624,19 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         address[] memory whitelist = new address[](11);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
     }
 
     /*
@@ -640,7 +644,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testIncrementCounterViaSessionKeyWhitelistingBatch() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -649,12 +653,12 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(testCounter);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 3, whitelist);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 3, whitelist);
 
         // Verify that the registered key is not a MasterKey but has whitelisting
         bool isMasterKey;
         bool isWhitelisted;
-        (,,, isMasterKey, isWhitelisted,) = ManagedOpenfortAccount(payable(account)).sessionKeys(sessionKey);
+        (,,, isMasterKey, isWhitelisted,) = ManagedOpenfortAccount(payable(accountAddress)).sessionKeys(sessionKey);
         assert(!isMasterKey);
         assert(isWhitelisted);
 
@@ -670,15 +674,15 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         }
 
         UserOperation[] memory userOp =
-            _setupUserOpExecuteBatch(account, sessionKeyPrivKey, bytes(""), targets, values, callData);
+            _setupUserOpExecuteBatch(accountAddress, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 3);
+        assertEq(testCounter.counters(accountAddress), 3);
     }
 
     /*
@@ -686,7 +690,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingBatch() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
@@ -695,12 +699,12 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(testCounter);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 3, whitelist);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 3, whitelist);
 
         // Verify that the registered key is not a MasterKey but has whitelisting
         bool isMasterKey;
         bool isWhitelisted;
-        (,,, isMasterKey, isWhitelisted,) = ManagedOpenfortAccount(payable(account)).sessionKeys(sessionKey);
+        (,,, isMasterKey, isWhitelisted,) = ManagedOpenfortAccount(payable(accountAddress)).sessionKeys(sessionKey);
         assert(!isMasterKey);
         assert(isWhitelisted);
 
@@ -716,15 +720,15 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         }
 
         UserOperation[] memory userOp =
-            _setupUserOpExecuteBatch(account, sessionKeyPrivKey, bytes(""), targets, values, callData);
+            _setupUserOpExecuteBatch(accountAddress, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
     }
 
     /*
@@ -732,28 +736,28 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingWrongAddress() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
         address[] memory whitelist = new address[](1);
-        whitelist[0] = address(account);
+        whitelist[0] = address(accountAddress);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -761,16 +765,16 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingBatchWrongAddress() public {
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         address sessionKey;
         uint256 sessionKeyPrivKey;
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
         address[] memory whitelist = new address[](1);
-        whitelist[0] = address(account);
+        whitelist[0] = address(accountAddress);
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         uint256 count = 3;
         address[] memory targets = new address[](count);
@@ -784,7 +788,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         }
 
         UserOperation[] memory userOp = _setupUserOpExecuteBatch(
-            account,
+            accountAddress,
             sessionKeyPrivKey, //Sign the userOp using the sessionKey's private key
             bytes(""),
             targets,
@@ -792,13 +796,13 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             callData
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has not increased
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
     }
 
     /*
@@ -817,24 +821,26 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         uint256 accountAdmin2PKey;
         (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
 
-        assertEq(ManagedOpenfortAccount(payable(account)).owner(), accountAdmin);
+        assertEq(ManagedOpenfortAccount(payable(accountAddress)).owner(), accountAdmin);
         vm.expectRevert("Ownable: caller is not the owner");
-        ManagedOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
+        ManagedOpenfortAccount(payable(accountAddress)).transferOwnership(accountAdmin2);
 
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
+        ManagedOpenfortAccount(payable(accountAddress)).transferOwnership(accountAdmin2);
         vm.prank(accountAdmin2);
-        ManagedOpenfortAccount(payable(account)).acceptOwnership();
+        ManagedOpenfortAccount(payable(accountAddress)).acceptOwnership();
 
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         // Make the admin of the managed account wallet (deployer) call "count"
         vm.prank(accountAdmin2);
-        ManagedOpenfortAccount(payable(account)).execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
+        ManagedOpenfortAccount(payable(accountAddress)).execute(
+            address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -846,24 +852,24 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
 
         vm.prank(accountAdmin);
-        ManagedOpenfortAccount(payable(account)).transferOwnership(accountAdmin2);
+        ManagedOpenfortAccount(payable(accountAddress)).transferOwnership(accountAdmin2);
         vm.prank(accountAdmin2);
-        ManagedOpenfortAccount(payable(account)).acceptOwnership();
+        ManagedOpenfortAccount(payable(accountAddress)).acceptOwnership();
 
         // Verify that the counter is still set to 0
-        assertEq(testCounter.counters(account), 0);
+        assertEq(testCounter.counters(accountAddress), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account, accountAdmin2PKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, accountAdmin2PKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(account), 1);
+        assertEq(testCounter.counters(accountAddress), 1);
     }
 
     /*
@@ -878,7 +884,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         assertEq(mockERC20.totalSupply(), 1);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            account,
+            accountAddress,
             accountAdminPKey,
             bytes(""),
             address(mockERC20),
@@ -886,7 +892,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             abi.encodeWithSignature("mint(address,uint256)", beneficiary, 1)
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(account);
+        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -899,12 +905,12 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Test receive native tokens.
      */
     function testReceiveNativeToken() public {
-        assertEq(address(account).balance, 0);
+        assertEq(address(accountAddress).balance, 0);
 
         vm.prank(accountAdmin);
-        (bool success,) = payable(account).call{value: 1000}("");
+        (bool success,) = payable(accountAddress).call{value: 1000}("");
         assert(success);
-        assertEq(address(account).balance, 1000);
+        assertEq(address(accountAddress).balance, 1000);
     }
 
     /*
@@ -913,15 +919,15 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     function testTransferOutNativeToken() public {
         uint256 value = 1000;
 
-        assertEq(address(account).balance, 0);
+        assertEq(address(accountAddress).balance, 0);
         vm.prank(accountAdmin);
-        (bool success,) = payable(account).call{value: value}("");
-        assertEq(address(account).balance, value);
+        (bool success,) = payable(accountAddress).call{value: value}("");
+        assertEq(address(accountAddress).balance, value);
         assert(success);
         assertEq(beneficiary.balance, 0);
 
         UserOperation[] memory userOp =
-            _setupUserOpExecute(account, accountAdminPKey, bytes(""), address(beneficiary), value, bytes(""));
+            _setupUserOpExecute(accountAddress, accountAdminPKey, bytes(""), address(beneficiary), value, bytes(""));
 
         EntryPoint(entryPoint).handleOps(userOp, beneficiary);
         assertEq(beneficiary.balance, value);
@@ -932,13 +938,13 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      */
     // function testSimulateValidation() public {
     //     // Verify that the counter is still set to 0
-    //     assertEq(testCounter.counters(account), 0);
+    //     assertEq(testCounter.counters(accountAddress), 0);
 
     //     UserOperation[] memory userOp = _setupUserOpExecute(
     //         account, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
     //     );
 
-    //     entryPoint.depositTo{value: 1000000000000000000}(account);
+    //     entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
 
     //     // Expect the simulateValidation() to always revert
     //     vm.expectRevert();
@@ -962,7 +968,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     //     entryPoint.simulateHandleOp(userOp[0], address(0), "");
 
     //     // Verify that the counter has not increased
-    //     assertEq(testCounter.counters(account), 0);
+    //     assertEq(testCounter.counters(accountAddress), 0);
     // }
 
     /*
@@ -976,12 +982,12 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         assertEq(address(managedOpenfortAccountImpl.entryPoint()), address(entryPoint));
 
         // Try to use the old and new implementation before upgrade (should always behave with current values)
-        assertEq(MockV2ManagedOpenfortAccount(payable(account)).getLock(), 0);
+        assertEq(MockV2ManagedOpenfortAccount(payable(accountAddress)).getLock(), 0);
         vm.expectRevert(MustBeGuardian.selector);
-        MockV2ManagedOpenfortAccount(payable(account)).startRecovery(address(0));
+        MockV2ManagedOpenfortAccount(payable(accountAddress)).startRecovery(address(0));
 
-        assertEq(ManagedOpenfortAccount(payable(account)).getDeposit(), 0);
-        assertEq(MockV2ManagedOpenfortAccount(payable(account)).getDeposit(), 0);
+        assertEq(ManagedOpenfortAccount(payable(accountAddress)).getDeposit(), 0);
+        assertEq(MockV2ManagedOpenfortAccount(payable(accountAddress)).getDeposit(), 0);
 
         // Deploy the new account implementation
         MockV2ManagedOpenfortAccount mockV2ManagedOpenfortAccount =
@@ -997,22 +1003,22 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         // Try to use the old and new implementation before upgrade (should always behave with current values)
         vm.expectRevert("disabled!");
-        MockV2ManagedOpenfortAccount(payable(account)).getLock();
+        MockV2ManagedOpenfortAccount(payable(accountAddress)).getLock();
         vm.expectRevert("disabled!");
-        ManagedOpenfortAccount(payable(account)).getLock();
+        ManagedOpenfortAccount(payable(accountAddress)).getLock();
 
         vm.expectRevert("disabled!");
-        MockV2ManagedOpenfortAccount(payable(account)).startRecovery(address(0));
+        MockV2ManagedOpenfortAccount(payable(accountAddress)).startRecovery(address(0));
         vm.expectRevert("disabled!");
-        ManagedOpenfortAccount(payable(account)).startRecovery(address(0));
+        ManagedOpenfortAccount(payable(accountAddress)).startRecovery(address(0));
 
         vm.expectRevert();
-        ManagedOpenfortAccount(payable(account)).getDeposit();
+        ManagedOpenfortAccount(payable(accountAddress)).getDeposit();
         vm.expectRevert();
-        MockV2ManagedOpenfortAccount(payable(account)).getDeposit();
+        MockV2ManagedOpenfortAccount(payable(accountAddress)).getDeposit();
 
         // Check that the EntryPoint is now upgraded too
-        assertEq(address(MockV2ManagedOpenfortAccount(payable(address(account))).entryPoint()), newEntryPoint);
+        assertEq(address(MockV2ManagedOpenfortAccount(payable(address(accountAddress))).entryPoint()), newEntryPoint);
     }
 
     function testFailIsValidSignature() public {
@@ -1025,7 +1031,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         signer = ECDSA.recover(hash, signature);
         assertEq(accountAdmin, signer); // [PASS]
 
-        bytes4 valid = ManagedOpenfortAccount(payable(account)).isValidSignature(hash, signature);
+        bytes4 valid = ManagedOpenfortAccount(payable(accountAddress)).isValidSignature(hash, signature);
         assertEq(valid, bytes4(0xffffffff)); // SHOULD PASS!
         assertEq(valid, MAGICVALUE); // SHOULD FAIL! We do not accept straight signatures from owners anymore
     }
@@ -1041,7 +1047,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         signer = ECDSA.recover(hashMessage, signature);
         assertEq(accountAdmin, signer); // [PASS]
 
-        bytes4 valid = ManagedOpenfortAccount(payable(account)).isValidSignature(hash, signature);
+        bytes4 valid = ManagedOpenfortAccount(payable(accountAddress)).isValidSignature(hash, signature);
         assertEq(valid, bytes4(0xffffffff)); // SHOULD PASS!
         assertEq(valid, MAGICVALUE); // SHOULD FAIL! We do not accept straight signatures from owners anymore
     }
@@ -1072,19 +1078,19 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         bytes32 structHash = keccak256(abi.encode(OF_MSG_TYPEHASH, hash));
 
         (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
-            IERC5267(account).eip712Domain();
+            IERC5267(accountAddress).eip712Domain();
 
         bytes32 domainSeparator = keccak256(
             abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
         );
 
-        bytes memory signature = getEIP712SignatureFrom(account, structHash, accountAdminPKey);
+        bytes memory signature = getEIP712SignatureFrom(accountAddress, structHash, accountAdminPKey);
         bytes32 hash712 = domainSeparator.toTypedDataHash(structHash);
         address signer = hash712.recover(signature);
 
         assertEq(accountAdmin, signer); // [PASS]
 
-        bytes4 valid = ManagedOpenfortAccount(payable(account)).isValidSignature(hash, signature);
+        bytes4 valid = ManagedOpenfortAccount(payable(accountAddress)).isValidSignature(hash, signature);
         assertEq(valid, MAGICVALUE); // SHOULD PASS
     }
 
@@ -1096,7 +1102,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Test locking the Openfort account using the default guardian.
      */
     function testLockAccount() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         assertEq(openfortAccount.isLocked(), false);
         assertEq(openfortAccount.getLock(), 0);
@@ -1124,7 +1130,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Test unlocking the Openfort account using the default guardian.
      */
     function testUnlockAccount() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         assertEq(openfortAccount.isLocked(), false);
         assertEq(openfortAccount.getLock(), 0);
@@ -1164,7 +1170,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Successfully propose a guardian and confirm it after SECURITY_PERIOD
      */
     function testAddEOAGuardian() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         openfortAccount.getGuardians();
 
@@ -1213,7 +1219,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * An expired proposal cannot be accepted. A proposal expires after SECURITY_PERIOD and SECURITY_WINDOW.
      */
     function testAddEOAGuardianExpired() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Verify that the number of guardians is 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
@@ -1258,7 +1264,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * An expired proposal cannot be accepted. A proposal expires after SECURITY_PERIOD and SECURITY_WINDOW.
      */
     function testAddEOAGuardianExpiredThenReAdd() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Verify that the number of guardians is 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
@@ -1326,7 +1332,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * An expired proposal cannot be accepted. A proposal expires after SECURITY_PERIOD and SECURITY_WINDOW.
      */
     function testAddEOAGuardianDuplicatedPorposal() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Verify that the number of guardians is 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
@@ -1368,7 +1374,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Only the owner can cancel an ongoing proposal.
      */
     function testAddEOAGuardianCancel() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Verify that the number of guardians is 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
@@ -1424,7 +1430,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Successfully propose a guardian and confirm it after SECURITY_PERIOD
      */
     function testAddOwnerAsGuardianNotAllowed() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         openfortAccount.getGuardians();
 
@@ -1459,7 +1465,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Successfully propose guardians and confirm them after SECURITY_PERIOD
      */
     function testAddMultipleEOAGuardians() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         openfortAccount.getGuardians();
 
@@ -1510,7 +1516,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Only the owner can revoke a guardian.
      */
     function testRevokeGuardian() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Verify that the number of guardians is 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
@@ -1569,7 +1575,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Only the owner can revoke a guardian.
      */
     function testRevokeDefaultGuardian() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         openfortAccount.getGuardians();
 
@@ -1625,7 +1631,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Only the owner can revoke a guardian.
      */
     function testRevokeAllGuardians() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Verify that the number of guardians is 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
@@ -1704,7 +1710,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * An expired revocation cannot be confirmed. A revocation expires after SECURITY_PERIOD + SECURITY_WINDOW.
      */
     function testRevokeEOAGuardianExpired() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Verify that the number of guardians is 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
@@ -1745,7 +1751,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * An expired revocation cannot be confirmed. A revocation expires after SECURITY_PERIOD and SECURITY_WINDOW.
      */
     function testRevokeEOAGuardianDuplicatedPorposal() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Verify that the number of guardians is 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
@@ -1793,7 +1799,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Test revoking the default guardian and add it back.
      */
     function testRevokeDefaultGuardianAndAddBack() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Verify that the number of guardians is 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
@@ -1833,7 +1839,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Only the owner can revoke a guardian and cancel its revocation before confirming.
      */
     function testCancelRevokeGuardian() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Verify that the number of guardians is 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
@@ -1900,7 +1906,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Random extra tests to mess up with the logic
      */
     function testMessingUpWithGuardianRegister() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Create 4 friends
         address friendAccount;
@@ -1949,7 +1955,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Check the correct functionality of startRecovery()
      */
     function testStartRecovery() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         vm.expectRevert(MustBeGuardian.selector);
         openfortAccount.startRecovery(OPENFORT_GUARDIAN);
@@ -1968,7 +1974,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Checks that incorrect parameters should always fail when trying to complete a recovery
      */
     function testBasicChecksCompleteRecovery() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         vm.prank(OPENFORT_GUARDIAN);
         openfortAccount.startRecovery(address(beneficiary));
@@ -1997,7 +2003,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Ownership is transferred to beneficiary
      */
     function testBasicCompleteRecovery() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Default Openfort guardian starts a recovery process because the owner lost the PK
         vm.prank(OPENFORT_GUARDIAN);
@@ -2009,7 +2015,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         );
 
         bytes[] memory signatures = new bytes[](1);
-        signatures[0] = getEIP712SignatureFrom(account, structHash, OPENFORT_GUARDIAN_PKEY);
+        signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, OPENFORT_GUARDIAN_PKEY);
 
         skip(RECOVERY_PERIOD + 1);
         openfortAccount.completeRecovery(signatures);
@@ -2025,7 +2031,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * @notice Remember that signatures need to be ordered by the guardian's address.
      */
     function test3GuardiansCompleteRecovery() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Create two friends
         address friendAccount;
@@ -2065,8 +2071,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         );
 
         bytes[] memory signatures = new bytes[](2);
-        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
-        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccountPK);
+        signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
+        signatures[1] = getEIP712SignatureFrom(accountAddress, structHash, friendAccountPK);
 
         skip(RECOVERY_PERIOD + 1);
         openfortAccount.completeRecovery(signatures);
@@ -2082,7 +2088,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * @notice Remember that signatures need to be ordered by the guardian's address.
      */
     function test3GuardiansUnorderedCompleteRecovery() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Create two friends
         address friendAccount;
@@ -2122,8 +2128,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         );
 
         bytes[] memory signatures = new bytes[](2);
-        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccountPK); // Unsorted!
-        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccount2PK);
+        signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, friendAccountPK); // Unsorted!
+        signatures[1] = getEIP712SignatureFrom(accountAddress, structHash, friendAccount2PK);
 
         skip(RECOVERY_PERIOD + 1);
         vm.expectRevert(InvalidRecoverySignatures.selector);
@@ -2141,7 +2147,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * @notice Remember that signatures need to be ordered by the guardian's address.
      */
     function test4GuardiansNoDefaultCompleteRecovery() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Create 4 friends
         address friendAccount;
@@ -2196,8 +2202,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         );
 
         bytes[] memory signatures = new bytes[](2);
-        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
-        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccountPK);
+        signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
+        signatures[1] = getEIP712SignatureFrom(accountAddress, structHash, friendAccountPK);
 
         skip(RECOVERY_PERIOD + 1);
         openfortAccount.completeRecovery(signatures);
@@ -2213,7 +2219,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * @notice Remember that signatures need to be ordered by the guardian's address.
      */
     function test3GuardiansFailCompleteRecovery() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Create two friends
         address friendAccount;
@@ -2253,8 +2259,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             keccak256(abi.encode(RECOVER_TYPEHASH, factoryAdmin, uint64(block.timestamp + RECOVERY_PERIOD), uint32(2)));
 
         bytes[] memory signatures = new bytes[](2);
-        signatures[0] = getEIP712SignatureFrom(account, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
-        signatures[1] = getEIP712SignatureFrom(account, structHash, friendAccountPK);
+        signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
+        signatures[1] = getEIP712SignatureFrom(accountAddress, structHash, friendAccountPK);
 
         skip(RECOVERY_PERIOD + 1);
         vm.expectRevert(InvalidRecoverySignatures.selector);
@@ -2269,7 +2275,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Testing the functionality to cancel a recovery process
      */
     function testCancelRecovery() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Default Openfort guardian starts a recovery process because the owner lost the PK
         vm.prank(OPENFORT_GUARDIAN);
@@ -2287,7 +2293,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         );
 
         bytes[] memory signatures = new bytes[](1);
-        signatures[0] = getEIP712SignatureFrom(account, structHash, OPENFORT_GUARDIAN_PKEY);
+        signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, OPENFORT_GUARDIAN_PKEY);
 
         skip(RECOVERY_PERIOD + 1);
         vm.expectRevert(NoOngoingRecovery.selector);
@@ -2301,7 +2307,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Testing the startRecovery twice in a row
      */
     function testStartRecoveryTwice() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Default Openfort guardian starts a recovery process because the owner lost the PK
         vm.prank(OPENFORT_GUARDIAN);
@@ -2327,7 +2333,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Should not be allowed.
      */
     function testTransferOwnerNotGuardian() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Create a friend EOA
         address friendAccount = makeAddr("friend");
@@ -2352,7 +2358,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Should be allowed.
      */
     function testTransferOwner() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         // Create a new owner EOA
         address newOwner = makeAddr("newOwner");
@@ -2375,7 +2381,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * that isGuardianOrGuardianSigner() always returns false.
      */
     function testStubFakeMockTempisGuardian() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(account));
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
         assertEq(openfortAccount.isGuardianOrGuardianSigner(OPENFORT_GUARDIAN), false);
     }
 }
