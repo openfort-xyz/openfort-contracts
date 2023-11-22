@@ -17,7 +17,7 @@ import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
 contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
 
-    UpgradeableOpenfortAccount public upgradeableOpenfortAccount;
+    UpgradeableOpenfortAccount public upgradeableOpenfortAccountImpl;
     UpgradeableOpenfortFactory public upgradeableOpenfortFactory;
 
     /**
@@ -53,12 +53,12 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // deploy upgradeable account implementation
         vm.expectEmit(true, true, false, true);
         emit AccountImplementationDeployed(factoryAdmin);
-        upgradeableOpenfortAccount = new UpgradeableOpenfortAccount{salt: versionSalt}();
+        upgradeableOpenfortAccountImpl = new UpgradeableOpenfortAccount{salt: versionSalt}();
         // deploy upgradeable account factory
         upgradeableOpenfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(
             factoryAdmin,
             address(entryPoint),
-            address(upgradeableOpenfortAccount),
+            address(upgradeableOpenfortAccountImpl),
             RECOVERY_PERIOD,
             SECURITY_PERIOD,
             SECURITY_WINDOW,
@@ -74,6 +74,22 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // deploy a new MockERC20 (ERC20)
         mockERC20 = new MockERC20();
         vm.stopPrank();
+    }
+
+    /*
+     * Should not be able to initialize the implementation
+     */
+    function testInitializeImplementation() public {
+        vm.expectRevert("Initializable: contract is already initialized");
+        upgradeableOpenfortAccountImpl.initialize(
+            accountAdmin,
+            address(entryPoint),
+            RECOVERY_PERIOD,
+            SECURITY_PERIOD,
+            SECURITY_WINDOW,
+            LOCK_PERIOD,
+            OPENFORT_GUARDIAN
+        );
     }
 
     /*
@@ -1003,7 +1019,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         UpgradeableOpenfortFactory upgradeableOpenfortFactoryOld = new UpgradeableOpenfortFactory{salt: versionSalt}(
             factoryAdmin,
             oldEntryPoint,
-            address(upgradeableOpenfortAccount),
+            address(upgradeableOpenfortAccountImpl),
             RECOVERY_PERIOD,
             SECURITY_PERIOD,
             SECURITY_WINDOW,
