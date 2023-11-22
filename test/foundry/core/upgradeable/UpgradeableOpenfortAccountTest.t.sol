@@ -101,6 +101,31 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     }
 
     /*
+     * Create an account by directly calling the factory by fuzzing the admin and nonce parameters.
+     */
+    function testFuzzCreateAccountWithNonceViaFactory(address _adminAddress, bytes32 _nonce) public {
+        // Get the counterfactual address
+        vm.prank(factoryAdmin);
+        address accountAddress2 = upgradeableOpenfortFactory.getAddressWithNonce(_adminAddress, _nonce);
+
+        // Expect that we will see an event containing the account and admin
+        vm.expectEmit(true, true, false, true);
+        emit AccountCreated(accountAddress2, _adminAddress);
+
+        // Deploy a upgradeable account to the counterfactual address
+        vm.prank(factoryAdmin);
+        upgradeableOpenfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+
+        // Calling it again should just return the address and not create another account
+        vm.prank(factoryAdmin);
+        upgradeableOpenfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+
+        // Make sure the counterfactual address has not been altered
+        vm.prank(factoryAdmin);
+        assertEq(accountAddress2, upgradeableOpenfortFactory.getAddressWithNonce(_adminAddress, _nonce));
+    }
+
+    /*
      * Create an account calling the factory via EntryPoint.
      * Use initCode
      */
