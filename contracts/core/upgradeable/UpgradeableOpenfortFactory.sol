@@ -3,13 +3,13 @@ pragma solidity =0.8.19;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {UpgradeableOpenfortAccount, IEntryPoint} from "./UpgradeableOpenfortAccount.sol";
-import {OpenfortUpgradeableProxy} from "./OpenfortUpgradeableProxy.sol";
+import {UpgradeableOpenfortProxy} from "./UpgradeableOpenfortProxy.sol";
 import {BaseOpenfortFactory} from "../base/BaseOpenfortFactory.sol";
 
 /**
  * @title UpgradeableOpenfortFactory (Non-upgradeable)
  * @notice Contract to create an on-chain factory to deploy new UpgradeableOpenfortAccounts.
- * It uses OpenZeppelin's Create2 and OpenfortUpgradeableProxy libraries.
+ * It uses OpenZeppelin's Create2 and UpgradeableOpenfortProxy libraries.
  * It inherits from:
  *  - BaseOpenfortFactory
  */
@@ -46,7 +46,7 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
         if (account.code.length > 0) return account;
 
         emit AccountCreated(account, _admin);
-        account = address(new OpenfortUpgradeableProxy{salt: salt}(accountImplementation, ""));
+        account = address(new UpgradeableOpenfortProxy{salt: salt}(_implementation, ""));
         UpgradeableOpenfortAccount(payable(account)).initialize(
             _admin, entrypointContract, recoveryPeriod, securityPeriod, securityWindow, lockPeriod, openfortGuardian
         );
@@ -59,9 +59,7 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
         bytes32 salt = keccak256(abi.encode(_admin, _nonce));
         return Create2.computeAddress(
             salt,
-            keccak256(
-                abi.encodePacked(type(OpenfortUpgradeableProxy).creationCode, abi.encode(accountImplementation, ""))
-            )
+            keccak256(abi.encodePacked(type(UpgradeableOpenfortProxy).creationCode, abi.encode(_implementation, "")))
         );
     }
 }

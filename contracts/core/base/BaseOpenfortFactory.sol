@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.8.19;
 
-import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {AddressUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
 
@@ -11,10 +11,11 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
  * @notice Contract to create an on-chain factory to deploy new OpenfortAccounts.
  * It inherits from:
  *  - IBaseOpenfortFactory
+ *  - Ownable2Step
  */
-abstract contract BaseOpenfortFactory is IBaseOpenfortFactory, Ownable2StepUpgradeable {
+abstract contract BaseOpenfortFactory is IBaseOpenfortFactory, Ownable2Step {
     address public entrypointContract;
-    address public accountImplementation;
+    address internal _implementation;
     uint256 public recoveryPeriod;
     uint256 public securityPeriod;
     uint256 public securityWindow;
@@ -44,12 +45,19 @@ abstract contract BaseOpenfortFactory is IBaseOpenfortFactory, Ownable2StepUpgra
         }
         _transferOwnership(_owner);
         entrypointContract = _entrypoint;
-        accountImplementation = _accountImplementation;
+        _implementation = _accountImplementation;
         recoveryPeriod = _recoveryPeriod;
         securityPeriod = _securityPeriod;
         securityWindow = _securityWindow;
         lockPeriod = _lockPeriod;
         openfortGuardian = _openfortGuardian;
+    }
+
+    /**
+     * @dev Returns the current implementation address.
+     */
+    function implementation() external view virtual override returns (address) {
+        return _implementation;
     }
 
     /**
