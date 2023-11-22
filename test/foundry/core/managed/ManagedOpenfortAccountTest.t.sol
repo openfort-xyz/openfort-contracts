@@ -9,7 +9,7 @@ import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {MockERC20} from "contracts/mock/MockERC20.sol";
 import {ManagedOpenfortAccount} from "contracts/core/managed/ManagedOpenfortAccount.sol";
 import {ManagedOpenfortFactory} from "contracts/core/managed/ManagedOpenfortFactory.sol";
-import {OpenfortManagedProxy} from "contracts/core/managed/OpenfortManagedProxy.sol";
+import {ManagedOpenfortProxy} from "contracts/core/managed/ManagedOpenfortProxy.sol";
 import {MockV2ManagedOpenfortAccount} from "contracts/mock/MockV2ManagedOpenfortAccount.sol";
 import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
 
