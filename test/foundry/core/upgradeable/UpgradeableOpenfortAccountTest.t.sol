@@ -9,6 +9,7 @@ import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {MockERC20} from "contracts/mock/MockERC20.sol";
 import {IBaseRecoverableAccount} from "contracts/interfaces/IBaseRecoverableAccount.sol";
 import {IUpgradeableOpenfortAccount} from "contracts/interfaces/IUpgradeableOpenfortAccount.sol";
+import {OpenfortErrorsAndEvents} from "contracts/interfaces/OpenfortErrorsAndEvents.sol";
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {UpgradeableOpenfortProxy} from "contracts/core/upgradeable/UpgradeableOpenfortProxy.sol";
@@ -127,8 +128,12 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         address accountAddress2 = openfortFactory.getAddressWithNonce(_adminAddress, _nonce);
 
         // Expect that we will see an event containing the account and admin
-        vm.expectEmit(true, true, false, true);
-        emit AccountCreated(accountAddress2, _adminAddress);
+        if (_adminAddress == address(0)) {
+            vm.expectRevert();
+        } else {
+            vm.expectEmit(true, true, false, true);
+            emit AccountCreated(accountAddress2, _adminAddress);
+        }
 
         // Deploy a upgradeable account to the counterfactual address
         vm.prank(factoryAdmin);
@@ -205,7 +210,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -236,13 +241,43 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         UserOperation[] memory userOp =
             _setupUserOpExecuteBatch(accountAddress, accountAdminPKey, bytes(""), targets, values, callData);
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
 
         // Verify that the counter has increased
-        assertEq(testCounter.counters(accountAddress), 3);
+        assertEq(testCounter.counters(accountAddress), count);
+    }
+
+    /*
+     * Use the executeBatch() with a too big number
+     */
+    function testFailBatchingBig() public {
+        // Verify that the counter is still set to 0
+        assertEq(testCounter.counters(accountAddress), 0);
+
+        uint256 count = 10;
+        address[] memory targets = new address[](count);
+        uint256[] memory values = new uint256[](count);
+        bytes[] memory callData = new bytes[](count);
+
+        for (uint256 i = 0; i < count; i += 1) {
+            targets[i] = address(testCounter);
+            values[i] = 0;
+            callData[i] = abi.encodeWithSignature("count()");
+        }
+
+        UserOperation[] memory userOp =
+            _setupUserOpExecuteBatch(accountAddress, accountAdminPKey, bytes(""), targets, values, callData);
+
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verify that the counter has increased
+        assertEq(testCounter.counters(accountAddress), count);
     }
 
     /*
@@ -260,7 +295,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -290,7 +325,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -326,7 +361,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             )
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -338,7 +373,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -375,7 +410,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             )
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -387,7 +422,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -413,7 +448,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             )
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -440,7 +475,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             abi.encodeWithSignature("registerSessionKey(address,uint48,uint48,uint48)", sessionKey, 0, 2 ** 48 - 1, 10)
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -452,7 +487,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -480,7 +515,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             abi.encodeWithSignature("registerSessionKey(address,uint48,uint48)", sessionKeyAttack, 0, 2 ** 48 - 1)
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -506,7 +541,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         vm.expectRevert();
@@ -536,7 +571,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -566,7 +601,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -575,7 +610,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -615,7 +650,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         UserOperation[] memory userOp =
             _setupUserOpExecuteBatch(accountAddress, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -645,7 +680,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -674,7 +709,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -702,7 +737,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -748,7 +783,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         UserOperation[] memory userOp =
             _setupUserOpExecuteBatch(accountAddress, sessionKeyPrivKey, bytes(""), targets, values, callData);
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -777,7 +812,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -822,7 +857,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             callData
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -888,7 +923,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, accountAdmin2PKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -917,7 +952,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             abi.encodeWithSignature("mint(address,uint256)", beneficiary, 1)
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
         entryPoint.handleOps(userOp, beneficiary);
@@ -969,7 +1004,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             accountAddress, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
-        entryPoint.depositTo{value: 1000000000000000000}(accountAddress);
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
         // Expect the simulateValidation() to always revert
         vm.expectRevert();
         entryPoint.simulateValidation(userOp[0]);
@@ -1017,7 +1052,9 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * 2- Inform the account of the new EntryPoint by calling updateEntryPoint()
      */
     function testUpdateEntryPoint() public {
+        bytes memory code = address(entryPoint).code;
         address oldEntryPoint = address(0x0576a174D229E3cFA37253523E645A78A0C91B57);
+        vm.etch(oldEntryPoint, code); // Simulate there's code here
         address newEntryPoint = vm.envAddress("ENTRY_POINT_ADDRESS");
         UpgradeableOpenfortFactory openfortFactoryOld = new UpgradeableOpenfortFactory{salt: versionSalt}(
             factoryAdmin,
@@ -1037,6 +1074,10 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         vm.expectRevert("Ownable: caller is not the owner");
         upgradeableAccount.updateEntryPoint(newEntryPoint);
+
+        vm.prank(accountAdmin);
+        vm.expectRevert(OpenfortErrorsAndEvents.NotAContract.selector);
+        upgradeableAccount.updateEntryPoint(address(0));
 
         vm.prank(accountAdmin);
         upgradeableAccount.updateEntryPoint(newEntryPoint);
@@ -1115,6 +1156,20 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         bytes4 valid = IBaseRecoverableAccount(payable(accountAddress)).isValidSignature(hash, signature);
         assertEq(valid, MAGICVALUE); // SHOULD PASS
+    }
+
+    function testAddDeposit() public {
+        IBaseRecoverableAccount account = IBaseRecoverableAccount(payable(accountAddress));
+        assertEq(0, account.getDeposit());
+        vm.expectEmit(true, true, false, true);
+        emit Deposited(accountAddress, 1 ether);
+        account.addDeposit{value: 1 ether}();
+        assertEq(1 ether, account.getDeposit());
+
+        // Make the admin of the upgradeable account wallet (deployer) call "count"
+        vm.prank(accountAdmin);
+        account.execute{value: 1 ether}(accountAddress, 1 ether, abi.encodeWithSignature("addDeposit()"));
+        assertEq(2 ether, account.getDeposit());
     }
 
     /**
