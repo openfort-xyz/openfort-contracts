@@ -10,7 +10,7 @@ import {MockERC20} from "contracts/mock/MockERC20.sol";
 import {IBaseOpenfortAccount} from "contracts/interfaces/IBaseOpenfortAccount.sol";
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
-import {OpenfortUpgradeableProxy} from "contracts/core/upgradeable/OpenfortUpgradeableProxy.sol";
+import {UpgradeableOpenfortProxy} from "contracts/core/upgradeable/UpgradeableOpenfortProxy.sol";
 import {MockV2UpgradeableOpenfortAccount} from "contracts/mock/MockV2UpgradeableOpenfortAccount.sol";
 import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
 
@@ -966,7 +966,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(UpgradeableOpenfortAccount(payable(account)).owner(), address(accountAdmin));
         assertEq(address(IBaseOpenfortAccount(payable(account)).entryPoint()), address(entryPoint));
         MockV2UpgradeableOpenfortAccount newAccountImplementation = new MockV2UpgradeableOpenfortAccount();
-        OpenfortUpgradeableProxy p = OpenfortUpgradeableProxy(payable(account));
+        UpgradeableOpenfortProxy p = UpgradeableOpenfortProxy(payable(account));
         // Printing account address and the implementation address
         console.log("Account address (proxy): ", account);
         console.log("Implementation address (old): ", p.implementation());

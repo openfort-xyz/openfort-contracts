@@ -4,8 +4,8 @@ pragma solidity =0.8.19;
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {IBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import {ManagedOpenfortAccount} from "./ManagedOpenfortAccount.sol";
-import {OpenfortManagedProxy} from "./OpenfortManagedProxy.sol";
-import {BaseOpenfortFactory, AddressUpgradeable} from "../base/BaseOpenfortFactory.sol";
+import {ManagedOpenfortProxy} from "./ManagedOpenfortProxy.sol";
+import {BaseOpenfortFactory, Address} from "../base/BaseOpenfortFactory.sol";
 
 /**
  * @title ManagedOpenfortFactory (Non-upgradeable)
@@ -15,17 +15,11 @@ import {BaseOpenfortFactory, AddressUpgradeable} from "../base/BaseOpenfortFacto
  *  - IBeacon to work as the beacon
  */
 contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
-    address private _implementation;
-
     /**
      * @dev Emitted when the implementation returned by the beacon is changed.
      */
     event Upgraded(address indexed implementation);
 
-    /**
-     * @dev Sets the address of the initial implementation, and the deployer account as the owner who can upgrade the
-     * beacon.
-     */
     constructor(
         address _owner,
         address _entrypoint,
@@ -61,7 +55,7 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
 
         emit AccountCreated(account, _admin);
 
-        account = address(new OpenfortManagedProxy{salt: salt}(address(this), ""));
+        account = address(new ManagedOpenfortProxy{salt: salt}(address(this), ""));
         ManagedOpenfortAccount(payable(account)).initialize(
             _admin, entrypointContract, recoveryPeriod, securityPeriod, securityWindow, lockPeriod, openfortGuardian
         );
@@ -73,14 +67,14 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
     function getAddressWithNonce(address _admin, bytes32 _nonce) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin, _nonce));
         return Create2.computeAddress(
-            salt, keccak256(abi.encodePacked(type(OpenfortManagedProxy).creationCode, abi.encode(address(this), "")))
+            salt, keccak256(abi.encodePacked(type(ManagedOpenfortProxy).creationCode, abi.encode(address(this), "")))
         );
     }
 
     /**
      * @dev Returns the current implementation address.
      */
-    function implementation() public view virtual override returns (address) {
+    function implementation() public view virtual override(BaseOpenfortFactory, IBeacon) returns (address) {
         return _implementation;
     }
 
@@ -107,9 +101,7 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
      * - `newImplementation` must be a contract.
      */
     function _setImplementation(address newImplementation) private {
-        require(
-            AddressUpgradeable.isContract(newImplementation), "ManagedOpenfortFactory: implementation is not a contract"
-        );
+        require(Address.isContract(newImplementation), "ManagedOpenfortFactory: implementation is not a contract");
         _implementation = newImplementation;
     }
 }
