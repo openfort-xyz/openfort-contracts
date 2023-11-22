@@ -38,7 +38,7 @@ abstract contract BaseOpenfortAccount is
     // bytes4(keccak256("executeBatch(address[],uint256[],bytes[])")
     bytes4 internal constant EXECUTEBATCH_SELECTOR = 0x47e1da2a;
     // keccak256("OpenfortMessage(bytes32 hashedMessage)");
-    bytes32 private constant OF_MSG_TYPEHASH = 0x57159f03b9efda178eab2037b2ec0b51ce11be0051b8a2a9992c29dc260e4a30;
+    bytes32 internal constant OF_MSG_TYPEHASH = 0x57159f03b9efda178eab2037b2ec0b51ce11be0051b8a2a9992c29dc260e4a30;
 
     /**
      * Struct like ValidationData (from the EIP-4337) - alpha solution - to keep track of session keys' data
@@ -68,31 +68,38 @@ abstract contract BaseOpenfortAccount is
         _disableInitializers();
     }
 
-    /**
-     * Require the function call went through EntryPoint or owner
-     */
-    function _requireFromEntryPointOrOwner() internal view virtual {
-        if (msg.sender != address(entryPoint()) && msg.sender != owner()) {
-            revert NotOwnerOrEntrypoint();
-        }
-    }
-
-    /**
-     * Require the function call went through owner
-     */
-    function _requireFromOwner() internal view {
-        if (msg.sender != owner()) {
-            revert NotOwner();
-        }
-    }
-
     function owner() public view virtual returns (address);
 
     /**
      * Check current account deposit in the entryPoint
      */
-    function getDeposit() public view virtual returns (uint256) {
+    function getDeposit() external view virtual returns (uint256) {
         return entryPoint().balanceOf(address(this));
+    }
+
+    /*
+     * @notice See EIP-1271
+     * Owner and session keys need to sign using EIP712.
+     */
+    function isValidSignature(bytes32 _hash, bytes memory _signature) external view virtual override returns (bytes4) {
+        bytes32 structHash = keccak256(abi.encode(OF_MSG_TYPEHASH, _hash));
+        bytes32 digest = _hashTypedDataV4(structHash);
+        address signer = digest.recover(_signature);
+        if (owner() == signer) return MAGICVALUE;
+
+        SessionKeyStruct storage sessionKey = sessionKeys[signer];
+        // If the signer is a session key that is still valid
+        if (
+            sessionKey.validUntil == 0 || sessionKey.validAfter > block.timestamp
+                || sessionKey.validUntil < block.timestamp || sessionKey.limit < 1
+        ) {
+            return 0xffffffff;
+        } // Not owner or session key revoked
+        else if (sessionKey.registrarAddress != owner()) {
+            return 0xffffffff;
+        } else {
+            return MAGICVALUE;
+        }
     }
 
     /*
@@ -166,31 +173,6 @@ abstract contract BaseOpenfortAccount is
         return false;
     }
 
-    /*
-     * @notice See EIP-1271
-     * Owner and session keys need to sign using EIP712.
-     */
-    function isValidSignature(bytes32 _hash, bytes memory _signature) public view virtual override returns (bytes4) {
-        bytes32 structHash = keccak256(abi.encode(OF_MSG_TYPEHASH, _hash));
-        bytes32 digest = _hashTypedDataV4(structHash);
-        address signer = digest.recover(_signature);
-        if (owner() == signer) return MAGICVALUE;
-
-        SessionKeyStruct storage sessionKey = sessionKeys[signer];
-        // If the signer is a session key that is still valid
-        if (
-            sessionKey.validUntil == 0 || sessionKey.validAfter > block.timestamp
-                || sessionKey.validUntil < block.timestamp || sessionKey.limit < 1
-        ) {
-            return 0xffffffff;
-        } // Not owner or session key revoked
-        else if (sessionKey.registrarAddress != owner()) {
-            return 0xffffffff;
-        } else {
-            return MAGICVALUE;
-        }
-    }
-
     /**
      * Execute a transaction (called directly from owner, or by entryPoint)
      */
@@ -222,7 +204,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * Deposit funds for this account in the EntryPoint
      */
-    function addDeposit() public payable virtual {
+    function addDeposit() external payable virtual {
         entryPoint().depositTo{value: msg.value}(address(this));
     }
 
@@ -235,6 +217,62 @@ abstract contract BaseOpenfortAccount is
     function withdrawDepositTo(address payable _withdrawAddress, uint256 _amount) external virtual {
         _requireFromOwner();
         entryPoint().withdrawTo(_withdrawAddress, _amount);
+    }
+
+    /**
+     * Register a session key to the account
+     * @param _key session key to register
+     * @param _validAfter - this session key is valid only after this timestamp.
+     * @param _validUntil - this session key is valid only up to this timestamp.
+     * @param _limit - limit of uses remaining.
+     * @param _whitelist - this session key can only interact with the addresses in the _whitelist.
+     */
+    function registerSessionKey(
+        address _key,
+        uint48 _validAfter,
+        uint48 _validUntil,
+        uint48 _limit,
+        address[] calldata _whitelist
+    ) external virtual {
+        _requireFromEntryPointOrOwner();
+
+        require(_whitelist.length < 11, "Whitelist too big");
+        uint256 i;
+        for (i; i < _whitelist.length;) {
+            sessionKeys[_key].whitelist[_whitelist[i]] = true;
+            unchecked {
+                ++i;
+            }
+        }
+        if (i != 0) {
+            // If there was some whitelisting, it is not a masterSessionKey
+            sessionKeys[_key].whitelisting = true;
+            sessionKeys[_key].masterSessionKey = false;
+        } else {
+            if (_limit == ((2 ** 48) - 1)) sessionKeys[_key].masterSessionKey = true;
+            else sessionKeys[_key].masterSessionKey = false;
+        }
+
+        sessionKeys[_key].validAfter = _validAfter;
+        sessionKeys[_key].validUntil = _validUntil;
+        sessionKeys[_key].limit = _limit;
+        sessionKeys[_key].registrarAddress = owner();
+
+        emit SessionKeyRegistered(_key);
+    }
+
+    /**
+     * Revoke a session key from the account
+     * @param _key session key to revoke
+     */
+    function revokeSessionKey(address _key) external virtual {
+        _requireFromEntryPointOrOwner();
+        if (sessionKeys[_key].validUntil != 0) {
+            sessionKeys[_key].validUntil = 0;
+            sessionKeys[_key].masterSessionKey = false;
+            sessionKeys[_key].registrarAddress = address(0);
+            emit SessionKeyRevoked(_key);
+        }
     }
 
     /**
@@ -274,58 +312,20 @@ abstract contract BaseOpenfortAccount is
     }
 
     /**
-     * Register a session key to the account
-     * @param _key session key to register
-     * @param _validAfter - this session key is valid only after this timestamp.
-     * @param _validUntil - this session key is valid only up to this timestamp.
-     * @param _limit - limit of uses remaining.
-     * @param _whitelist - this session key can only interact with the addresses in the _whitelist.
+     * Require the function call went through EntryPoint or owner
      */
-    function registerSessionKey(
-        address _key,
-        uint48 _validAfter,
-        uint48 _validUntil,
-        uint48 _limit,
-        address[] calldata _whitelist
-    ) public virtual {
-        _requireFromEntryPointOrOwner();
-
-        require(_whitelist.length < 11, "Whitelist too big");
-        uint256 i;
-        for (i; i < _whitelist.length;) {
-            sessionKeys[_key].whitelist[_whitelist[i]] = true;
-            unchecked {
-                ++i;
-            }
+    function _requireFromEntryPointOrOwner() internal view virtual {
+        if (msg.sender != address(entryPoint()) && msg.sender != owner()) {
+            revert NotOwnerOrEntrypoint();
         }
-        if (i != 0) {
-            // If there was some whitelisting, it is not a masterSessionKey
-            sessionKeys[_key].whitelisting = true;
-            sessionKeys[_key].masterSessionKey = false;
-        } else {
-            if (_limit == ((2 ** 48) - 1)) sessionKeys[_key].masterSessionKey = true;
-            else sessionKeys[_key].masterSessionKey = false;
-        }
-
-        sessionKeys[_key].validAfter = _validAfter;
-        sessionKeys[_key].validUntil = _validUntil;
-        sessionKeys[_key].limit = _limit;
-        sessionKeys[_key].registrarAddress = owner();
-
-        emit SessionKeyRegistered(_key);
     }
 
     /**
-     * Revoke a session key from the account
-     * @param _key session key to revoke
+     * Require the function call went through owner
      */
-    function revokeSessionKey(address _key) external virtual {
-        _requireFromEntryPointOrOwner();
-        if (sessionKeys[_key].validUntil != 0) {
-            sessionKeys[_key].validUntil = 0;
-            sessionKeys[_key].masterSessionKey = false;
-            sessionKeys[_key].registrarAddress = address(0);
-            emit SessionKeyRevoked(_key);
+    function _requireFromOwner() internal view {
+        if (msg.sender != owner()) {
+            revert NotOwner();
         }
     }
 }
