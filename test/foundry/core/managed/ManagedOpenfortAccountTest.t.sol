@@ -71,9 +71,43 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     }
 
     /*
+     * Should be able to stake and unstake
+     */
+    function testStakeFactory() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortFactory.addStake{value: 1 ether}(10);
+
+        vm.expectRevert("no stake specified");
+        vm.prank(factoryAdmin);
+        openfortFactory.addStake(10);
+
+        vm.prank(factoryAdmin);
+        openfortFactory.addStake{value: 1 ether}(10);
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortFactory.unlockStake();
+
+        vm.prank(factoryAdmin);
+        openfortFactory.unlockStake();
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortFactory.withdrawStake(payable(factoryAdmin));
+
+        vm.expectRevert("Stake withdrawal is not due");
+        vm.prank(factoryAdmin);
+        openfortFactory.withdrawStake(payable(factoryAdmin));
+
+        skip(11);
+
+        vm.prank(factoryAdmin);
+        openfortFactory.withdrawStake(payable(factoryAdmin));
+    }
+
+    /*
      * Should not be able to initialize the implementation
      */
     function testInitializeImplementation() public {
+        assertEq(openfortFactory.implementation(), address(managedOpenfortAccountImpl));
         vm.expectRevert("Initializable: contract is already initialized");
         managedOpenfortAccountImpl.initialize(
             accountAdmin,
@@ -120,20 +154,23 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address account2 = openfortFactory.getAddressWithNonce(_adminAddress, _nonce);
 
         // Expect that we will see an event containing the account and admin
-        vm.expectEmit(true, true, false, true);
-        emit AccountCreated(account2, _adminAddress);
+        if (_adminAddress == address(0)) {
+            vm.expectRevert();
+        } else {
+            vm.expectEmit(true, true, false, true);
+            emit AccountCreated(account2, _adminAddress);
+            // Deploy a managed account to the counterfactual address
+            vm.prank(factoryAdmin);
+            openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
 
-        // Deploy a managed account to the counterfactual address
-        vm.prank(factoryAdmin);
-        openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+            // Calling it again should just return the address and not create another account
+            vm.prank(factoryAdmin);
+            openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
 
-        // Calling it again should just return the address and not create another account
-        vm.prank(factoryAdmin);
-        openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
-
-        // Make sure the counterfactual address has not been altered
-        vm.prank(factoryAdmin);
-        assertEq(account2, openfortFactory.getAddressWithNonce(_adminAddress, _nonce));
+            // Make sure the counterfactual address has not been altered
+            vm.prank(factoryAdmin);
+            assertEq(account2, openfortFactory.getAddressWithNonce(_adminAddress, _nonce));
+        }
     }
 
     /*
@@ -686,7 +723,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     }
 
     /*
-     * Use a sessionKey with whitelisting to call ExecuteBatch().
+     * Use a sessionKey with whitelisting to call ExecuteBatch() with 11 actions.
+     * Fail due to too much actions.
      */
     function testFailIncrementCounterViaSessionKeyWhitelistingBatch() public {
         // Verify that the counter is still set to 0
@@ -729,6 +767,27 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         // Verify that the counter has not increased
         assertEq(testCounter.counters(accountAddress), 0);
+    }
+
+    /*
+     * Use a sessionKey with whitelisting to call ExecuteBatch() with 11 whitelisted addresses.
+     * Fail due to too much whitelisted addresses.
+     */
+    function testTooManyWhitelist() public {
+        // Verify that the counter is still set to 0
+        assertEq(testCounter.counters(accountAddress), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        address[] memory whitelist = new address[](11);
+        for (uint256 i = 0; i < whitelist.length; i++) {
+            whitelist[i] = address(testCounter);
+        }
+        vm.expectRevert("Whitelist too big");
+        vm.prank(accountAdmin);
+        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 3, whitelist);
     }
 
     /*
