@@ -50,7 +50,6 @@ interface IBaseRecoverableAccount is IBaseOpenfortAccount {
     function getLock() external view returns (uint256 _releaseAfter);
     function guardianCount() external view returns (uint256);
     function isGuardian(address _guardian) external view returns (bool);
-    function isGuardianOrGuardianSigner(address _guardian) external pure returns (bool _isGuardian);
     function isLocked() external view returns (bool);
     function lock() external;
     function proposeGuardian(address _guardian) external;

@@ -11,6 +11,7 @@ import {ManagedOpenfortAccount} from "contracts/core/managed/ManagedOpenfortAcco
 import {ManagedOpenfortFactory} from "contracts/core/managed/ManagedOpenfortFactory.sol";
 import {ManagedOpenfortProxy} from "contracts/core/managed/ManagedOpenfortProxy.sol";
 import {MockV2ManagedOpenfortAccount} from "contracts/mock/MockV2ManagedOpenfortAccount.sol";
+import {IBaseOpenfortFactory} from "contracts/interfaces/IBaseOpenfortFactory.sol";
 import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
 
 contract ManagedOpenfortAccountTest is OpenfortBaseTest {
@@ -497,6 +498,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         vm.prank(accountAdmin);
         ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 0, 100, emptyWhitelist);
+        vm.prank(accountAdmin);
         ManagedOpenfortAccount(payable(accountAddress)).revokeSessionKey(sessionKey);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -1036,7 +1038,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * 1- Deploy a new account implementation with the new EntryPoint address and disabled 
      * 2- Upgrade the implementation address
      */
-    function testUpgradeEntryPoint() public {
+    function testUpgradeBeacon() public {
         address newEntryPoint = 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF;
 
         // Check addressess
@@ -1050,6 +1052,11 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         assertEq(ManagedOpenfortAccount(payable(accountAddress)).getDeposit(), 0);
         assertEq(MockV2ManagedOpenfortAccount(payable(accountAddress)).getDeposit(), 0);
 
+        ManagedOpenfortProxy p = ManagedOpenfortProxy(payable(accountAddress));
+        // Printing account address and the implementation address
+        console.log("Account address (proxy): ", accountAddress);
+        console.log("Implementation address (old): ", p.implementation());
+
         // Deploy the new account implementation
         MockV2ManagedOpenfortAccount mockV2ManagedOpenfortAccount =
             new MockV2ManagedOpenfortAccount{salt: versionSalt}();
@@ -1057,6 +1064,10 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         // Try to upgrade
         vm.expectRevert("Ownable: caller is not the owner");
         openfortFactory.upgradeTo(address(mockV2ManagedOpenfortAccount));
+
+        vm.expectRevert(IBaseOpenfortFactory.NotAContract.selector);
+        vm.prank(factoryAdmin);
+        openfortFactory.upgradeTo(address(0));
 
         // Finally upgrade
         vm.prank(factoryAdmin);
@@ -1077,6 +1088,10 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         ManagedOpenfortAccount(payable(accountAddress)).getDeposit();
         vm.expectRevert();
         MockV2ManagedOpenfortAccount(payable(accountAddress)).getDeposit();
+
+        // Printing account address and the implementation address
+        console.log("Account address (proxy): ", accountAddress);
+        console.log("Implementation address (new): ", p.implementation());
 
         // Check that the EntryPoint is now upgraded too
         assertEq(address(MockV2ManagedOpenfortAccount(payable(address(accountAddress))).entryPoint()), newEntryPoint);
@@ -2435,14 +2450,5 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         // New owner should be now newOwner
         assertEq(openfortAccount.owner(), address(newOwner));
-    }
-
-    /*
-     * Temporal test function for coverage purposes showing
-     * that isGuardianOrGuardianSigner() always returns false.
-     */
-    function testStubFakeMockTempisGuardian() public {
-        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
-        assertEq(openfortAccount.isGuardianOrGuardianSigner(OPENFORT_GUARDIAN), false);
     }
 }
