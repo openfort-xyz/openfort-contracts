@@ -25,10 +25,9 @@ contract MockV2UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgrade
     /**
      * Update the EntryPoint address
      */
-    function updateEntryPoint(address _newEntrypoint) external onlyOwner {
-        if (_newEntrypoint == address(0)) revert ZeroAddressNotAllowed();
-        emit EntryPointUpdated(entrypointContract, _newEntrypoint);
-        entrypointContract = _newEntrypoint;
+    function updateEntryPoint(address _newEntrypoint) external view onlyOwner {
+        (_newEntrypoint);
+        revert("disabled!");
     }
 
     /**
