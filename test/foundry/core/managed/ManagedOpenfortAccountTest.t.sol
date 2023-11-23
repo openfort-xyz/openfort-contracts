@@ -156,6 +156,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the account and admin
         if (_adminAddress == address(0)) {
             vm.expectRevert();
+            vm.prank(factoryAdmin);
+            openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
         } else {
             vm.expectEmit(true, true, false, true);
             emit AccountCreated(account2, _adminAddress);

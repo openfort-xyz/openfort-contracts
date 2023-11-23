@@ -13,15 +13,6 @@ import {BaseRecoverableAccount, IEntryPoint} from "../base/BaseRecoverableAccoun
  *  - UUPSUpgradeable
  */
 contract UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgradeable {
-    function _authorizeUpgrade(address) internal override onlyOwner {}
-
-    /**
-     * Return the current EntryPoint
-     */
-    function entryPoint() public view override returns (IEntryPoint) {
-        return IEntryPoint(entrypointContract);
-    }
-
     /**
      * Update the EntryPoint address
      */
@@ -30,4 +21,13 @@ contract UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgradeable {
         emit EntryPointUpdated(entrypointContract, _newEntrypoint);
         entrypointContract = _newEntrypoint;
     }
+
+    /**
+     * Return the current EntryPoint
+     */
+    function entryPoint() public view override returns (IEntryPoint) {
+        return IEntryPoint(entrypointContract);
+    }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

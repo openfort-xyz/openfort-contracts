@@ -11,6 +11,7 @@ import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/Upgradeable
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {OpenfortPaymasterV2} from "contracts/paymaster/OpenfortPaymasterV2.sol";
 import {OpenfortBaseTest} from "../core/OpenfortBaseTest.t.sol";
+import {OpenfortErrorsAndEvents} from "contracts/interfaces/OpenfortErrorsAndEvents.sol";
 
 contract OpenfortPaymasterV2Test is OpenfortBaseTest {
     using ECDSA for bytes32;
@@ -357,6 +358,8 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         vm.expectRevert();
         openfortPaymaster.depositFor{value: 1 ether}(paymasterAdmin);
 
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 0);
+
         // Paymaster deposits 1 ETH to EntryPoint
         openfortPaymaster.depositFor{value: 1 ether}(factoryAdmin);
         assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 1 ether);
@@ -423,13 +426,18 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         openfortPaymaster.depositFor{value: 1 ether}(factoryAdmin);
         assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 1 ether);
         // Only owner cannot call it
-        vm.expectRevert();
+        vm.expectRevert("Ownable: caller is not the owner");
         openfortPaymaster.withdrawFromDepositor(factoryAdmin, payable(factoryAdmin), 1 ether);
         assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 1 ether);
 
         vm.expectRevert();
         vm.prank(paymasterAdmin);
         openfortPaymaster.withdrawFromDepositor(factoryAdmin, payable(factoryAdmin), 100 ether);
+        assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 1 ether);
+
+        vm.expectRevert(OpenfortErrorsAndEvents.ZeroValueNotAllowed.selector);
+        vm.prank(paymasterAdmin);
+        openfortPaymaster.withdrawFromDepositor(address(0), payable(factoryAdmin), 1 ether);
         assertEq(openfortPaymaster.getDepositFor(factoryAdmin), 1 ether);
 
         vm.prank(paymasterAdmin);
