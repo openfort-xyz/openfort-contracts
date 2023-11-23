@@ -79,9 +79,43 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     }
 
     /*
+     * Should be able to stake and unstake
+     */
+    function testStakeFactory() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortFactory.addStake{value: 1 ether}(10);
+
+        vm.expectRevert("no stake specified");
+        vm.prank(factoryAdmin);
+        openfortFactory.addStake(10);
+
+        vm.prank(factoryAdmin);
+        openfortFactory.addStake{value: 1 ether}(10);
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortFactory.unlockStake();
+
+        vm.prank(factoryAdmin);
+        openfortFactory.unlockStake();
+
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortFactory.withdrawStake(payable(factoryAdmin));
+
+        vm.expectRevert("Stake withdrawal is not due");
+        vm.prank(factoryAdmin);
+        openfortFactory.withdrawStake(payable(factoryAdmin));
+
+        skip(11);
+
+        vm.prank(factoryAdmin);
+        openfortFactory.withdrawStake(payable(factoryAdmin));
+    }
+
+    /*
      * Should not be able to initialize the implementation
      */
     function testInitializeImplementation() public {
+        assertEq(openfortFactory.implementation(), address(upgradeableOpenfortAccountImpl));
         vm.expectRevert("Initializable: contract is already initialized");
         upgradeableOpenfortAccountImpl.initialize(
             accountAdmin,
@@ -133,19 +167,18 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         } else {
             vm.expectEmit(true, true, false, true);
             emit AccountCreated(accountAddress2, _adminAddress);
+
+            // Deploy a upgradeable account to the counterfactual address
+            vm.prank(factoryAdmin);
+            openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+
+            // Calling it again should just return the address and not create another account
+            vm.prank(factoryAdmin);
+            openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+            // Make sure the counterfactual address has not been altered
+            vm.prank(factoryAdmin);
+            assertEq(accountAddress2, openfortFactory.getAddressWithNonce(_adminAddress, _nonce));
         }
-
-        // Deploy a upgradeable account to the counterfactual address
-        vm.prank(factoryAdmin);
-        openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
-
-        // Calling it again should just return the address and not create another account
-        vm.prank(factoryAdmin);
-        openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
-
-        // Make sure the counterfactual address has not been altered
-        vm.prank(factoryAdmin);
-        assertEq(accountAddress2, openfortFactory.getAddressWithNonce(_adminAddress, _nonce));
     }
 
     /*
@@ -867,6 +900,27 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     }
 
     /*
+     * Use a sessionKey with whitelisting to call ExecuteBatch() with 11 whitelisted addresses.
+     * Fail due to too much whitelisted addresses.
+     */
+    function testTooManyWhitelist() public {
+        // Verify that the counter is still set to 0
+        assertEq(testCounter.counters(accountAddress), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        address[] memory whitelist = new address[](11);
+        for (uint256 i = 0; i < whitelist.length; i++) {
+            whitelist[i] = address(testCounter);
+        }
+        vm.expectRevert("Whitelist too big");
+        vm.prank(accountAdmin);
+        UpgradeableOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 3, whitelist);
+    }
+
+    /*
      * Change the owner of an account and call TestCounter directly.
      * Important use-case:
      * 1- accountAdmin is Openfort's master wallet and is managing the account of the user.
@@ -1042,6 +1096,13 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         assertEq(MockV2UpgradeableOpenfortAccount(payable(accountAddress)).easterEgg(), 42);
 
+        vm.expectRevert("Ownable: caller is not the owner");
+        IUpgradeableOpenfortAccount(payable(accountAddress)).updateEntryPoint(beneficiary);
+
+        vm.expectRevert("disabled!");
+        vm.prank(accountAdmin);
+        IUpgradeableOpenfortAccount(payable(accountAddress)).updateEntryPoint(beneficiary);
+
         // Printing account address and the implementation address. Impl address should have changed
         console.log("Account address (proxy): ", accountAddress);
         console.log("Implementation address (new): ", p.implementation());
@@ -1161,15 +1222,42 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     function testAddDeposit() public {
         IBaseRecoverableAccount account = IBaseRecoverableAccount(payable(accountAddress));
         assertEq(0, account.getDeposit());
+        // The commented code below is because addDeposit() was removed
+        // vm.expectEmit(true, true, false, true);
+        // emit Deposited(accountAddress, 1 ether);
+        // account.addDeposit{value: 1 ether}();
+        // assertEq(1 ether, account.getDeposit());
+
+        // Make the admin of the upgradeable account wallet (deployer) call "depositTo()"
+        vm.expectEmit(true, true, false, true);
+        emit Deposited(accountAddress, 1 ether); // Notice 2 ether is the current deposit, not the deposited
+        vm.prank(accountAdmin);
+        account.execute{value: 1 ether}(
+            address(entryPoint), 1 ether, abi.encodeWithSignature("depositTo(address)", accountAddress)
+        );
+        assertEq(1 ether, account.getDeposit());
+    }
+
+    function testWithdrawDeposit() public {
+        IBaseRecoverableAccount account = IBaseRecoverableAccount(payable(accountAddress));
+        assertEq(0, account.getDeposit());
         vm.expectEmit(true, true, false, true);
         emit Deposited(accountAddress, 1 ether);
-        account.addDeposit{value: 1 ether}();
+        // Make the admin of the upgradeable account wallet (deployer) call "depositTo()"
+        vm.prank(accountAdmin);
+        account.execute{value: 1 ether}(
+            address(entryPoint), 1 ether, abi.encodeWithSignature("depositTo(address)", accountAddress)
+        );
         assertEq(1 ether, account.getDeposit());
 
-        // Make the admin of the upgradeable account wallet (deployer) call "count"
         vm.prank(accountAdmin);
-        account.execute{value: 1 ether}(accountAddress, 1 ether, abi.encodeWithSignature("addDeposit()"));
-        assertEq(2 ether, account.getDeposit());
+        account.execute{value: 1 ether}(
+            address(entryPoint),
+            0,
+            abi.encodeWithSignature("withdrawTo(address,uint256)", payable(accountAddress), 1 ether)
+        );
+        assertEq(0 ether, account.getDeposit());
+        assertEq(2 ether, accountAddress.balance); // Notice the Ether went to the account, not the EOA
     }
 
     /**

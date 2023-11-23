@@ -203,24 +203,6 @@ abstract contract BaseOpenfortAccount is
     }
 
     /**
-     * Deposit funds for this account in the EntryPoint
-     */
-    function addDeposit() external payable virtual {
-        entryPoint().depositTo{value: msg.value}(address(this));
-    }
-
-    /**
-     * Withdraw value from the account's deposit
-     * @param _withdrawAddress target to send to
-     * @param _amount to withdraw
-     * @notice ONLY the owner can call this function (it's not using _requireFromEntryPointOrOwner())
-     */
-    function withdrawDepositTo(address payable _withdrawAddress, uint256 _amount) external virtual {
-        _requireFromOwner();
-        entryPoint().withdrawTo(_withdrawAddress, _amount);
-    }
-
-    /**
      * Register a session key to the account
      * @param _key session key to register
      * @param _validAfter - this session key is valid only after this timestamp.
