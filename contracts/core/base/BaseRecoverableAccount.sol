@@ -206,16 +206,6 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
     }
 
     /**
-     * @notice Checks if an address is a guardian or an account authorised to sign on behalf of a smart-contract guardian.
-     * @param _guardian the address to test
-     * @return _isGuardian `true` if the address is a guardian for the wallet otherwise `false`.
-     */
-    function isGuardianOrGuardianSigner(address _guardian) external pure returns (bool _isGuardian) {
-        (_guardian);
-        _isGuardian = false; // ToDo for smart contract wallets acting as guardians in the future
-    }
-
-    /**
      * @notice Lets the owner propose a guardian to its Openfort account.
      * The first guardians are added when the account is created. All following proposals must be confirmed
      * by calling the confirmGuardianProposal() method. Only the owner can add guardians.

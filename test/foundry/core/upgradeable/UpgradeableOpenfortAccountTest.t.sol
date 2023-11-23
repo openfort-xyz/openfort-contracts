@@ -600,6 +600,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         vm.prank(accountAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 0, 100, emptyWhitelist);
+        vm.prank(accountAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).revokeSessionKey(sessionKey);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -2541,14 +2542,5 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // New owner should be now newOwner
         assertEq(openfortAccount.owner(), address(newOwner));
-    }
-
-    /*
-     * Temporal test function for coverage purposes showing
-     * that isGuardianOrGuardianSigner() always returns false.
-     */
-    function testStubFakeMockTempisGuardian() public {
-        IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
-        assertEq(openfortAccount.isGuardianOrGuardianSigner(OPENFORT_GUARDIAN), false);
     }
 }
