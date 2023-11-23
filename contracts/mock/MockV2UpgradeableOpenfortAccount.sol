@@ -13,20 +13,11 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  *  - UUPSUpgradeable
  */
 contract MockV2UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgradeable {
-    function _authorizeUpgrade(address) internal override onlyOwner {}
-
-    /**
-     * Return the modified EntryPoint
-     */
-    function entryPoint() public pure override returns (IEntryPoint) {
-        return IEntryPoint(0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF);
-    }
-
     /**
      * Update the EntryPoint address
      */
-    function updateEntryPoint(address _newEntrypoint) external view onlyOwner {
-        (_newEntrypoint);
+    function updateEntryPoint(address _newEntrypoint) external {
+        _authorizeUpgrade(_newEntrypoint);
         revert("disabled!");
     }
 
@@ -36,4 +27,13 @@ contract MockV2UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgrade
     function easterEgg() external pure returns (uint256) {
         return 42;
     }
+
+    /**
+     * Return the modified EntryPoint
+     */
+    function entryPoint() public pure override returns (IEntryPoint) {
+        return IEntryPoint(0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF);
+    }
+
+    function _authorizeUpgrade(address) internal override {}
 }
