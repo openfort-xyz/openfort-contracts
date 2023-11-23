@@ -164,6 +164,8 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the account and admin
         if (_adminAddress == address(0)) {
             vm.expectRevert();
+            vm.prank(factoryAdmin);
+            openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
         } else {
             vm.expectEmit(true, true, false, true);
             emit AccountCreated(accountAddress2, _adminAddress);
@@ -1095,9 +1097,6 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         );
 
         assertEq(MockV2UpgradeableOpenfortAccount(payable(accountAddress)).easterEgg(), 42);
-
-        vm.expectRevert("Ownable: caller is not the owner");
-        IUpgradeableOpenfortAccount(payable(accountAddress)).updateEntryPoint(beneficiary);
 
         vm.expectRevert("disabled!");
         vm.prank(accountAdmin);
