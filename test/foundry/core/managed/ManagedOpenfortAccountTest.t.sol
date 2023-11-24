@@ -6,13 +6,12 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
-import {MockERC20} from "contracts/mock/MockERC20.sol";
 import {ManagedOpenfortAccount} from "contracts/core/managed/ManagedOpenfortAccount.sol";
 import {ManagedOpenfortFactory} from "contracts/core/managed/ManagedOpenfortFactory.sol";
 import {ManagedOpenfortProxy} from "contracts/core/managed/ManagedOpenfortProxy.sol";
 import {MockV2ManagedOpenfortAccount} from "contracts/mock/MockV2ManagedOpenfortAccount.sol";
 import {IBaseOpenfortFactory} from "contracts/interfaces/IBaseOpenfortFactory.sol";
-import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
+import {OpenfortBaseTest, MockERC20, MockERC721, MockERC1155} from "../OpenfortBaseTest.t.sol";
 
 contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
@@ -64,10 +63,13 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         );
         // Create an managed account wallet and get its address
         accountAddress = openfortFactory.createAccountWithNonce(accountAdmin, "1");
+
         // deploy a new TestCounter
         testCounter = new TestCounter{salt: versionSalt}();
         // deploy a new MockERC20 (ERC20)
         mockERC20 = new MockERC20{salt: versionSalt}();
+        mockERC721 = new MockERC721{salt: versionSalt}();
+        mockERC1155 = new MockERC1155{salt: versionSalt}();
         vm.stopPrank();
     }
 
