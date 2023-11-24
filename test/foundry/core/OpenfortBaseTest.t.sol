@@ -7,6 +7,8 @@ import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {MockERC20} from "contracts/mock/MockERC20.sol";
+import {MockERC721} from "contracts/mock/MockERC721.sol";
+import {MockERC1155} from "contracts/mock/MockERC1155.sol";
 import {MockV2UpgradeableOpenfortAccount} from "contracts/mock/MockV2UpgradeableOpenfortAccount.sol";
 
 contract OpenfortBaseTest is Test {
@@ -19,6 +21,8 @@ contract OpenfortBaseTest is Test {
     address public accountAddress;
     TestCounter public testCounter;
     MockERC20 public mockERC20;
+    MockERC721 public mockERC721;
+    MockERC1155 public mockERC1155;
 
     // Testing addresses
     address public factoryAdmin;
