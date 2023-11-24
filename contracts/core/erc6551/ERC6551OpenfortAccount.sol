@@ -113,10 +113,8 @@ contract ERC6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
      * Update the EntryPoint address
      */
     function updateEntryPoint(address _newEntrypoint) external {
-        if (_newEntrypoint == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
         _requireFromOwner();
+        if (_newEntrypoint == address(0)) revert ZeroAddressNotAllowed();
         ++state;
         emit EntryPointUpdated(entrypointContract, _newEntrypoint);
         entrypointContract = _newEntrypoint;
@@ -129,7 +127,7 @@ contract ERC6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
         return IEntryPoint(entrypointContract);
     }
 
-    function supportsInterface(bytes4 _interfaceId) public pure override returns (bool) {
+    function supportsInterface(bytes4 _interfaceId) external pure override returns (bool) {
         return (
             _interfaceId == type(IERC6551Account).interfaceId || _interfaceId == type(IERC6551Executable).interfaceId
                 || _interfaceId == type(IERC1155Receiver).interfaceId || _interfaceId == type(IERC721Receiver).interfaceId
