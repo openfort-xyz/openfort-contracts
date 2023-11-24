@@ -6,7 +6,6 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
-import {MockERC20} from "contracts/mock/MockERC20.sol";
 import {IBaseRecoverableAccount} from "contracts/interfaces/IBaseRecoverableAccount.sol";
 import {IUpgradeableOpenfortAccount} from "contracts/interfaces/IUpgradeableOpenfortAccount.sol";
 import {OpenfortErrorsAndEvents} from "contracts/interfaces/OpenfortErrorsAndEvents.sol";
@@ -14,7 +13,8 @@ import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/Upgradeable
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {UpgradeableOpenfortProxy} from "contracts/core/upgradeable/UpgradeableOpenfortProxy.sol";
 import {MockV2UpgradeableOpenfortAccount} from "contracts/mock/MockV2UpgradeableOpenfortAccount.sol";
-import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
+import {OpenfortBaseTest, MockERC20, MockERC721, MockERC1155} from "../OpenfortBaseTest.t.sol";
+import {SimpleNFT} from "contracts/mock/SimpleNFT.sol";
 
 contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
@@ -72,9 +72,11 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         accountAddress = openfortFactory.createAccountWithNonce(accountAdmin, "1");
 
         // deploy a new TestCounter
-        testCounter = new TestCounter();
+        testCounter = new TestCounter{salt: versionSalt}();
         // deploy a new MockERC20 (ERC20)
-        mockERC20 = new MockERC20();
+        mockERC20 = new MockERC20{salt: versionSalt}();
+        mockERC721 = new MockERC721{salt: versionSalt}();
+        mockERC1155 = new MockERC1155{salt: versionSalt}();
         vm.stopPrank();
     }
 
@@ -1019,6 +1021,69 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     }
 
     /*
+     * Test an account for reentrancy call execute that calls count.
+     */
+    function testReentrancy() public {
+        // Verify that the counter is still set to 0
+        assertEq(testCounter.counters(accountAddress), 0);
+
+        // Make the admin of the account wallet call "count"
+        vm.prank(accountAdmin);
+        IBaseRecoverableAccount(payable(accountAddress)).execute(
+            address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
+
+        // Verify that the counter has increased
+        assertEq(testCounter.counters(accountAddress), 1);
+
+        // Make the admin of the account wallet call "execute" which call count
+        vm.expectRevert(OpenfortErrorsAndEvents.NotOwnerOrEntrypoint.selector);
+        vm.prank(accountAdmin);
+        IBaseRecoverableAccount(payable(accountAddress)).execute(
+            address(accountAddress),
+            0,
+            abi.encodeWithSignature(
+                "execute(address,uint256,bytes)", testCounter, 0, abi.encodeWithSignature("count()")
+            )
+        );
+    }
+
+    /*
+     * Test an account for reentrancy call executeBatch that calls count.
+     */
+    function testReentrancyBatch() public {
+        // Verify that the counter is still set to 0
+        assertEq(testCounter.counters(accountAddress), 0);
+
+        // Make the admin of the account wallet call "count"
+        vm.prank(accountAdmin);
+        IBaseRecoverableAccount(payable(accountAddress)).execute(
+            address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
+
+        // Verify that the counter has increased
+        assertEq(testCounter.counters(accountAddress), 1);
+
+        uint256 count = 1;
+        address[] memory targets = new address[](count);
+        uint256[] memory values = new uint256[](count);
+        bytes[] memory callData = new bytes[](count);
+
+        for (uint256 i = 0; i < count; i += 1) {
+            targets[i] = address(accountAddress);
+            values[i] = 0;
+            callData[i] = abi.encodeWithSignature(
+                "execute(address,uint256,bytes)", testCounter, 0, abi.encodeWithSignature("count()")
+            );
+        }
+
+        // Make the admin of the account wallet call "execute" which call count
+        vm.expectRevert(OpenfortErrorsAndEvents.NotOwnerOrEntrypoint.selector);
+        vm.prank(accountAdmin);
+        IBaseRecoverableAccount(payable(accountAddress)).executeBatch(targets, values, callData);
+    }
+
+    /*
      * Test receive native tokens.
      */
     function testReceiveNativeToken() public {
@@ -1146,7 +1211,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(address(upgradeableAccount.entryPoint()), newEntryPoint);
     }
 
-    function testFailIsValidSignature() public {
+    function testIsValidSignature() public {
         bytes32 hash = keccak256("Signed by Owner");
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hash);
         address signer = ecrecover(hash, v, r, s);
@@ -1158,10 +1223,10 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         bytes4 valid = IBaseRecoverableAccount(payable(accountAddress)).isValidSignature(hash, signature);
         assertEq(valid, bytes4(0xffffffff)); // SHOULD PASS!
-        assertEq(valid, MAGICVALUE); // SHOULD FAIL! We do not accept straight signatures from owners anymore
+        assertNotEq(valid, MAGICVALUE); // We do not accept straight signatures from owners anymore
     }
 
-    function testFailIsValidSignatureMessage() public {
+    function testIsValidSignatureMessage() public {
         bytes32 hash = keccak256("Signed by Owner");
         bytes32 hashMessage = hash.toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hashMessage);
@@ -1174,7 +1239,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         bytes4 valid = IBaseRecoverableAccount(payable(accountAddress)).isValidSignature(hash, signature);
         assertEq(valid, bytes4(0xffffffff)); // SHOULD PASS!
-        assertEq(valid, MAGICVALUE); // SHOULD FAIL! We do not accept straight signatures from owners anymore
+        assertNotEq(valid, MAGICVALUE); // We do not accept straight signatures from owners anymore
     }
 
     /*
@@ -1216,6 +1281,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(accountAdmin, signer); // [PASS]
 
         bytes4 valid = IBaseRecoverableAccount(payable(accountAddress)).isValidSignature(hash, signature);
+        assertNotEq(valid, bytes4(0xffffffff)); // SHOULD PASS
         assertEq(valid, MAGICVALUE); // SHOULD PASS
     }
 
@@ -2542,5 +2608,186 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // New owner should be now newOwner
         assertEq(openfortAccount.owner(), address(newOwner));
+    }
+
+    /**
+     * Transfer tokens between OF accounts tests *
+     */
+
+    /*
+     * Test an account with mockERC20 sending it to another.
+     */
+    function testTransferERC20BetweenAccounts() public {
+        // Verify that the totalSupply is still 0
+        assertEq(mockERC20.totalSupply(), 0);
+
+        address accountAddress2 = openfortFactory.createAccountWithNonce(accountAdmin, "2");
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            accountAddress,
+            accountAdminPKey,
+            bytes(""),
+            address(mockERC20),
+            0,
+            abi.encodeWithSignature("mint(address,uint256)", accountAddress, 1)
+        );
+
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        assertEq(mockERC20.balanceOf(accountAddress), 1);
+        assertEq(mockERC20.balanceOf(accountAddress2), 0);
+
+        mockERC20.mint(accountAddress, 1);
+
+        assertEq(mockERC20.balanceOf(accountAddress), 2);
+        assertEq(mockERC20.balanceOf(accountAddress2), 0);
+
+        userOp = _setupUserOpExecute(
+            accountAddress,
+            accountAdminPKey,
+            bytes(""),
+            address(mockERC20),
+            0,
+            abi.encodeWithSignature("transfer(address,uint256)", accountAddress2, 1)
+        );
+
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        assertEq(mockERC20.balanceOf(accountAddress), 1);
+        assertEq(mockERC20.balanceOf(accountAddress2), 1);
+
+        // Verify that the totalSupply has increased
+        assertEq(mockERC20.totalSupply(), 2);
+    }
+
+    /*
+     * Test an account with mockERC721 sending it to another and back.
+     */
+    function testTransferERC721BetweenAccounts() public {
+        assertEq(mockERC721.balanceOf(accountAddress), 0);
+
+        address accountAddress2 = openfortFactory.createAccountWithNonce(accountAdmin, "2");
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            accountAddress,
+            accountAdminPKey,
+            bytes(""),
+            address(mockERC721),
+            0,
+            abi.encodeWithSignature("mint(address,uint256)", accountAddress, 1)
+        );
+
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        assertEq(mockERC721.balanceOf(accountAddress), 1);
+        assertEq(mockERC721.balanceOf(accountAddress2), 0);
+
+        mockERC721.mint(accountAddress, 2);
+
+        assertEq(mockERC721.balanceOf(accountAddress), 2);
+        assertEq(mockERC721.balanceOf(accountAddress2), 0);
+
+        userOp = _setupUserOpExecute(
+            accountAddress,
+            accountAdminPKey,
+            bytes(""),
+            address(mockERC721),
+            0,
+            abi.encodeWithSignature("transferFrom(address,address,uint256)", accountAddress, accountAddress2, 1)
+        );
+
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        assertEq(mockERC721.balanceOf(accountAddress), 1);
+        assertEq(mockERC721.balanceOf(accountAddress2), 1);
+
+        userOp = _setupUserOpExecute(
+            accountAddress2,
+            accountAdminPKey,
+            bytes(""),
+            address(mockERC721),
+            0,
+            abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", accountAddress2, accountAddress, 1)
+        );
+
+        entryPoint.depositTo{value: 1 ether}(accountAddress2);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        assertEq(mockERC721.balanceOf(accountAddress), 2);
+        assertEq(mockERC721.balanceOf(accountAddress2), 0);
+    }
+
+    /*
+     * Test an account with mockERC1155 sending it to another.
+     */
+    function testTransferERC1155BetweenAccounts() public {
+        assertEq(mockERC1155.balanceOf(accountAddress, 1), 0);
+
+        address accountAddress2 = openfortFactory.createAccountWithNonce(accountAdmin, "2");
+
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            accountAddress,
+            accountAdminPKey,
+            bytes(""),
+            address(mockERC1155),
+            0,
+            abi.encodeWithSignature("mint(address,uint256,uint256)", accountAddress, 1, 1)
+        );
+
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        assertEq(mockERC1155.balanceOf(accountAddress, 1), 1);
+        assertEq(mockERC1155.balanceOf(accountAddress2, 1), 0);
+
+        mockERC1155.mint(accountAddress, 1, 1);
+
+        assertEq(mockERC1155.balanceOf(accountAddress, 1), 2);
+        assertEq(mockERC1155.balanceOf(accountAddress2, 1), 0);
+
+        userOp = _setupUserOpExecute(
+            accountAddress,
+            accountAdminPKey,
+            bytes(""),
+            address(mockERC1155),
+            0,
+            abi.encodeWithSignature(
+                "safeTransferFrom(address,address,uint256,uint256,bytes)", accountAddress, accountAddress2, 1, 1, ""
+            )
+        );
+
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        assertEq(mockERC1155.balanceOf(accountAddress, 1), 1);
+        assertEq(mockERC1155.balanceOf(accountAddress2, 1), 1);
+    }
+
+    /*
+     * Test for coverage purposes.
+     * SimpleNFT is an NFT contract used by Openfort in some internal tests
+     */
+    function testSimpleNFT() public {
+        SimpleNFT simpleNFT = new SimpleNFT();
+        simpleNFT.mint(accountAddress);
+        assertEq(simpleNFT.balanceOf(accountAddress), 1);
     }
 }

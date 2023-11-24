@@ -5,7 +5,6 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
 import {BaseAccount, UserOperation, IEntryPoint, UserOperationLib} from "account-abstraction/core/BaseAccount.sol";
 import {_packValidationData} from "account-abstraction/core/Helpers.sol";
@@ -25,7 +24,6 @@ import {OpenfortErrorsAndEvents} from "../../interfaces/OpenfortErrorsAndEvents.
 abstract contract BaseOpenfortAccount is
     BaseAccount,
     Initializable,
-    ReentrancyGuardUpgradeable,
     EIP712Upgradeable,
     IERC1271Upgradeable,
     TokenCallbackHandler,
@@ -178,7 +176,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * Execute a transaction (called directly from owner, or by entryPoint)
      */
-    function execute(address dest, uint256 value, bytes calldata func) public payable virtual nonReentrant {
+    function execute(address dest, uint256 value, bytes calldata func) public payable virtual {
         _requireFromEntryPointOrOwner();
         _call(dest, value, func);
     }
@@ -190,7 +188,6 @@ abstract contract BaseOpenfortAccount is
         public
         payable
         virtual
-        nonReentrant
     {
         _requireFromEntryPointOrOwner();
         if (_target.length > 9 || _target.length != _calldata.length || _target.length != _value.length) {
