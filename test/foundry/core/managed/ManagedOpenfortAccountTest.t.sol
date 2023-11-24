@@ -6,12 +6,17 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import {EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
+import {IBaseRecoverableAccount} from "contracts/interfaces/IBaseRecoverableAccount.sol";
 import {ManagedOpenfortAccount} from "contracts/core/managed/ManagedOpenfortAccount.sol";
 import {ManagedOpenfortFactory} from "contracts/core/managed/ManagedOpenfortFactory.sol";
 import {ManagedOpenfortProxy} from "contracts/core/managed/ManagedOpenfortProxy.sol";
 import {MockV2ManagedOpenfortAccount} from "contracts/mock/MockV2ManagedOpenfortAccount.sol";
 import {IBaseOpenfortFactory} from "contracts/interfaces/IBaseOpenfortFactory.sol";
 import {OpenfortBaseTest, MockERC20, MockERC721, MockERC1155} from "../OpenfortBaseTest.t.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC777Recipient} from "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
@@ -2452,5 +2457,14 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         // New owner should be now newOwner
         assertEq(openfortAccount.owner(), address(newOwner));
+    }
+
+    function testSupportsInterface() public {
+        IBaseRecoverableAccount account = IBaseRecoverableAccount(payable(accountAddress));
+        assertTrue(account.supportsInterface(type(IERC721Receiver).interfaceId));
+        assertTrue(account.supportsInterface(type(IERC777Recipient).interfaceId));
+        assertTrue(account.supportsInterface(type(IERC1155Receiver).interfaceId));
+        assertTrue(account.supportsInterface(type(IERC165).interfaceId));
+        assertFalse(account.supportsInterface(bytes4(0x0000)));
     }
 }
