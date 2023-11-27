@@ -2614,6 +2614,57 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(openfortAccount.owner(), address(newOwner));
     }
 
+    /*
+     * Try to use a sessionKey that is registered by the previous owner.
+     * Should not work.
+     */
+    function testOldSessionKey() public {
+        // Verify that the counter is still set to 0
+        assertEq(testCounter.counters(accountAddress), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
+        IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
+
+        // Original owner registers a session key
+        vm.prank(accountAdmin);
+        openfortAccount.registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist);
+
+        // Using the session key
+        UserOperation[] memory userOp = _setupUserOpExecute(
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verify that the counter has increased
+        assertEq(testCounter.counters(accountAddress), 1);
+
+        // Register a new owner
+        address newOwner = makeAddr("newOwner");
+        vm.prank(accountAdmin);
+        openfortAccount.transferOwnership(newOwner);
+        vm.prank(newOwner);
+        openfortAccount.acceptOwnership();
+
+        // Trying to use the session key registered by the old owner
+        userOp = _setupUserOpExecute(
+            accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+        );
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        vm.expectRevert();
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verify that the counter has not increased this time
+        assertEq(testCounter.counters(accountAddress), 1);
+    }
+
     /**
      * Transfer tokens between OF accounts tests *
      */
