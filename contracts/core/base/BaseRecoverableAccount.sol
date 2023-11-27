@@ -20,9 +20,10 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
 
     address internal entrypointContract;
 
+    // Recoverable account settings (cannot be modified once created)
     // Period during which the owner can cancel a guardian proposal/revocation in seconds (7 days)
     uint256 internal recoveryPeriod;
-    // Default lock period (cannot be modified)
+    // Default lock period
     uint256 internal lockPeriod;
     // The security period to add/remove guardians
     uint256 internal securityPeriod;
@@ -83,6 +84,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
     error OngoingRecovery();
     error InvalidRecoverySignatures();
     error InvalidSignatureAmount();
+    error TooManyInitialGuardians();
 
     /*
      * @notice Initialize the smart contract account.
@@ -94,9 +96,9 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         uint256 _securityPeriod,
         uint256 _securityWindow,
         uint256 _lockPeriod,
-        address _openfortGuardian
+        address[] _initialGuardians
     ) public initializer {
-        if (_defaultAdmin == address(0) || _entrypoint == address(0) || _openfortGuardian == address(0)) {
+        if (_defaultAdmin == address(0) || _entrypoint == address(0)) {
             revert ZeroAddressNotAllowed();
         }
         if (_lockPeriod < _recoveryPeriod || _recoveryPeriod < _securityPeriod + _securityWindow) {
@@ -112,11 +114,16 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         securityWindow = _securityWindow;
         securityPeriod = _securityPeriod;
 
-        guardiansConfig.guardians.push(_openfortGuardian);
-        guardiansConfig.info[_openfortGuardian].exists = true;
-        guardiansConfig.info[_openfortGuardian].index = 0;
-        guardiansConfig.info[_openfortGuardian].pending = 0;
-        emit GuardianAdded(_openfortGuardian);
+        uint256 initialGuardiansNumber = _initialGuardians.length;
+        if (initialGuardiansNumber > 5) revert TooManyInitialGuardians();
+
+        for (uint256 i = 0; i < array.length; i++) {
+            guardiansConfig.guardians.push(_initialGuardians[i]);
+            guardiansConfig.info[_initialGuardians[i]].exists = true;
+            guardiansConfig.info[_initialGuardians[i]].index = 0;
+            guardiansConfig.info[_initialGuardians[i]].pending = 0;
+            emit GuardianAdded(_initialGuardians[i]);
+        }
     }
 
     function owner() public view virtual override(BaseOpenfortAccount, OwnableUpgradeable) returns (address) {
