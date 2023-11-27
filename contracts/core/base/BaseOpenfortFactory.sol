@@ -16,37 +16,15 @@ import {IBaseOpenfortFactory} from "../../interfaces/IBaseOpenfortFactory.sol";
 abstract contract BaseOpenfortFactory is IBaseOpenfortFactory, Ownable2Step {
     address public entrypointContract;
     address internal _implementation;
-    uint256 public recoveryPeriod;
-    uint256 public securityPeriod;
-    uint256 public securityWindow;
-    uint256 public lockPeriod;
-    address public openfortGuardian;
 
     error InsecurePeriod();
 
-    constructor(
-        address _owner,
-        address _entrypoint,
-        address _accountImplementation,
-        uint256 _recoveryPeriod,
-        uint256 _securityPeriod,
-        uint256 _securityWindow,
-        uint256 _lockPeriod,
-        address _openfortGuardian
-    ) {
-        if (_owner == address(0) || _openfortGuardian == address(0)) revert ZeroAddressNotAllowed();
+    constructor(address _owner, address _entrypoint, address _accountImplementation) {
+        if (_owner == address(0)) revert ZeroAddressNotAllowed();
         if (!Address.isContract(_entrypoint) || !Address.isContract(_accountImplementation)) revert NotAContract();
-        if (_lockPeriod < _recoveryPeriod || _recoveryPeriod < _securityPeriod + _securityWindow) {
-            revert InsecurePeriod();
-        }
         _transferOwnership(_owner);
         entrypointContract = _entrypoint;
         _implementation = _accountImplementation;
-        recoveryPeriod = _recoveryPeriod;
-        securityPeriod = _securityPeriod;
-        securityWindow = _securityWindow;
-        lockPeriod = _lockPeriod;
-        openfortGuardian = _openfortGuardian;
     }
 
     /**

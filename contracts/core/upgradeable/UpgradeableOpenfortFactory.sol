@@ -13,6 +13,13 @@ import {BaseOpenfortFactory} from "../base/BaseOpenfortFactory.sol";
  *  - BaseOpenfortFactory
  */
 contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
+    uint256 public recoveryPeriod;
+    uint256 public securityPeriod;
+    uint256 public securityWindow;
+    uint256 public lockPeriod;
+
+    error TooManyInitialGuardians();
+
     constructor(
         address _owner,
         address _entrypoint,
@@ -20,25 +27,24 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
         uint256 _recoveryPeriod,
         uint256 _securityPeriod,
         uint256 _securityWindow,
-        uint256 _lockPeriod,
-        address _openfortGuardian
-    )
-        BaseOpenfortFactory(
-            _owner,
-            _entrypoint,
-            _accountImplementation,
-            _recoveryPeriod,
-            _securityPeriod,
-            _securityWindow,
-            _lockPeriod,
-            _openfortGuardian
-        )
-    {}
+        uint256 _lockPeriod
+    ) BaseOpenfortFactory(_owner, _entrypoint, _accountImplementation) {
+        if (_lockPeriod < _recoveryPeriod || _recoveryPeriod < _securityPeriod + _securityWindow) {
+            revert InsecurePeriod();
+        }
+        recoveryPeriod = _recoveryPeriod;
+        securityPeriod = _securityPeriod;
+        securityWindow = _securityWindow;
+        lockPeriod = _lockPeriod;
+    }
 
     /*
      * @notice Deploy a new account for _admin with a nonce.
      */
-    function createAccountWithNonce(address _admin, bytes32 _nonce) external returns (address account) {
+    function createAccountWithNonce(address _admin, bytes32 _nonce, address[] _initialGuardians)
+        external
+        returns (address account)
+    {
         bytes32 salt = keccak256(abi.encode(_admin, _nonce));
         account = getAddressWithNonce(_admin, _nonce);
 
@@ -46,8 +52,13 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(new UpgradeableOpenfortProxy{salt: salt}(_implementation, ""));
+        uint256 initialGuardiansNumber = _initialGuardians.length;
+        if (initialGuardiansNumber > 5) revert TooManyInitialGuardians();
+        for (uint256 i = 0; i < initialGuardiansNumber; i++) {
+            if (_initialGuardians[i] == address(0)) revert ZeroAddressNotAllowed();
+        }
         UpgradeableOpenfortAccount(payable(account)).initialize(
-            _admin, entrypointContract, recoveryPeriod, securityPeriod, securityWindow, lockPeriod, openfortGuardian
+            _admin, entrypointContract, recoveryPeriod, securityPeriod, securityWindow, lockPeriod, _initialGuardians
         );
     }
 
