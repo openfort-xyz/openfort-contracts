@@ -12,7 +12,9 @@ interface IBaseOpenfortFactory {
     error NotAContract();
 
     /// @notice Deploys a new Account for admin.
-    function createAccountWithNonce(address _admin, bytes32 _nonce) external returns (address account);
+    function createAccountWithNonce(address _admin, bytes32 _nonce, address[] memory _initialGuardians)
+        external
+        returns (address account);
 
     /// @notice Returns the address of the Account implementation.
     function implementation() external view returns (address);

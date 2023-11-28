@@ -41,7 +41,7 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
     /*
      * @notice Deploy a new account for _admin with a nonce.
      */
-    function createAccountWithNonce(address _admin, bytes32 _nonce, address[] _initialGuardians)
+    function createAccountWithNonce(address _admin, bytes32 _nonce, address[] memory _initialGuardians)
         external
         returns (address account)
     {
