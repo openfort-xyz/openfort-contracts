@@ -68,7 +68,9 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             RECOVERY_PERIOD,
             SECURITY_PERIOD,
             SECURITY_WINDOW,
-            LOCK_PERIOD, OPENFORT_GUARDIAN);
+            LOCK_PERIOD,
+            OPENFORT_GUARDIAN
+        );
 
         // Create an upgradeable account wallet and get its address
         accountAddress = openfortFactory.createAccountWithNonce(accountAdmin, "1", true);
@@ -1191,7 +1193,9 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             RECOVERY_PERIOD,
             SECURITY_PERIOD,
             SECURITY_WINDOW,
-            LOCK_PERIOD, OPENFORT_GUARDIAN);
+            LOCK_PERIOD,
+            OPENFORT_GUARDIAN
+        );
 
         // Create an upgradeable account wallet using the old EntryPoint and get its address
         address payable oldAccountAddress =
