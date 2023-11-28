@@ -17,8 +17,14 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
     uint256 public securityPeriod;
     uint256 public securityWindow;
     uint256 public lockPeriod;
+    address public initialGuardian;
 
     error TooManyInitialGuardians();
+
+    /**
+     * @dev Emitted when the initial guardian is changed.
+     */
+    event InitialGuardianUpdated(address indexed oldInitialGuardian, address indexed newInitialGuardian);
 
     constructor(
         address _owner,
@@ -27,7 +33,8 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
         uint256 _recoveryPeriod,
         uint256 _securityPeriod,
         uint256 _securityWindow,
-        uint256 _lockPeriod
+        uint256 _lockPeriod,
+        address _initialGuardian
     ) BaseOpenfortFactory(_owner, _entrypoint, _accountImplementation) {
         if (_lockPeriod < _recoveryPeriod || _recoveryPeriod < _securityPeriod + _securityWindow) {
             revert InsecurePeriod();
@@ -36,12 +43,20 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
         securityPeriod = _securityPeriod;
         securityWindow = _securityWindow;
         lockPeriod = _lockPeriod;
+        if (_initialGuardian == address(0)) revert ZeroAddressNotAllowed();
+        initialGuardian = _initialGuardian;
+    }
+
+    function updateInitialGuardian(address _newInitialGuardian) external onlyOwner {
+        if (_newInitialGuardian == address(0)) revert ZeroAddressNotAllowed();
+        emit InitialGuardianUpdated(initialGuardian, _newInitialGuardian);
+        initialGuardian = _newInitialGuardian;
     }
 
     /*
-     * @notice Deploy a new account for _admin with a nonce.
+     * @notice Deploy a new account for _admin with a _nonce.
      */
-    function createAccountWithNonce(address _admin, bytes32 _nonce, address[] memory _initialGuardians)
+    function createAccountWithNonce(address _admin, bytes32 _nonce, bool _initializeGuardian)
         external
         returns (address account)
     {
@@ -52,18 +67,20 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
 
         emit AccountCreated(account, _admin);
         account = address(new UpgradeableOpenfortProxy{salt: salt}(_implementation, ""));
-        uint256 initialGuardiansNumber = _initialGuardians.length;
-        if (initialGuardiansNumber > 5) revert TooManyInitialGuardians();
-        for (uint256 i = 0; i < initialGuardiansNumber; i++) {
-            if (_initialGuardians[i] == address(0)) revert ZeroAddressNotAllowed();
-        }
+
         UpgradeableOpenfortAccount(payable(account)).initialize(
-            _admin, entrypointContract, recoveryPeriod, securityPeriod, securityWindow, lockPeriod, _initialGuardians
+            _admin,
+            entrypointContract,
+            recoveryPeriod,
+            securityPeriod,
+            securityWindow,
+            lockPeriod,
+            _initializeGuardian ? initialGuardian : address(0)
         );
     }
 
     /*
-     * @notice Return the address of an account that would be deployed with the given admin signer and nonce.
+     * @notice Return the address of an account that would be deployed with the given _admin signer and _nonce.
      */
     function getAddressWithNonce(address _admin, bytes32 _nonce) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin, _nonce));

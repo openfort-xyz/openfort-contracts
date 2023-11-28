@@ -84,7 +84,6 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
     error OngoingRecovery();
     error InvalidRecoverySignatures();
     error InvalidSignatureAmount();
-    error TooManyInitialGuardians();
 
     /*
      * @notice Initialize the smart contract account.
@@ -96,7 +95,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         uint256 _securityPeriod,
         uint256 _securityWindow,
         uint256 _lockPeriod,
-        address[] memory _initialGuardians
+        address _initialGuardian
     ) public initializer {
         if (_defaultAdmin == address(0) || _entrypoint == address(0)) {
             revert ZeroAddressNotAllowed();
@@ -114,15 +113,12 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         securityWindow = _securityWindow;
         securityPeriod = _securityPeriod;
 
-        uint256 initialGuardiansNumber = _initialGuardians.length;
-        if (initialGuardiansNumber > 5) revert TooManyInitialGuardians();
-
-        for (uint256 i = 0; i < initialGuardiansNumber; i++) {
-            guardiansConfig.guardians.push(_initialGuardians[i]);
-            guardiansConfig.info[_initialGuardians[i]].exists = true;
-            guardiansConfig.info[_initialGuardians[i]].index = 0;
-            guardiansConfig.info[_initialGuardians[i]].pending = 0;
-            emit GuardianAdded(_initialGuardians[i]);
+        if (_initialGuardian != address(0)) {
+            guardiansConfig.guardians.push(_initialGuardian);
+            guardiansConfig.info[_initialGuardian].exists = true;
+            guardiansConfig.info[_initialGuardian].index = 0;
+            guardiansConfig.info[_initialGuardian].pending = 0;
+            emit GuardianAdded(_initialGuardian);
         }
     }
 
@@ -223,6 +219,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         if (isLocked()) revert AccountLocked();
         if (owner() == _guardian) revert GuardianCannotBeOwner();
         if (isGuardian(_guardian)) revert DuplicatedGuardian();
+        if (_guardian == address(0)) revert ZeroAddressNotAllowed();
 
         if (
             guardiansConfig.info[_guardian].pending != 0
@@ -248,7 +245,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
 
         guardiansConfig.guardians.push(_guardian);
         guardiansConfig.info[_guardian].exists = true;
-        guardiansConfig.info[_guardian].index = guardiansConfig.guardians.length;
+        guardiansConfig.info[_guardian].index = guardiansConfig.guardians.length - 1;
         guardiansConfig.info[_guardian].pending = 0;
         emit GuardianAdded(_guardian);
     }

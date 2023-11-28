@@ -7,7 +7,7 @@ import {ManagedOpenfortAccount} from "../contracts/core/managed/ManagedOpenfortA
 import {ManagedOpenfortFactory} from "../contracts/core/managed/ManagedOpenfortFactory.sol";
 
 contract ManagedOpenfortDeploy is Script {
-    uint256 internal deployPrivKey = vm.envUint("PK_PAYMASTER_OWNER_MAINNET");
+    uint256 internal deployPrivKey = vm.envUint("PK_PAYMASTER_OWNER_TESTNET");
     address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
 
@@ -15,13 +15,11 @@ contract ManagedOpenfortDeploy is Script {
     uint256 private constant SECURITY_PERIOD = 1.5 days;
     uint256 private constant SECURITY_WINDOW = 0.5 days;
     uint256 private constant LOCK_PERIOD = 5 days;
-    address private OPENFORT_GUARDIAN = vm.envAddress("PAYMASTER_OWNER_MAINNET");
-    address[] initialGuardians;
+    address private OPENFORT_GUARDIAN = vm.envAddress("PAYMASTER_OWNER_TESTNET");
 
     function run() public {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
         vm.startBroadcast(deployPrivKey);
-        initialGuardians = [OPENFORT_GUARDIAN];
 
         // Create an acccount to serve as implementation
         ManagedOpenfortAccount managedOpenfortAccountImpl = new ManagedOpenfortAccount{salt: versionSalt}();
@@ -33,14 +31,15 @@ contract ManagedOpenfortDeploy is Script {
             RECOVERY_PERIOD,
             SECURITY_PERIOD,
             SECURITY_WINDOW,
-            LOCK_PERIOD
+            LOCK_PERIOD,
+            OPENFORT_GUARDIAN
         );
 
         address accountImpl = openfortFactory.implementation();
         console.log("Account implementation: ", accountImpl);
 
         // Create an managed account wallet and get its address
-        address firstAccountAddress = openfortFactory.createAccountWithNonce(deployAddress, "1", initialGuardians);
+        address firstAccountAddress = openfortFactory.createAccountWithNonce(deployAddress, "1", true);
         console.log(firstAccountAddress);
         console.log("First Account Address: ", firstAccountAddress);
 
