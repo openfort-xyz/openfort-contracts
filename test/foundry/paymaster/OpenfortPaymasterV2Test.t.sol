@@ -34,8 +34,6 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
 
     event PostOpGasUpdated(uint256 oldPostOpGas, uint256 _newPostOpGas);
 
-    address[] initialGuardians;
-
     /*
      * Auxiliary function to generate a userOP
      */
@@ -172,8 +170,6 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         vm.deal(paymasterAdmin, 100 ether);
         (OPENFORT_GUARDIAN, OPENFORT_GUARDIAN_PKEY) = makeAddrAndKey("OPENFORT_GUARDIAN");
 
-        initialGuardians = [OPENFORT_GUARDIAN];
-
         // If we are in a fork
         if (vm.envAddress("ENTRY_POINT_ADDRESS").code.length > 0) {
             entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
@@ -207,7 +203,8 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
             RECOVERY_PERIOD,
             SECURITY_PERIOD,
             SECURITY_WINDOW,
-            LOCK_PERIOD
+            LOCK_PERIOD,
+            OPENFORT_GUARDIAN
         );
         // deploy a new TestCounter
         testCounter = new TestCounter();
@@ -217,7 +214,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
 
         // Create an Openfort account and get its address
         vm.prank(factoryAdmin);
-        accountAddress = upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "1", initialGuardians);
+        accountAddress = upgradeableOpenfortFactory.createAccountWithNonce(accountAdmin, "1", true);
     }
 
     /*
