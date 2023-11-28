@@ -19,13 +19,16 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
     uint256 public securityPeriod;
     uint256 public securityWindow;
     uint256 public lockPeriod;
-
-    error TooManyInitialGuardians();
+    address public initialGuardian;
 
     /**
      * @dev Emitted when the implementation returned by the beacon is changed.
      */
     event Upgraded(address indexed implementation);
+    /**
+     * @dev Emitted when the initial guardian is changed.
+     */
+    event InitialGuardianUpdated(address indexed oldInitialGuardian, address indexed newInitialGuardian);
 
     constructor(
         address _owner,
@@ -34,7 +37,8 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
         uint256 _recoveryPeriod,
         uint256 _securityPeriod,
         uint256 _securityWindow,
-        uint256 _lockPeriod
+        uint256 _lockPeriod,
+        address _initialGuardian
     ) BaseOpenfortFactory(_owner, _entrypoint, _accountImplementation) {
         if (_lockPeriod < _recoveryPeriod || _recoveryPeriod < _securityPeriod + _securityWindow) {
             revert InsecurePeriod();
@@ -43,13 +47,21 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
         securityPeriod = _securityPeriod;
         securityWindow = _securityWindow;
         lockPeriod = _lockPeriod;
+        if (_initialGuardian == address(0)) revert ZeroAddressNotAllowed();
+        initialGuardian = _initialGuardian;
         _setImplementation(_accountImplementation);
+    }
+
+    function updateInitialGuardian(address _newInitialGuardian) external onlyOwner {
+        if (_newInitialGuardian == address(0)) revert ZeroAddressNotAllowed();
+        emit InitialGuardianUpdated(initialGuardian, _newInitialGuardian);
+        initialGuardian = _newInitialGuardian;
     }
 
     /*
      * @notice Deploy a new account for _admin with a nonce.
      */
-    function createAccountWithNonce(address _admin, bytes32 _nonce, address[] memory _initialGuardians)
+    function createAccountWithNonce(address _admin, bytes32 _nonce, bool _initializeGuardian)
         external
         returns (address account)
     {
@@ -61,18 +73,19 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
         emit AccountCreated(account, _admin);
 
         account = address(new ManagedOpenfortProxy{salt: salt}(address(this), ""));
-        uint256 initialGuardiansNumber = _initialGuardians.length;
-        if (initialGuardiansNumber > 5) revert TooManyInitialGuardians();
-        for (uint256 i = 0; i < initialGuardiansNumber; i++) {
-            if (_initialGuardians[i] == address(0)) revert ZeroAddressNotAllowed();
-        }
         ManagedOpenfortAccount(payable(account)).initialize(
-            _admin, entrypointContract, recoveryPeriod, securityPeriod, securityWindow, lockPeriod, _initialGuardians
+            _admin,
+            entrypointContract,
+            recoveryPeriod,
+            securityPeriod,
+            securityWindow,
+            lockPeriod,
+            _initializeGuardian ? initialGuardian : address(0)
         );
     }
 
     /*
-     * @notice Return the address of an account that would be deployed with the given admin signer and nonce.
+     * @notice Return the address of an account that would be deployed with the given _admin signer and _nonce.
      */
     function getAddressWithNonce(address _admin, bytes32 _nonce) public view returns (address) {
         bytes32 salt = keccak256(abi.encode(_admin, _nonce));
@@ -96,11 +109,11 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
      * Requirements:
      *
      * - msg.sender must be the owner of the contract.
-     * - `newImplementation` must be a contract.
+     * - `_newImplementation` must be a contract.
      */
-    function upgradeTo(address newImplementation) public virtual onlyOwner {
-        _setImplementation(newImplementation);
-        emit Upgraded(newImplementation);
+    function upgradeTo(address _newImplementation) public virtual onlyOwner {
+        _setImplementation(_newImplementation);
+        emit Upgraded(_newImplementation);
     }
 
     /**
@@ -108,10 +121,10 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
      *
      * Requirements:
      *
-     * - `newImplementation` must be a contract.
+     * - `_newImplementation` must be a contract.
      */
-    function _setImplementation(address newImplementation) private {
-        if (!Address.isContract(newImplementation)) revert NotAContract();
-        _implementation = newImplementation;
+    function _setImplementation(address _newImplementation) private {
+        if (!Address.isContract(_newImplementation)) revert NotAContract();
+        _implementation = _newImplementation;
     }
 }
