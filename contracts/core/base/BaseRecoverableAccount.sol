@@ -96,7 +96,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         uint256 _securityPeriod,
         uint256 _securityWindow,
         uint256 _lockPeriod,
-        address[] _initialGuardians
+        address[] memory _initialGuardians
     ) public initializer {
         if (_defaultAdmin == address(0) || _entrypoint == address(0)) {
             revert ZeroAddressNotAllowed();
@@ -117,7 +117,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         uint256 initialGuardiansNumber = _initialGuardians.length;
         if (initialGuardiansNumber > 5) revert TooManyInitialGuardians();
 
-        for (uint256 i = 0; i < array.length; i++) {
+        for (uint256 i = 0; i < initialGuardiansNumber; i++) {
             guardiansConfig.guardians.push(_initialGuardians[i]);
             guardiansConfig.info[_initialGuardians[i]].exists = true;
             guardiansConfig.info[_initialGuardians[i]].index = 0;
@@ -420,4 +420,11 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         if (isGuardian(_newOwner)) revert GuardianCannotBeOwner();
         super.transferOwnership(_newOwner);
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[49] private __gap;
 }
