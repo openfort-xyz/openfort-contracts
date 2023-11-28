@@ -24,6 +24,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     ManagedOpenfortAccount public managedOpenfortAccountImpl;
     ManagedOpenfortFactory public openfortFactory;
 
+    address[] initialGuardians;
+
     /**
      * @notice Initialize the ManagedOpenfortAccount testing contract.
      * Scenario:
@@ -39,6 +41,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         (accountAdmin, accountAdminPKey) = makeAddrAndKey("accountAdmin");
         vm.deal(accountAdmin, 100 ether);
         (OPENFORT_GUARDIAN, OPENFORT_GUARDIAN_PKEY) = makeAddrAndKey("OPENFORT_GUARDIAN");
+
+        initialGuardians = [OPENFORT_GUARDIAN];
 
         vm.startPrank(factoryAdmin);
         // If we are in a fork
@@ -63,11 +67,10 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             RECOVERY_PERIOD,
             SECURITY_PERIOD,
             SECURITY_WINDOW,
-            LOCK_PERIOD,
-            OPENFORT_GUARDIAN
+            LOCK_PERIOD
         );
-        // Create an managed account wallet and get its address
-        accountAddress = openfortFactory.createAccountWithNonce(accountAdmin, "1");
+        // Create a managed account wallet and get its address
+        accountAddress = openfortFactory.createAccountWithNonce(accountAdmin, "1", initialGuardians);
 
         // deploy a new TestCounter
         testCounter = new TestCounter{salt: versionSalt}();
@@ -124,7 +127,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
             SECURITY_PERIOD,
             SECURITY_WINDOW,
             LOCK_PERIOD,
-            OPENFORT_GUARDIAN
+            initialGuardians
         );
     }
 
@@ -142,11 +145,11 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         // Deploy a managed account to the counterfactual address
         vm.prank(factoryAdmin);
-        openfortFactory.createAccountWithNonce(accountAdmin, "2");
+        openfortFactory.createAccountWithNonce(accountAdmin, "2", initialGuardians);
 
         // Calling it again should just return the address and not create another account
         vm.prank(factoryAdmin);
-        openfortFactory.createAccountWithNonce(accountAdmin, "2");
+        openfortFactory.createAccountWithNonce(accountAdmin, "2", initialGuardians);
 
         // Make sure the counterfactual address has not been altered
         vm.prank(factoryAdmin);
@@ -165,17 +168,17 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         if (_adminAddress == address(0)) {
             vm.expectRevert();
             vm.prank(factoryAdmin);
-            openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+            openfortFactory.createAccountWithNonce(_adminAddress, _nonce, initialGuardians);
         } else {
             vm.expectEmit(true, true, false, true);
             emit AccountCreated(account2, _adminAddress);
             // Deploy a managed account to the counterfactual address
             vm.prank(factoryAdmin);
-            openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+            openfortFactory.createAccountWithNonce(_adminAddress, _nonce, initialGuardians);
 
             // Calling it again should just return the address and not create another account
             vm.prank(factoryAdmin);
-            openfortFactory.createAccountWithNonce(_adminAddress, _nonce);
+            openfortFactory.createAccountWithNonce(_adminAddress, _nonce, initialGuardians);
 
             // Make sure the counterfactual address has not been altered
             vm.prank(factoryAdmin);
@@ -196,8 +199,9 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address account2 = openfortFactory.getAddressWithNonce(accountAdmin, bytes32("2"));
         assertEq(account2.code.length, 0);
 
-        bytes memory initCallData =
-            abi.encodeWithSignature("createAccountWithNonce(address,bytes32)", accountAdmin, bytes32("2"));
+        bytes memory initCallData = abi.encodeWithSignature(
+            "createAccountWithNonce(address,bytes32,address[])", accountAdmin, bytes32("2"), initialGuardians
+        );
         bytes memory initCode = abi.encodePacked(abi.encodePacked(address(openfortFactory)), initCallData);
 
         UserOperation[] memory userOpCreateAccount =
