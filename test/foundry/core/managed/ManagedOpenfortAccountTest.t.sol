@@ -33,6 +33,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * - testCounter is the counter used to test userOps
      */
     function setUp() public {
+        versionSalt = bytes32(0x0);
         // Setup and fund signers
         (factoryAdmin, factoryAdminPKey) = makeAddrAndKey("factoryAdmin");
         vm.deal(factoryAdmin, 100 ether);
