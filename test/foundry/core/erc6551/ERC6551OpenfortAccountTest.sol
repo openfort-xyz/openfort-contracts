@@ -3,10 +3,15 @@ pragma solidity =0.8.19;
 
 import {console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {ERC6551Registry, IERC6551Registry} from "erc6551/src/ERC6551Registry.sol";
 import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {MockERC721} from "contracts/mock/MockERC721.sol";
+import {IERC6551Account} from "erc6551/src/interfaces/IERC6551Account.sol";
+import {IERC6551Executable} from "erc6551/src/interfaces/IERC6551Executable.sol";
 import {ERC6551OpenfortAccount} from "contracts/core/erc6551/ERC6551OpenfortAccount.sol";
 import {OpenfortErrorsAndEvents} from "contracts/interfaces/OpenfortErrorsAndEvents.sol";
 import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
@@ -199,6 +204,48 @@ contract ERC6551OpenfortAccountTest is OpenfortBaseTest {
     function testOwner() public {
         assertEq(erc6551OpenfortAccount.owner(), mockERC721.ownerOf(1));
         assertEq(erc6551OpenfortAccount.owner(), accountAdmin);
+
+        vm.chainId(9999999);
+        assertEq(erc6551OpenfortAccount.owner(), address(0));
+    }
+
+    /*
+     * Test token() function.
+     * Notice, no need to initialize yet.
+     */
+    function testToken() public {
+        uint256 _chainId;
+        assembly {
+            _chainId := chainid()
+        }
+        (uint256 chainId, address tokenContract, uint256 tokenId) = erc6551OpenfortAccount.token();
+        assertEq(chainId, _chainId);
+        assertEq(tokenContract, address(mockERC721));
+        assertEq(tokenId, 1);
+
+        erc6551OpenfortAccount.initialize();
+
+        (uint256 chainId2, address tokenContract2, uint256 tokenId2) = erc6551OpenfortAccount.token();
+        assertEq(chainId2, _chainId);
+        assertEq(tokenContract2, address(mockERC721));
+        assertEq(tokenId2, 1);
+    }
+
+    /*
+     * Test isValidSigner() function.
+     * Notice, no need to initialize yet.
+     */
+    function testIsValidSigner() public {
+        bytes4 isValid = erc6551OpenfortAccount.isValidSigner(vm.addr(2), "");
+        assertEq(isValid, 0);
+
+        isValid = erc6551OpenfortAccount.isValidSigner(accountAdmin, "");
+        assertEq(isValid, erc6551OpenfortAccount.isValidSigner.selector);
+
+        erc6551OpenfortAccount.initialize();
+
+        isValid = erc6551OpenfortAccount.isValidSigner(accountAdmin, "");
+        assertEq(isValid, erc6551OpenfortAccount.isValidSigner.selector);
     }
 
     /*
@@ -220,6 +267,10 @@ contract ERC6551OpenfortAccountTest is OpenfortBaseTest {
         vm.deal(accountAddress, 1 ether);
 
         vm.prank(accountAdmin);
+        vm.expectRevert(ERC6551OpenfortAccount.OperationNotAllowed.selector);
+        erc6551OpenfortAccount.execute(payable(vm.addr(2)), 0.5 ether, "", 1);
+
+        vm.prank(accountAdmin);
         erc6551OpenfortAccount.execute(payable(vm.addr(2)), 0.5 ether, "", 0);
 
         assertEq(accountAddress.balance, 0.5 ether);
@@ -231,6 +282,31 @@ contract ERC6551OpenfortAccountTest is OpenfortBaseTest {
 
         assertEq(accountAddress.balance, 0 ether);
         assertEq(vm.addr(2).balance, 1 ether);
+        assertEq(erc6551OpenfortAccount.state(), 3);
+    }
+
+    function testERC6551ExecuteTransferEthBatch() public {
+        erc6551OpenfortAccount.initialize();
+        vm.deal(accountAddress, 1 ether);
+
+        uint256 count = 2;
+        address[] memory targets = new address[](count);
+        uint256[] memory values = new uint256[](count);
+        bytes[] memory callData = new bytes[](count);
+
+        targets[0] = payable(vm.addr(2));
+        targets[1] = payable(vm.addr(3));
+        values[0] = 0.25 ether;
+        values[1] = 0.25 ether;
+        callData[0] = "";
+        callData[1] = "";
+
+        vm.prank(accountAdmin);
+        erc6551OpenfortAccount.executeBatch(targets, values, callData);
+
+        assertEq(accountAddress.balance, 0.5 ether);
+        assertEq(vm.addr(2).balance, 0.25 ether);
+        assertEq(vm.addr(3).balance, 0.25 ether);
         assertEq(erc6551OpenfortAccount.state(), 3);
     }
 
@@ -270,5 +346,60 @@ contract ERC6551OpenfortAccountTest is OpenfortBaseTest {
 
         // Verify that the counter has increased
         assertEq(testCounter.counters(accountAddress), 1);
+    }
+
+    function testSupportsInterface() public {
+        assertTrue(erc6551OpenfortAccount.supportsInterface(type(IERC6551Account).interfaceId));
+        assertTrue(erc6551OpenfortAccount.supportsInterface(type(IERC6551Executable).interfaceId));
+        assertTrue(erc6551OpenfortAccount.supportsInterface(type(IERC721Receiver).interfaceId));
+        assertTrue(erc6551OpenfortAccount.supportsInterface(type(IERC1155Receiver).interfaceId));
+        assertTrue(erc6551OpenfortAccount.supportsInterface(type(IERC165).interfaceId));
+        assertFalse(erc6551OpenfortAccount.supportsInterface(bytes4(0x0000)));
+    }
+
+    function testUpdateEntryPoint() public {
+        vm.expectRevert(OpenfortErrorsAndEvents.NotOwner.selector);
+        erc6551OpenfortAccount.updateEntryPoint(vm.addr(2));
+
+        vm.prank(accountAdmin);
+        vm.expectRevert(OpenfortErrorsAndEvents.ZeroAddressNotAllowed.selector);
+        erc6551OpenfortAccount.updateEntryPoint(address(0));
+
+        vm.prank(accountAdmin);
+        erc6551OpenfortAccount.updateEntryPoint(vm.addr(2));
+
+        // Weird behaviour, but not necessarily bad; if the user changes the EntryPoint address
+        // before initializing, the EntryPoint is set to the default
+        vm.prank(accountAdmin);
+        erc6551OpenfortAccount.initialize();
+
+        vm.prank(accountAdmin);
+        erc6551OpenfortAccount.updateEntryPoint(vm.addr(2));
+    }
+
+    /*
+     * Test onERC721Received()
+     */
+    function testSafeTransferFrom() public {
+        vm.prank(accountAdmin);
+        vm.expectRevert("Cannot own yourself");
+        mockERC721.safeTransferFrom(accountAdmin, address(erc6551OpenfortAccount), 1);
+
+        uint256 _chainId;
+        assembly {
+            _chainId := chainid()
+        }
+        address accountAddress2 = erc6551Registry.createAccount(
+            address(erc6551OpenfortAccountImpl), versionSalt, _chainId, address(mockERC721), 2
+        );
+
+        // Try with token ID 2 not minted yet
+        vm.prank(accountAdmin);
+        vm.expectRevert("ERC721: invalid token ID");
+        mockERC721.safeTransferFrom(accountAdmin, accountAddress2, 1);
+
+        mockERC721.mint(accountAdmin, 2);
+        vm.prank(accountAdmin);
+        mockERC721.safeTransferFrom(accountAdmin, accountAddress2, 1);
     }
 }

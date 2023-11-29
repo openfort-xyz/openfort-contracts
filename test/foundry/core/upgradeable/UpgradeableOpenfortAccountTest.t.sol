@@ -4,6 +4,10 @@ pragma solidity =0.8.19;
 import {console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC777Recipient} from "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {IBaseRecoverableAccount} from "contracts/interfaces/IBaseRecoverableAccount.sol";
@@ -15,10 +19,6 @@ import {UpgradeableOpenfortProxy} from "contracts/core/upgradeable/UpgradeableOp
 import {MockV2UpgradeableOpenfortAccount} from "contracts/mock/MockV2UpgradeableOpenfortAccount.sol";
 import {OpenfortBaseTest, MockERC20, MockERC721, MockERC1155} from "../OpenfortBaseTest.t.sol";
 import {SimpleNFT} from "contracts/mock/SimpleNFT.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {IERC777Recipient} from "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
-import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
@@ -2838,6 +2838,33 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     }
 
     /*
+     * Test an account with mockERC1155 sending it to another.
+     */
+    function testTransferERC1155BetweenAccountsBatch() public {
+        assertEq(mockERC1155.balanceOf(accountAddress, 1), 0);
+
+        address accountAddress2 = openfortFactory.createAccountWithNonce(accountAdmin, "2", true);
+
+        mockERC1155.mint(accountAdmin, 1, 2);
+
+        assertEq(mockERC1155.balanceOf(accountAdmin, 1), 2);
+        assertEq(mockERC1155.balanceOf(accountAddress2, 1), 0);
+
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = 1;
+        ids[1] = 1;
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 1;
+        amounts[1] = 1;
+
+        vm.prank(accountAdmin);
+        mockERC1155.safeBatchTransferFrom(accountAdmin, accountAddress2, ids, amounts, "");
+
+        assertEq(mockERC1155.balanceOf(accountAdmin, 1), 0);
+        assertEq(mockERC1155.balanceOf(accountAddress2, 1), 2);
+    }
+
+    /*
      * Test for coverage purposes.
      * SimpleNFT is an NFT contract used by Openfort in some internal tests
      */
@@ -2854,5 +2881,17 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertTrue(account.supportsInterface(type(IERC1155Receiver).interfaceId));
         assertTrue(account.supportsInterface(type(IERC165).interfaceId));
         assertFalse(account.supportsInterface(bytes4(0x0000)));
+    }
+
+    function testUpdateInitialGuardian() public {
+        vm.expectRevert();
+        openfortFactory.updateInitialGuardian(vm.addr(2));
+
+        vm.prank(factoryAdmin);
+        vm.expectRevert();
+        openfortFactory.updateInitialGuardian(address(0));
+
+        vm.prank(factoryAdmin);
+        openfortFactory.updateInitialGuardian(address(accountAdmin));
     }
 }
