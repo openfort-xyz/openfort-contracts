@@ -21,25 +21,24 @@ import {BaseOpenfortAccount, IEntryPoint, ECDSAUpgradeable} from "../base/BaseOp
 contract ERC6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC6551Executable {
     using ECDSAUpgradeable for bytes32;
 
-    address internal entrypointContract;
-
     // bytes4(keccak256("execute(address,uint256,bytes,uint8)")
     bytes4 internal constant EXECUTE_ERC6551_SELECTOR = 0x51945447;
+    address constant DEFAULT_ENTRYPOINT = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
 
+    address internal entrypointContract;
     uint256 public state;
 
     error OperationNotAllowed();
 
     receive() external payable override(BaseOpenfortAccount, IERC6551Account) {}
 
+    constructor() {}
+
     /*
      * @notice Initialize the smart contract wallet.
      */
-    function initialize(address _entrypoint) public initializer {
-        _requireFromOwner();
-        if (_entrypoint == address(0)) revert ZeroAddressNotAllowed();
-        emit EntryPointUpdated(entrypointContract, _entrypoint);
-        entrypointContract = _entrypoint;
+    function initialize() public initializer {
+        entrypointContract = DEFAULT_ENTRYPOINT;
         __EIP712_init("Openfort", "0.5");
         state = 1;
     }
@@ -82,6 +81,7 @@ contract ERC6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
         returns (bytes memory _result)
     {
         if (_operation != 0) revert OperationNotAllowed();
+        _requireFromEntryPointOrOwner();
         ++state;
         bool success;
         (success, _result) = _target.call{value: _value}(_data);
