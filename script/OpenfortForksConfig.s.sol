@@ -105,7 +105,7 @@ abstract contract OpenfortForksConfig is Script {
         paymasterAddresses[uint256(Forks.ArbitrumTestFork)] = openfortPaymasterV2Testnet;
 
         // Fork: Base Goerli testnet
-        vm.createFork(vm.envString("GOERLI_BASE_RPC"));
+        vm.createFork(vm.envString("BASE_GOERLI_RPC"));
         paymasterOwnerAddresses[uint256(Forks.BaseGoerliFork)] = openfortPaymasterOwnerTestnet;
         paymasterAddresses[uint256(Forks.BaseGoerliFork)] = openfortPaymasterV2Testnet;
 
