@@ -88,11 +88,11 @@ contract CheckDeposits is OpenfortForksConfig {
         console.log("Checking Paymaster and PaymasterOwner on BSC testnet:");
         checkPaymasterDepositAndOwnerBalance(uint256(Forks.BscTestFork));
 
-        console.log("Checking Paymaster and PaymasterOwner on Arbirtum Goerli testnet:");
+        console.log("Checking Paymaster and PaymasterOwner on Arbirtum Sepolia testnet:");
         checkPaymasterDepositAndOwnerBalance(uint256(Forks.ArbitrumTestFork));
 
-        console.log("Checking Paymaster and PaymasterOwner on Base Goerli testnet:");
-        checkPaymasterDepositAndOwnerBalance(uint256(Forks.BaseGoerliFork));
+        console.log("Checking Paymaster and PaymasterOwner on Base Sepolia testnet:");
+        checkPaymasterDepositAndOwnerBalance(uint256(Forks.BaseTestFork));
 
         console.log("Checking Paymaster and PaymasterOwner on Beam testnet:");
         checkPaymasterDepositAndOwnerBalance(uint256(Forks.BeamTestnetFork));
