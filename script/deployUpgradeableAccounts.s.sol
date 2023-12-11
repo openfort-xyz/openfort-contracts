@@ -17,14 +17,17 @@ contract UpgradeableOpenfortDeploy is Script {
     uint256 private constant LOCK_PERIOD = 5 days;
     address private OPENFORT_GUARDIAN = vm.envAddress("PAYMASTER_OWNER_TESTNET");
 
-    function run() public {
+    function run()
+        public
+        returns (UpgradeableOpenfortAccount upgradeableOpenfortAccountImpl, UpgradeableOpenfortFactory openfortFactory)
+    {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
         vm.startBroadcast(deployPrivKey);
 
         // Create an acccount to serve as implementation
-        UpgradeableOpenfortAccount upgradeableOpenfortAccountImpl = new UpgradeableOpenfortAccount{salt: versionSalt}();
+        upgradeableOpenfortAccountImpl = new UpgradeableOpenfortAccount{salt: versionSalt}();
         // deploy account factory (beacon)
-        UpgradeableOpenfortFactory openfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(
+        openfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(
             deployAddress,
             address(entryPoint),
             address(upgradeableOpenfortAccountImpl),
