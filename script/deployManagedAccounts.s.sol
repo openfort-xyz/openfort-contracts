@@ -34,7 +34,9 @@ contract ManagedOpenfortDeploy is Script {
             LOCK_PERIOD,
             OPENFORT_GUARDIAN
         );
-
+        
+        vm.stopBroadcast();
+        
         address accountImpl = openfortFactory.implementation();
         console.log("Account implementation: ", accountImpl);
 
@@ -42,7 +44,5 @@ contract ManagedOpenfortDeploy is Script {
         address firstAccountAddress = openfortFactory.createAccountWithNonce(deployAddress, "1", true);
         console.log(firstAccountAddress);
         console.log("First Account Address: ", firstAccountAddress);
-
-        vm.stopBroadcast();
     }
 }
