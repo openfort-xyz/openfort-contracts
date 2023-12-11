@@ -6,17 +6,16 @@ import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPo
 import {OpenfortPaymasterV2} from "../contracts/paymaster/OpenfortPaymasterV2.sol";
 
 contract OpenfortPaymasterV2Deploy is Script {
-    uint256 internal deployPrivKey = vm.envUint("PK_PAYMASTER_OWNER_MAINNET");
+    uint256 internal deployPrivKey = vm.envUint("PK_PAYMASTER_OWNER_TESTNET");
     address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
     uint32 internal constant UNSTAKEDELAYSEC = 8600;
 
-    function run() public {
+    function run() public returns (OpenfortPaymasterV2 openfortPaymaster) {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
         vm.startBroadcast(deployPrivKey);
 
-        OpenfortPaymasterV2 openfortPaymaster = new OpenfortPaymasterV2{salt: versionSalt}(entryPoint, deployAddress);
-
+        openfortPaymaster = new OpenfortPaymasterV2{salt: versionSalt}(entryPoint, deployAddress);
         entryPoint.depositTo{value: 1.5 ether}(address(openfortPaymaster));
         openfortPaymaster.addStake{value: 0.015 ether}(UNSTAKEDELAYSEC);
 

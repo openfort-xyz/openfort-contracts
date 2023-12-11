@@ -9,14 +9,12 @@ contract DeployMock is Script {
     uint256 internal deployPrivKey = vm.envUint("PK_PAYMASTER_OWNER_TESTNET");
     address internal deployAddress = vm.addr(deployPrivKey);
 
-    function run() public {
+    function run() public returns (MockERC20 mockERC20, MockERC721 mockERC721) {
         bytes32 versionSalt = bytes32(0x0);
         vm.startBroadcast(deployPrivKey);
 
-        MockERC20 mockERC20 = new MockERC20{salt: versionSalt}();
-        (mockERC20);
-        MockERC721 mockERC721 = new MockERC721{salt: versionSalt}();
-        (mockERC721);
+        mockERC20 = new MockERC20{salt: versionSalt}();
+        mockERC721 = new MockERC721{salt: versionSalt}();
 
         vm.stopBroadcast();
     }

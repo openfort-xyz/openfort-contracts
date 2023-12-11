@@ -17,14 +17,17 @@ contract ManagedOpenfortDeploy is Script {
     uint256 private constant LOCK_PERIOD = 5 days;
     address private OPENFORT_GUARDIAN = vm.envAddress("PAYMASTER_OWNER_TESTNET");
 
-    function run() public {
+    function run()
+        public
+        returns (ManagedOpenfortAccount managedOpenfortAccountImpl, ManagedOpenfortFactory openfortFactory)
+    {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
         vm.startBroadcast(deployPrivKey);
 
         // Create an acccount to serve as implementation
-        ManagedOpenfortAccount managedOpenfortAccountImpl = new ManagedOpenfortAccount{salt: versionSalt}();
+        managedOpenfortAccountImpl = new ManagedOpenfortAccount{salt: versionSalt}();
         // deploy account factory (beacon)
-        ManagedOpenfortFactory openfortFactory = new ManagedOpenfortFactory{salt: versionSalt}(
+        openfortFactory = new ManagedOpenfortFactory{salt: versionSalt}(
             deployAddress,
             address(entryPoint),
             address(managedOpenfortAccountImpl),
@@ -34,9 +37,9 @@ contract ManagedOpenfortDeploy is Script {
             LOCK_PERIOD,
             OPENFORT_GUARDIAN
         );
-        
+
         vm.stopBroadcast();
-        
+
         address accountImpl = openfortFactory.implementation();
         console.log("Account implementation: ", accountImpl);
 
