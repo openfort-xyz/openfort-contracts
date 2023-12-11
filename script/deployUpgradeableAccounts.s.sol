@@ -6,50 +6,43 @@ import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPo
 import {UpgradeableOpenfortAccount} from "../contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "../contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 
-// contract UpgradeableOpenfortDeploy is Script {
-//     uint256 internal deployPrivKey = vm.deriveKey(vm.envString("MNEMONIC_MC"), 0);
-//     // uint256 internal deployPrivKey = vm.envUint("PK");
-//     address internal deployAddress = vm.addr(deployPrivKey);
-//     IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
+contract UpgradeableOpenfortDeploy is Script {
+    uint256 internal deployPrivKey = vm.envUint("PK_PAYMASTER_OWNER_TESTNET");
+    address internal deployAddress = vm.addr(deployPrivKey);
+    IEntryPoint internal entryPoint = IEntryPoint((payable(vm.envAddress("ENTRY_POINT_ADDRESS"))));
 
-//     function run() public {
-//         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
-//         vm.startBroadcast(deployPrivKey);
+    uint256 private constant RECOVERY_PERIOD = 2 days;
+    uint256 private constant SECURITY_PERIOD = 1.5 days;
+    uint256 private constant SECURITY_WINDOW = 0.5 days;
+    uint256 private constant LOCK_PERIOD = 5 days;
+    address private OPENFORT_GUARDIAN = vm.envAddress("PAYMASTER_OWNER_TESTNET");
 
-//         UpgradeableOpenfortAccount upgradeableOpenfortAccount = new UpgradeableOpenfortAccount{salt: versionSalt}();
+    function run() public {
+        bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
+        vm.startBroadcast(deployPrivKey);
 
-//         UpgradeableOpenfortFactory upgradeableOpenfortFactory =
-//             new UpgradeableOpenfortFactory{salt: versionSalt}(address(entryPoint), address(upgradeableOpenfortAccount));
-//         (upgradeableOpenfortFactory);
-//         // address account1 = upgradeableOpenfortFactory.accountImplementation();
+        // Create an acccount to serve as implementation
+        UpgradeableOpenfortAccount upgradeableOpenfortAccountImpl = new UpgradeableOpenfortAccount{salt: versionSalt}();
+        // deploy account factory (beacon)
+        UpgradeableOpenfortFactory openfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(
+            deployAddress,
+            address(entryPoint),
+            address(upgradeableOpenfortAccountImpl),
+            RECOVERY_PERIOD,
+            SECURITY_PERIOD,
+            SECURITY_WINDOW,
+            LOCK_PERIOD,
+            OPENFORT_GUARDIAN
+        );
 
-//         // The first call should create a new account, while the second will just return the corresponding account address
-//         address account2 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, "1");
-//         console.log(
-//             "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account2
-//         );
+        vm.stopBroadcast();
 
-//         // assert(account1 != account2);
-//         // address account3 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, 3);
-//         // console.log(
-//         //     "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account3
-//         // );
-//         // assert(account2 != account3);
-//         // address account4 = upgradeableOpenfortFactory.createAccountWithNonce(deployAddress, 4);
-//         // console.log(
-//         //     "Factory at address %s has created an account at address %s", address(upgradeableOpenfortFactory), account4
-//         // );
-//         // assert(account3 != account4);
+        address accountImpl = openfortFactory.implementation();
+        console.log("Account implementation: ", accountImpl);
 
-//         //address account3 = upgradeableOpenfortFactory.createAccount(deployAddress, bytes(""));
-
-//         //assert(account1 != account2);
-//         //assert(account2 == account3);
-
-//         //UpgradeableOpenfortAccount newAccount = new UpgradeableOpenfortAccount();
-
-//         //UpgradeableOpenfortAccount(payable(account2)).upgradeTo(address(newAccount));
-
-//         vm.stopBroadcast();
-//     }
-// }
+        // Create an upgradeable account wallet and get its address
+        address firstAccountAddress = openfortFactory.createAccountWithNonce(deployAddress, "1", true);
+        console.log(firstAccountAddress);
+        console.log("First Account Address: ", firstAccountAddress);
+    }
+}
