@@ -252,6 +252,7 @@ abstract contract BaseOpenfortAccount is
         _requireFromEntryPointOrOwner();
         if (sessionKeys[_key].validUntil != 0) {
             sessionKeys[_key].validUntil = 0;
+            sessionKeys[_key].limit = 0;
             sessionKeys[_key].masterSessionKey = false;
             sessionKeys[_key].registrarAddress = address(0);
             emit SessionKeyRevoked(_key);
