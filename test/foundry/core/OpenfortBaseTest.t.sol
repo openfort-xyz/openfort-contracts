@@ -4,19 +4,22 @@ pragma solidity =0.8.19;
 import {Test, console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
-import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
+import {IEntryPoint, EntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {MockERC20} from "contracts/mock/MockERC20.sol";
 import {MockERC721} from "contracts/mock/MockERC721.sol";
 import {MockERC1155} from "contracts/mock/MockERC1155.sol";
 import {MockV2UpgradeableOpenfortAccount} from "contracts/mock/MockV2UpgradeableOpenfortAccount.sol";
+import {DeployMock} from "script/deployMock.s.sol";
+import {SimpleNFT} from "contracts/mock/SimpleNFT.sol";
+import {CheckOrDeployEntryPoint} from "script/aux/checkOrDeployEntryPoint.sol";
 
-contract OpenfortBaseTest is Test {
+contract OpenfortBaseTest is Test, CheckOrDeployEntryPoint {
     using ECDSA for bytes32;
 
     bytes32 public versionSalt;
 
-    EntryPoint public entryPoint;
+    IEntryPoint public entryPoint;
 
     address public accountAddress;
     TestCounter public testCounter;
@@ -25,11 +28,8 @@ contract OpenfortBaseTest is Test {
     MockERC1155 public mockERC1155;
 
     // Testing addresses
-    address public factoryAdmin;
-    uint256 public factoryAdminPKey;
-
-    address public accountAdmin;
-    uint256 public accountAdminPKey;
+    address public openfortAdmin;
+    uint256 public openfortAdminPKey;
 
     address payable public beneficiary = payable(makeAddr("beneficiary"));
 
@@ -47,11 +47,11 @@ contract OpenfortBaseTest is Test {
     uint256 public constant SECURITY_PERIOD = 1.5 days;
     uint256 public constant SECURITY_WINDOW = 0.5 days;
     uint256 public constant LOCK_PERIOD = 5 days;
-    address public OPENFORT_GUARDIAN;
-    uint256 public OPENFORT_GUARDIAN_PKEY;
+    address public openfortGuardian;
+    uint256 public openfortGuardianKey;
 
     event AccountImplementationDeployed(address indexed creator);
-    event AccountCreated(address indexed account, address indexed accountAdmin);
+    event AccountCreated(address indexed account, address indexed openfortAdmin);
     event GuardianProposed(address indexed guardian, uint256 executeAfter);
     event GuardianProposalCancelled(address indexed guardian);
     event GuardianRevocationRequested(address indexed guardian, uint256 executeAfter);
@@ -74,6 +74,25 @@ contract OpenfortBaseTest is Test {
     error OngoingRecovery();
     error InvalidRecoverySignatures();
     error InvalidSignatureAmount();
+
+    function setUp() public virtual {
+        versionSalt = vm.envBytes32("VERSION_SALT");
+        entryPoint = checkOrDeployEntryPoint();
+
+        // Setup and fund signers
+        openfortAdminPKey = vm.envUint("PK_PAYMASTER_OWNER_TESTNET");
+        openfortAdmin = vm.addr(openfortAdminPKey);
+        vm.deal(openfortAdmin, 100 ether);
+
+        openfortGuardianKey = vm.envUint("PK_GUARDIAN_TESTNET");
+        openfortGuardian = vm.addr(openfortGuardianKey);
+
+        DeployMock deployMock = new DeployMock();
+        (mockERC20, mockERC721, mockERC1155) = deployMock.run();
+
+        // deploy a new TestCounter
+        testCounter = new TestCounter{salt: versionSalt}();
+    }
 
     /*
      * Auxiliary function to generate a userOP
@@ -102,7 +121,7 @@ contract OpenfortBaseTest is Test {
         });
 
         // Sign UserOp
-        bytes32 opHash = EntryPoint(entryPoint).getUserOpHash(op);
+        bytes32 opHash = entryPoint.getUserOpHash(op);
         bytes32 msgHash = ECDSA.toEthSignedMessageHash(opHash);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(_signerPKey, msgHash);
@@ -160,4 +179,14 @@ contract OpenfortBaseTest is Test {
      */
 
     event Deposited(address indexed account, uint256 totalDeposit);
+
+    /*
+     * Test for coverage purposes.
+     * SimpleNFT is an NFT contract used by Openfort in some internal tests
+     */
+    function testSimpleNFT() public {
+        SimpleNFT simpleNFT = new SimpleNFT();
+        simpleNFT.mint(openfortAdmin);
+        assertEq(simpleNFT.balanceOf(openfortAdmin), 1);
+    }
 }

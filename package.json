@@ -1,13 +1,13 @@
 {
   "name": "@openfort/openfort-contracts",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Official Contracts of the Openfort Project",
   "license": "GPL-3.0",
   "scripts": {
     "build": "npm run clean-all && npm run compile",
     "clean-all": "npx hardhat clean && forge clean && rm -rf cache/ broadcast/",
     "compile": "npx hardhat compile",
-    "test-all": "npx hardhat test && forge test"
+    "test": "source .env && forge test"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.0.1",

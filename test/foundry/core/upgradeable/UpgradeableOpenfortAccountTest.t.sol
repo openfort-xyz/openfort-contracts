@@ -8,7 +8,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC777Recipient} from "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import {EntryPoint, IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
+import {IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
 import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {IBaseRecoverableAccount} from "contracts/interfaces/IBaseRecoverableAccount.sol";
 import {IUpgradeableOpenfortAccount} from "contracts/interfaces/IUpgradeableOpenfortAccount.sol";
@@ -17,8 +17,8 @@ import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/Upgradeable
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {UpgradeableOpenfortProxy} from "contracts/core/upgradeable/UpgradeableOpenfortProxy.sol";
 import {MockV2UpgradeableOpenfortAccount} from "contracts/mock/MockV2UpgradeableOpenfortAccount.sol";
-import {OpenfortBaseTest, MockERC20, MockERC721, MockERC1155} from "../OpenfortBaseTest.t.sol";
-import {SimpleNFT} from "contracts/mock/SimpleNFT.sol";
+import {OpenfortBaseTest} from "../OpenfortBaseTest.t.sol";
+import {UpgradeableOpenfortDeploy} from "script/deployUpgradeableAccounts.s.sol";
 
 contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     using ECDSA for bytes32;
@@ -29,59 +29,20 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     /**
      * @notice Initialize the UpgradeableOpenfortAccount testing contract.
      * Scenario:
-     * - factoryAdmin is the deployer (and owner) of the UpgradeableOpenfortFactory
-     * - accountAdmin is the account used to deploy new upgradeable accounts
+     * - openfortAdmin is the deployer (and owner) of the UpgradeableOpenfortFactory
+     * - openfortAdmin is the account used to deploy new upgradeable accounts
      * - entryPoint is the singleton EntryPoint
      * - testCounter is the counter used to test userOps
      */
-    function setUp() public {
-        versionSalt = bytes32(0x0);
-        // Setup and fund signers
-        (factoryAdmin, factoryAdminPKey) = makeAddrAndKey("factoryAdmin");
-        vm.deal(factoryAdmin, 100 ether);
-        (accountAdmin, accountAdminPKey) = makeAddrAndKey("accountAdmin");
-        vm.deal(accountAdmin, 100 ether);
-        (OPENFORT_GUARDIAN, OPENFORT_GUARDIAN_PKEY) = makeAddrAndKey("OPENFORT_GUARDIAN");
+    function setUp() public override {
+        super.setUp();
 
-        vm.startPrank(factoryAdmin);
-        // If we are in a fork
-        if (vm.envAddress("ENTRY_POINT_ADDRESS").code.length > 0) {
-            entryPoint = EntryPoint(payable(vm.envAddress("ENTRY_POINT_ADDRESS")));
-        }
-        // If not a fork, deploy entryPoint (at correct address)
-        else {
-            EntryPoint entryPointAux = new EntryPoint();
-            bytes memory code = address(entryPointAux).code;
-            address targetAddr = address(vm.envAddress("ENTRY_POINT_ADDRESS"));
-            vm.etch(targetAddr, code);
-            entryPoint = EntryPoint(payable(targetAddr));
-        }
-        // deploy upgradeable account implementation
-        vm.expectEmit(true, true, false, true);
-        emit AccountImplementationDeployed(factoryAdmin);
-        upgradeableOpenfortAccountImpl = new UpgradeableOpenfortAccount{salt: versionSalt}();
-        // deploy upgradeable account factory
-        openfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(
-            factoryAdmin,
-            address(entryPoint),
-            address(upgradeableOpenfortAccountImpl),
-            RECOVERY_PERIOD,
-            SECURITY_PERIOD,
-            SECURITY_WINDOW,
-            LOCK_PERIOD,
-            OPENFORT_GUARDIAN
-        );
+        UpgradeableOpenfortDeploy upgradeableOpenfortDeploy = new UpgradeableOpenfortDeploy();
+        (upgradeableOpenfortAccountImpl, openfortFactory) = upgradeableOpenfortDeploy.run();
 
         // Create an upgradeable account wallet and get its address
-        accountAddress = openfortFactory.createAccountWithNonce(accountAdmin, "1", true);
-
-        // deploy a new TestCounter
-        testCounter = new TestCounter{salt: versionSalt}();
-        // deploy a new MockERC20 (ERC20)
-        mockERC20 = new MockERC20{salt: versionSalt}();
-        mockERC721 = new MockERC721{salt: versionSalt}();
-        mockERC1155 = new MockERC1155{salt: versionSalt}();
-        vm.stopPrank();
+        vm.prank(openfortAdmin);
+        accountAddress = openfortFactory.createAccountWithNonce(openfortAdmin, "1", true);
     }
 
     /*
@@ -92,29 +53,29 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         openfortFactory.addStake{value: 1 ether}(10);
 
         vm.expectRevert("no stake specified");
-        vm.prank(factoryAdmin);
+        vm.prank(openfortAdmin);
         openfortFactory.addStake(10);
 
-        vm.prank(factoryAdmin);
+        vm.prank(openfortAdmin);
         openfortFactory.addStake{value: 1 ether}(10);
 
         vm.expectRevert("Ownable: caller is not the owner");
         openfortFactory.unlockStake();
 
-        vm.prank(factoryAdmin);
+        vm.prank(openfortAdmin);
         openfortFactory.unlockStake();
 
         vm.expectRevert("Ownable: caller is not the owner");
-        openfortFactory.withdrawStake(payable(factoryAdmin));
+        openfortFactory.withdrawStake(payable(openfortAdmin));
 
         vm.expectRevert("Stake withdrawal is not due");
-        vm.prank(factoryAdmin);
-        openfortFactory.withdrawStake(payable(factoryAdmin));
+        vm.prank(openfortAdmin);
+        openfortFactory.withdrawStake(payable(openfortAdmin));
 
         skip(11);
 
-        vm.prank(factoryAdmin);
-        openfortFactory.withdrawStake(payable(factoryAdmin));
+        vm.prank(openfortAdmin);
+        openfortFactory.withdrawStake(payable(openfortAdmin));
     }
 
     /*
@@ -124,13 +85,13 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(openfortFactory.implementation(), address(upgradeableOpenfortAccountImpl));
         vm.expectRevert("Initializable: contract is already initialized");
         upgradeableOpenfortAccountImpl.initialize(
-            accountAdmin,
+            openfortAdmin,
             address(entryPoint),
             RECOVERY_PERIOD,
             SECURITY_PERIOD,
             SECURITY_WINDOW,
             LOCK_PERIOD,
-            OPENFORT_GUARDIAN
+            openfortGuardian
         );
     }
 
@@ -139,24 +100,24 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      */
     function testCreateAccountWithNonceViaFactory() public {
         // Get the counterfactual address
-        vm.prank(factoryAdmin);
-        address accountAddress2 = openfortFactory.getAddressWithNonce(accountAdmin, "2");
+        vm.prank(openfortAdmin);
+        address accountAddress2 = openfortFactory.getAddressWithNonce(openfortAdmin, "2");
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
-        emit AccountCreated(accountAddress2, accountAdmin);
+        emit AccountCreated(accountAddress2, openfortAdmin);
 
         // Deploy a upgradeable account to the counterfactual address
-        vm.prank(factoryAdmin);
-        openfortFactory.createAccountWithNonce(accountAdmin, "2", true);
+        vm.prank(openfortAdmin);
+        openfortFactory.createAccountWithNonce(openfortAdmin, "2", true);
 
         // Calling it again should just return the address and not create another account
-        vm.prank(factoryAdmin);
-        openfortFactory.createAccountWithNonce(accountAdmin, "2", true);
+        vm.prank(openfortAdmin);
+        openfortFactory.createAccountWithNonce(openfortAdmin, "2", true);
 
         // Make sure the counterfactual address has not been altered
-        vm.prank(factoryAdmin);
-        assertEq(accountAddress2, openfortFactory.getAddressWithNonce(accountAdmin, "2"));
+        vm.prank(openfortAdmin);
+        assertEq(accountAddress2, openfortFactory.getAddressWithNonce(openfortAdmin, "2"));
     }
 
     /*
@@ -164,27 +125,27 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      */
     function testFuzzCreateAccountWithNonceViaFactory(address _adminAddress, bytes32 _nonce) public {
         // Get the counterfactual address
-        vm.prank(factoryAdmin);
+        vm.prank(openfortAdmin);
         address accountAddress2 = openfortFactory.getAddressWithNonce(_adminAddress, _nonce);
 
         // Expect that we will see an event containing the account and admin
         if (_adminAddress == address(0)) {
             vm.expectRevert();
-            vm.prank(factoryAdmin);
+            vm.prank(openfortAdmin);
             openfortFactory.createAccountWithNonce(_adminAddress, _nonce, true);
         } else {
             vm.expectEmit(true, true, false, true);
             emit AccountCreated(accountAddress2, _adminAddress);
 
             // Deploy a upgradeable account to the counterfactual address
-            vm.prank(factoryAdmin);
+            vm.prank(openfortAdmin);
             openfortFactory.createAccountWithNonce(_adminAddress, _nonce, true);
 
             // Calling it again should just return the address and not create another account
-            vm.prank(factoryAdmin);
+            vm.prank(openfortAdmin);
             openfortFactory.createAccountWithNonce(_adminAddress, _nonce, true);
             // Make sure the counterfactual address has not been altered
-            vm.prank(factoryAdmin);
+            vm.prank(openfortAdmin);
             assertEq(accountAddress2, openfortFactory.getAddressWithNonce(_adminAddress, _nonce));
         }
     }
@@ -199,19 +160,19 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // revert();
 
         // Make sure the smart account does not have any code yet
-        address account2 = openfortFactory.getAddressWithNonce(accountAdmin, bytes32("2"));
+        address account2 = openfortFactory.getAddressWithNonce(openfortAdmin, bytes32("2"));
         assertEq(account2.code.length, 0);
 
         bytes memory initCallData =
-            abi.encodeWithSignature("createAccountWithNonce(address,bytes32,bool)", accountAdmin, bytes32("2"), true);
+            abi.encodeWithSignature("createAccountWithNonce(address,bytes32,bool)", openfortAdmin, bytes32("2"), true);
         bytes memory initCode = abi.encodePacked(abi.encodePacked(address(openfortFactory)), initCallData);
 
         UserOperation[] memory userOpCreateAccount =
-            _setupUserOpExecute(account2, accountAdminPKey, initCode, address(0), 0, bytes(""));
+            _setupUserOpExecute(account2, openfortAdminPKey, initCode, address(0), 0, bytes(""));
 
         // Expect that we will see an event containing the account and admin
         vm.expectEmit(true, true, false, true);
-        emit AccountCreated(account2, accountAdmin);
+        emit AccountCreated(account2, openfortAdmin);
 
         entryPoint.handleOps(userOpCreateAccount, beneficiary);
 
@@ -219,7 +180,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assert(account2.code.length > 0);
 
         // Make sure the counterfactual address has not been altered
-        assertEq(account2, openfortFactory.getAddressWithNonce(accountAdmin, bytes32("2")));
+        assertEq(account2, openfortFactory.getAddressWithNonce(openfortAdmin, bytes32("2")));
     }
 
     /*
@@ -230,7 +191,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(testCounter.counters(accountAddress), 0);
 
         // Make the admin of the upgradeable account wallet (deployer) call "count"
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).execute(
             address(testCounter), 0, abi.encodeWithSignature("count()")
         );
@@ -248,7 +209,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(testCounter.counters(accountAddress), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            accountAddress, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, openfortAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1 ether}(accountAddress);
@@ -280,7 +241,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         }
 
         UserOperation[] memory userOp =
-            _setupUserOpExecuteBatch(accountAddress, accountAdminPKey, bytes(""), targets, values, callData);
+            _setupUserOpExecuteBatch(accountAddress, openfortAdminPKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
@@ -310,7 +271,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         }
 
         UserOperation[] memory userOp =
-            _setupUserOpExecuteBatch(accountAddress, accountAdminPKey, bytes(""), targets, values, callData);
+            _setupUserOpExecuteBatch(accountAddress, openfortAdminPKey, bytes(""), targets, values, callData);
 
         entryPoint.depositTo{value: 1 ether}(accountAddress);
         vm.expectRevert();
@@ -357,7 +318,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
         address[] memory emptyWhitelist;
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(
             sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist
         );
@@ -390,7 +351,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         UserOperation[] memory userOp = _setupUserOp(
             accountAddress,
-            accountAdminPKey,
+            openfortAdminPKey,
             bytes(""),
             abi.encodeWithSignature(
                 "registerSessionKey(address,uint48,uint48,uint48,address[])",
@@ -439,7 +400,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         UserOperation[] memory userOp = _setupUserOp(
             accountAddress,
-            accountAdminPKey,
+            openfortAdminPKey,
             bytes(""),
             abi.encodeWithSignature(
                 "registerSessionKey(address,uint48,uint48,uint48,address[])",
@@ -509,7 +470,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             accountAddress,
-            accountAdminPKey,
+            openfortAdminPKey,
             bytes(""),
             accountAddress,
             0,
@@ -575,7 +536,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         address[] memory emptyWhitelist;
 
         vm.warp(100);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 99, 100, emptyWhitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -604,9 +565,9 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
         address[] memory emptyWhitelist;
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 0, 100, emptyWhitelist);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).revokeSessionKey(sessionKey);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -636,7 +597,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // We are now in block 100, but our session key is valid until block 150
         vm.warp(100);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 150, 1, emptyWhitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -675,7 +636,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // We are now in block 100, but our session key is valid until block 150
         vm.warp(100);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 150, 2, emptyWhitelist);
 
         uint256 count = 3;
@@ -713,7 +674,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
         address[] memory emptyWhitelist;
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 0, 100, emptyWhitelist);
         vm.prank(beneficiary);
         IBaseRecoverableAccount(payable(accountAddress)).revokeSessionKey(sessionKey);
@@ -744,7 +705,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(testCounter);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -772,7 +733,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
 
         address[] memory whitelist = new address[](11);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -801,7 +762,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(testCounter);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 3, whitelist);
 
         // Verify that the registered key is not a MasterKey but has whitelisting
@@ -847,7 +808,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(accountAddress);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
@@ -876,7 +837,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         address[] memory whitelist = new address[](1);
         whitelist[0] = address(accountAddress);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 1, whitelist);
 
         uint256 count = 3;
@@ -925,14 +886,14 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             whitelist[i] = address(testCounter);
         }
         vm.expectRevert("Whitelist too big");
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         UpgradeableOpenfortAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 3, whitelist);
     }
 
     /*
      * Change the owner of an account and call TestCounter directly.
      * Important use-case:
-     * 1- accountAdmin is Openfort's master wallet and is managing the account of the user.
+     * 1- openfortAdmin is Openfort's master wallet and is managing the account of the user.
      * 2- The user claims the ownership of the account to Openfort so Openfort calls
      * transferOwnership() to the account.
      * 3- The user has to "officially" claim the ownership of the account by directly
@@ -941,23 +902,23 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * 5- Test that the new owner can directly interact with the account and make it call the testCounter contract.
      */
     function testChangeOwnershipAndCountDirect() public {
-        address accountAdmin2;
-        uint256 accountAdmin2PKey;
-        (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
+        address openfortAdmin2;
+        uint256 openfortAdmin2PKey;
+        (openfortAdmin2, openfortAdmin2PKey) = makeAddrAndKey("openfortAdmin2");
 
         vm.expectRevert("Ownable: caller is not the owner");
-        IBaseRecoverableAccount(payable(accountAddress)).transferOwnership(accountAdmin2);
+        IBaseRecoverableAccount(payable(accountAddress)).transferOwnership(openfortAdmin2);
 
-        vm.prank(accountAdmin);
-        IBaseRecoverableAccount(payable(accountAddress)).transferOwnership(accountAdmin2);
-        vm.prank(accountAdmin2);
+        vm.prank(openfortAdmin);
+        IBaseRecoverableAccount(payable(accountAddress)).transferOwnership(openfortAdmin2);
+        vm.prank(openfortAdmin2);
         IBaseRecoverableAccount(payable(accountAddress)).acceptOwnership();
 
         // Verify that the counter is still set to 0
         assertEq(testCounter.counters(accountAddress), 0);
 
         // Make the admin of the upgradeable account wallet (deployer) call "count"
-        vm.prank(accountAdmin2);
+        vm.prank(openfortAdmin2);
         IBaseRecoverableAccount(payable(accountAddress)).execute(
             address(testCounter), 0, abi.encodeWithSignature("count()")
         );
@@ -970,20 +931,20 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Change the owner of an account and call TestCounter though the Entrypoint
      */
     function testChangeOwnershipAndCountEntryPoint() public {
-        address accountAdmin2;
-        uint256 accountAdmin2PKey;
-        (accountAdmin2, accountAdmin2PKey) = makeAddrAndKey("accountAdmin2");
+        address openfortAdmin2;
+        uint256 openfortAdmin2PKey;
+        (openfortAdmin2, openfortAdmin2PKey) = makeAddrAndKey("openfortAdmin2");
 
-        vm.prank(accountAdmin);
-        IBaseRecoverableAccount(payable(accountAddress)).transferOwnership(accountAdmin2);
-        vm.prank(accountAdmin2);
+        vm.prank(openfortAdmin);
+        IBaseRecoverableAccount(payable(accountAddress)).transferOwnership(openfortAdmin2);
+        vm.prank(openfortAdmin2);
         IBaseRecoverableAccount(payable(accountAddress)).acceptOwnership();
 
         // Verify that the counter is still set to 0
         assertEq(testCounter.counters(accountAddress), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            accountAddress, accountAdmin2PKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, openfortAdmin2PKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1 ether}(accountAddress);
@@ -1008,7 +969,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             accountAddress,
-            accountAdminPKey,
+            openfortAdminPKey,
             bytes(""),
             address(mockERC20),
             0,
@@ -1032,7 +993,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(testCounter.counters(accountAddress), 0);
 
         // Make the admin of the account wallet call "count"
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).execute(
             address(testCounter), 0, abi.encodeWithSignature("count()")
         );
@@ -1042,7 +1003,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Make the admin of the account wallet call "execute" which call count
         vm.expectRevert(OpenfortErrorsAndEvents.NotOwnerOrEntrypoint.selector);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).execute(
             address(accountAddress),
             0,
@@ -1060,7 +1021,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(testCounter.counters(accountAddress), 0);
 
         // Make the admin of the account wallet call "count"
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).execute(
             address(testCounter), 0, abi.encodeWithSignature("count()")
         );
@@ -1083,7 +1044,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Make the admin of the account wallet call "execute" which call count
         vm.expectRevert(OpenfortErrorsAndEvents.NotOwnerOrEntrypoint.selector);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IBaseRecoverableAccount(payable(accountAddress)).executeBatch(targets, values, callData);
     }
 
@@ -1093,7 +1054,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     function testReceiveNativeToken() public {
         assertEq(address(accountAddress).balance, 0);
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         (bool success,) = payable(accountAddress).call{value: 1000}("");
         assert(success);
         assertEq(address(accountAddress).balance, 1000);
@@ -1106,16 +1067,16 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         uint256 value = 1000;
 
         assertEq(address(accountAddress).balance, 0);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         (bool success,) = payable(accountAddress).call{value: value}("");
         assertEq(address(accountAddress).balance, value);
         assert(success);
         assertEq(beneficiary.balance, 0);
 
         UserOperation[] memory userOp =
-            _setupUserOpExecute(accountAddress, accountAdminPKey, bytes(""), address(beneficiary), value, bytes(""));
+            _setupUserOpExecute(accountAddress, openfortAdminPKey, bytes(""), address(beneficiary), value, bytes(""));
 
-        EntryPoint(entryPoint).handleOps(userOp, beneficiary);
+        entryPoint.handleOps(userOp, beneficiary);
         assertEq(beneficiary.balance, value);
     }
 
@@ -1127,7 +1088,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(testCounter.counters(accountAddress), 0);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
-            accountAddress, accountAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
+            accountAddress, openfortAdminPKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
         );
 
         entryPoint.depositTo{value: 1 ether}(accountAddress);
@@ -1143,7 +1104,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
      * Create an account and upgrade its implementation
      */
     function testUpgradeAccount() public {
-        assertEq(IBaseRecoverableAccount(payable(accountAddress)).owner(), address(accountAdmin));
+        assertEq(IBaseRecoverableAccount(payable(accountAddress)).owner(), address(openfortAdmin));
         assertEq(address(IBaseRecoverableAccount(payable(accountAddress)).entryPoint()), address(entryPoint));
         MockV2UpgradeableOpenfortAccount newAccountImplementation = new MockV2UpgradeableOpenfortAccount();
         UpgradeableOpenfortProxy p = UpgradeableOpenfortProxy(payable(accountAddress));
@@ -1157,7 +1118,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.expectRevert();
         MockV2UpgradeableOpenfortAccount(payable(accountAddress)).easterEgg();
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         UpgradeableOpenfortAccount(payable(accountAddress)).upgradeTo(address(newAccountImplementation));
 
         // Notice that, even though we bind the address to the old implementation, entryPoint() is now changed
@@ -1169,7 +1130,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(MockV2UpgradeableOpenfortAccount(payable(accountAddress)).easterEgg(), 42);
 
         vm.expectRevert("disabled!");
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         IUpgradeableOpenfortAccount(payable(accountAddress)).updateEntryPoint(beneficiary);
 
         // Printing account address and the implementation address. Impl address should have changed
@@ -1187,30 +1148,30 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.etch(oldEntryPoint, code); // Simulate there's code here
         address newEntryPoint = vm.envAddress("ENTRY_POINT_ADDRESS");
         UpgradeableOpenfortFactory openfortFactoryOld = new UpgradeableOpenfortFactory{salt: versionSalt}(
-            factoryAdmin,
+            openfortAdmin,
             oldEntryPoint,
             address(upgradeableOpenfortAccountImpl),
             RECOVERY_PERIOD,
             SECURITY_PERIOD,
             SECURITY_WINDOW,
             LOCK_PERIOD,
-            OPENFORT_GUARDIAN
+            openfortGuardian
         );
 
         // Create an upgradeable account wallet using the old EntryPoint and get its address
         address payable oldAccountAddress =
-            payable(openfortFactoryOld.createAccountWithNonce(accountAdmin, "999", true));
+            payable(openfortFactoryOld.createAccountWithNonce(openfortAdmin, "999", true));
         IUpgradeableOpenfortAccount upgradeableAccount = IUpgradeableOpenfortAccount(oldAccountAddress);
         assertEq(address(upgradeableAccount.entryPoint()), oldEntryPoint);
 
         vm.expectRevert("Ownable: caller is not the owner");
         upgradeableAccount.updateEntryPoint(newEntryPoint);
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         vm.expectRevert(OpenfortErrorsAndEvents.NotAContract.selector);
         upgradeableAccount.updateEntryPoint(address(0));
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         upgradeableAccount.updateEntryPoint(newEntryPoint);
 
         assertEq(address(upgradeableAccount.entryPoint()), newEntryPoint);
@@ -1218,13 +1179,13 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
     function testIsValidSignature() public {
         bytes32 hash = keccak256("Signed by Owner");
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(openfortAdminPKey, hash);
         address signer = ecrecover(hash, v, r, s);
-        assertEq(accountAdmin, signer); // [PASS]
+        assertEq(openfortAdmin, signer); // [PASS]
 
         bytes memory signature = abi.encodePacked(r, s, v);
         signer = ECDSA.recover(hash, signature);
-        assertEq(accountAdmin, signer); // [PASS]
+        assertEq(openfortAdmin, signer); // [PASS]
 
         bytes4 valid = IBaseRecoverableAccount(payable(accountAddress)).isValidSignature(hash, signature);
         assertEq(valid, bytes4(0xffffffff)); // SHOULD PASS!
@@ -1234,13 +1195,13 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     function testIsValidSignatureMessage() public {
         bytes32 hash = keccak256("Signed by Owner");
         bytes32 hashMessage = hash.toEthSignedMessageHash();
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(accountAdminPKey, hashMessage);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(openfortAdminPKey, hashMessage);
         address signer = ecrecover(hashMessage, v, r, s);
-        assertEq(accountAdmin, signer); // [PASS]
+        assertEq(openfortAdmin, signer); // [PASS]
 
         bytes memory signature = abi.encodePacked(r, s, v);
         signer = ECDSA.recover(hashMessage, signature);
-        assertEq(accountAdmin, signer); // [PASS]
+        assertEq(openfortAdmin, signer); // [PASS]
 
         bytes4 valid = IBaseRecoverableAccount(payable(accountAddress)).isValidSignature(hash, signature);
         assertEq(valid, bytes4(0xffffffff)); // SHOULD PASS!
@@ -1279,11 +1240,11 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
         );
 
-        bytes memory signature = getEIP712SignatureFrom(accountAddress, structHash, accountAdminPKey);
+        bytes memory signature = getEIP712SignatureFrom(accountAddress, structHash, openfortAdminPKey);
         bytes32 hash712 = domainSeparator.toTypedDataHash(structHash);
         address signer = hash712.recover(signature);
 
-        assertEq(accountAdmin, signer); // [PASS]
+        assertEq(openfortAdmin, signer); // [PASS]
 
         bytes4 valid = IBaseRecoverableAccount(payable(accountAddress)).isValidSignature(hash, signature);
         assertNotEq(valid, bytes4(0xffffffff)); // SHOULD PASS
@@ -1302,7 +1263,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Make the admin of the upgradeable account wallet (deployer) call "depositTo()"
         vm.expectEmit(true, true, false, true);
         emit Deposited(accountAddress, 1 ether); // Notice 2 ether is the current deposit, not the deposited
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         account.execute{value: 1 ether}(
             address(entryPoint), 1 ether, abi.encodeWithSignature("depositTo(address)", accountAddress)
         );
@@ -1315,13 +1276,13 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.expectEmit(true, true, false, true);
         emit Deposited(accountAddress, 1 ether);
         // Make the admin of the upgradeable account wallet (deployer) call "depositTo()"
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         account.execute{value: 1 ether}(
             address(entryPoint), 1 ether, abi.encodeWithSignature("depositTo(address)", accountAddress)
         );
         assertEq(1 ether, account.getDeposit());
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         account.execute{value: 1 ether}(
             address(entryPoint),
             0,
@@ -1347,14 +1308,14 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.expectRevert(MustBeGuardian.selector);
         openfortAccount.lock();
 
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         openfortAccount.lock();
 
         assertEq(openfortAccount.isLocked(), true);
         assertEq(openfortAccount.getLock(), block.timestamp + LOCK_PERIOD);
 
         vm.expectRevert(AccountLocked.selector);
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         openfortAccount.lock();
 
         // Automatically unlock
@@ -1375,7 +1336,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.expectRevert(MustBeGuardian.selector);
         openfortAccount.lock();
 
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         openfortAccount.lock();
 
         assertEq(openfortAccount.isLocked(), true);
@@ -1387,14 +1348,14 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         openfortAccount.unlock();
         assertEq(openfortAccount.isLocked(), true);
 
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         openfortAccount.unlock();
 
         assertEq(openfortAccount.isLocked(), false);
         assertEq(openfortAccount.getLock(), 0);
 
         vm.expectRevert(AccountNotLocked.selector);
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         openfortAccount.unlock();
     }
 
@@ -1424,7 +1385,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         // Verify that the number of guardians is still 1 (default)
@@ -1471,7 +1432,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         // Verify that the number of guardians is still 1 (default)
@@ -1516,7 +1477,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         // Verify that the number of guardians is still 1 (default)
@@ -1544,7 +1505,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         // Verify that the number of guardians is still 1 (default)
@@ -1580,7 +1541,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         // Verify that the number of guardians is still 1 (default)
@@ -1592,7 +1553,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         skip(1);
 
         vm.expectRevert();
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         // Now let's check that, even after the revert, it is possible to confirm the proposal (no DoS)
@@ -1626,7 +1587,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         // Verify that the number of guardians is still 1 (default)
@@ -1644,7 +1605,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         vm.expectEmit(true, true, false, true);
         emit GuardianProposalCancelled(friendAccount);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.cancelGuardianProposal(friendAccount);
 
         // Verify that the number of guardians is still 1 (default)
@@ -1652,7 +1613,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Friend account should not be a guardian yet
         assertEq(openfortAccount.isGuardian(friendAccount), false);
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         vm.expectRevert(UnknownProposal.selector);
         openfortAccount.confirmGuardianProposal(friendAccount);
 
@@ -1676,25 +1637,25 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Expect revert because the owner cannot be proposed as guardian
         vm.expectRevert();
-        vm.prank(accountAdmin);
-        openfortAccount.proposeGuardian(accountAdmin);
+        vm.prank(openfortAdmin);
+        openfortAccount.proposeGuardian(openfortAdmin);
 
         // Verify that the number of guardians is still 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
 
         // Owner account should not be a guardian yet
-        assertEq(openfortAccount.isGuardian(accountAdmin), false);
+        assertEq(openfortAccount.isGuardian(openfortAdmin), false);
 
         // Expect revert because the default guardian cannot be proposed again
         vm.expectRevert(DuplicatedGuardian.selector);
-        vm.prank(accountAdmin);
-        openfortAccount.proposeGuardian(OPENFORT_GUARDIAN);
+        vm.prank(openfortAdmin);
+        openfortAccount.proposeGuardian(openfortGuardian);
 
         // Verify that the number of guardians is still 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
 
-        // OPENFORT_GUARDIAN account should still be a guardian
-        assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), true);
+        // openfortGuardian account should still be a guardian
+        assertEq(openfortAccount.isGuardian(openfortGuardian), true);
     }
 
     /*
@@ -1721,7 +1682,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             // Expect that we will see an event containing the friend account and security period
             vm.expectEmit(true, true, false, true);
             emit GuardianProposed(friends[index], block.timestamp + SECURITY_PERIOD);
-            vm.prank(accountAdmin);
+            vm.prank(openfortAdmin);
             openfortAccount.proposeGuardian(friends[index]);
         }
 
@@ -1764,7 +1725,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         skip(1);
@@ -1783,13 +1744,13 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Trying to revoke a non-existent guardian (random beneficiary address)
         vm.expectRevert(MustBeGuardian.selector);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.revokeGuardian(beneficiary);
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.revokeGuardian(friendAccount);
 
         // Anyone can confirm a revocation. However, the security period has not passed yet
@@ -1825,7 +1786,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         skip(1);
@@ -1840,25 +1801,25 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Trying to revoke a guardian not using the owner
         vm.expectRevert("Ownable: caller is not the owner");
-        openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
+        openfortAccount.revokeGuardian(openfortGuardian);
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevocationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
-        openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
+        emit GuardianRevocationRequested(openfortGuardian, block.timestamp + SECURITY_PERIOD);
+        vm.prank(openfortAdmin);
+        openfortAccount.revokeGuardian(openfortGuardian);
 
         // Anyone can confirm a revocation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert(PendingRevokeNotOver.selector);
-        openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+        openfortAccount.confirmGuardianRevocation(openfortGuardian);
 
         // Anyone can confirm a revocation after security period
         skip(SECURITY_PERIOD);
-        openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+        openfortAccount.confirmGuardianRevocation(openfortGuardian);
 
         // Default account is not a guardian anymore
-        assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), false);
+        assertEq(openfortAccount.isGuardian(openfortGuardian), false);
         // Verify that the number of guardians is 1 again
         assertEq(openfortAccount.guardianCount(), 1);
     }
@@ -1879,7 +1840,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         skip(1);
@@ -1898,13 +1859,13 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Trying to revoke a non-existent guardian (random beneficiary address)
         vm.expectRevert(MustBeGuardian.selector);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.revokeGuardian(beneficiary);
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.revokeGuardian(friendAccount);
 
         // Anyone can confirm a revocation. However, the security period has not passed yet
@@ -1923,21 +1884,21 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevocationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
-        openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
+        emit GuardianRevocationRequested(openfortGuardian, block.timestamp + SECURITY_PERIOD);
+        vm.prank(openfortAdmin);
+        openfortAccount.revokeGuardian(openfortGuardian);
 
         // Anyone can confirm a revocation. However, the security period has not passed yet
         skip(1);
         vm.expectRevert(PendingRevokeNotOver.selector);
-        openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+        openfortAccount.confirmGuardianRevocation(openfortGuardian);
 
         // Anyone can confirm a revocation after security period
         skip(SECURITY_PERIOD);
-        openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+        openfortAccount.confirmGuardianRevocation(openfortGuardian);
 
         // Default account is not a guardian anymore
-        assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), false);
+        assertEq(openfortAccount.isGuardian(openfortGuardian), false);
         // Verify that the number of guardians is 1 again
         assertEq(openfortAccount.guardianCount(), 0);
     }
@@ -1958,7 +1919,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         skip(1);
@@ -1968,7 +1929,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.revokeGuardian(friendAccount);
 
         skip(1);
@@ -1999,7 +1960,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         skip(1);
@@ -2014,13 +1975,13 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         // Now let's check that, even after the revert, it is possible to confirm the proposal (no DoS)
         openfortAccount.revokeGuardian(friendAccount);
 
         vm.expectRevert(DuplicatedRevoke.selector);
         skip(1);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.revokeGuardian(friendAccount);
 
         skip(SECURITY_PERIOD);
@@ -2043,32 +2004,32 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianRevocationRequested(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        emit GuardianRevocationRequested(openfortGuardian, block.timestamp + SECURITY_PERIOD);
+        vm.prank(openfortAdmin);
         // Now let's check that, even after the revert, it is possible to confirm the proposal (no DoS)
-        openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
+        openfortAccount.revokeGuardian(openfortGuardian);
 
         skip(SECURITY_PERIOD + 1);
-        openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+        openfortAccount.confirmGuardianRevocation(openfortGuardian);
 
         // Verify that the number of guardians is now 0
         assertEq(openfortAccount.guardianCount(), 0);
         // default (openfort) account should not be a guardian anymore
-        assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), false);
+        assertEq(openfortAccount.isGuardian(openfortGuardian), false);
 
         // Expect that we will see an event containing the default (openfort) account and security period
         vm.expectEmit(true, true, false, true);
-        emit GuardianProposed(OPENFORT_GUARDIAN, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
-        openfortAccount.proposeGuardian(OPENFORT_GUARDIAN);
+        emit GuardianProposed(openfortGuardian, block.timestamp + SECURITY_PERIOD);
+        vm.prank(openfortAdmin);
+        openfortAccount.proposeGuardian(openfortGuardian);
 
         skip(SECURITY_PERIOD + 1);
-        openfortAccount.confirmGuardianProposal(OPENFORT_GUARDIAN);
+        openfortAccount.confirmGuardianProposal(openfortGuardian);
 
         // Verify that the number of guardians is now 1 again
         assertEq(openfortAccount.guardianCount(), 1);
         // default (openfort) account should be a guardian again
-        assertEq(openfortAccount.isGuardian(OPENFORT_GUARDIAN), true);
+        assertEq(openfortAccount.isGuardian(openfortGuardian), true);
     }
 
     /*
@@ -2087,7 +2048,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         skip(1);
@@ -2105,13 +2066,13 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Trying to revoke a non-existent guardian (random beneficiary address)
         vm.expectRevert(MustBeGuardian.selector);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.revokeGuardian(beneficiary);
 
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianRevocationRequested(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.revokeGuardian(friendAccount);
 
         // Anyone can confirm a revocation. However, the security period has not passed yet
@@ -2125,7 +2086,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianRevocationCancelled(friendAccount);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.cancelGuardianRevocation(friendAccount);
 
         // Friend account is not a guardian anymore
@@ -2155,7 +2116,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         (friendAccount2, friendAccount2PK) = makeAddrAndKey("friend2");
 
         // Adding and removing guardians
-        vm.startPrank(accountAdmin);
+        vm.startPrank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
         openfortAccount.proposeGuardian(friendAccount2);
         vm.stopPrank();
@@ -2170,13 +2131,13 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.expectRevert(UnknownRevoke.selector);
         openfortAccount.confirmGuardianRevocation(friendAccount);
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         vm.expectRevert(MustBeGuardian.selector);
         openfortAccount.revokeGuardian(friendAccount2); // Notice this tries to revoke a non-existent guardian!
         vm.expectRevert(DuplicatedGuardian.selector);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount); // Notice this tries to register a guardian AGAIN!
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.revokeGuardian(friendAccount); // Starting a valid revocation process
         skip(SECURITY_PERIOD + 1);
 
@@ -2196,13 +2157,13 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
 
         vm.expectRevert(MustBeGuardian.selector);
-        openfortAccount.startRecovery(OPENFORT_GUARDIAN);
+        openfortAccount.startRecovery(openfortGuardian);
 
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         vm.expectRevert(GuardianCannotBeOwner.selector);
-        openfortAccount.startRecovery(OPENFORT_GUARDIAN);
+        openfortAccount.startRecovery(openfortGuardian);
 
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         openfortAccount.startRecovery(address(beneficiary));
 
         assertEq(openfortAccount.isLocked(), true);
@@ -2214,7 +2175,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     function testBasicChecksCompleteRecovery() public {
         IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
 
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         openfortAccount.startRecovery(address(beneficiary));
 
         assertEq(openfortAccount.isLocked(), true);
@@ -2244,7 +2205,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
 
         // Default Openfort guardian starts a recovery process because the owner lost the PK
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         openfortAccount.startRecovery(address(beneficiary));
         assertEq(openfortAccount.isLocked(), true);
 
@@ -2253,7 +2214,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         );
 
         bytes[] memory signatures = new bytes[](1);
-        signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, OPENFORT_GUARDIAN_PKEY);
+        signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, openfortGuardianKey);
 
         skip(RECOVERY_PERIOD + 1);
         openfortAccount.completeRecovery(signatures);
@@ -2284,11 +2245,11 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             // Expect that we will see an event containing the friend account and security period
             vm.expectEmit(true, true, false, true);
             emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-            vm.prank(accountAdmin);
+            vm.prank(openfortAdmin);
             openfortAccount.proposeGuardian(friendAccount);
             vm.expectEmit(true, true, false, true);
             emit GuardianProposed(friendAccount2, block.timestamp + SECURITY_PERIOD);
-            vm.prank(accountAdmin);
+            vm.prank(openfortAdmin);
             openfortAccount.proposeGuardian(friendAccount2);
 
             skip(1);
@@ -2299,7 +2260,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         {
             // Default Openfort guardian starts a recovery process because the owner lost the PK
-            vm.prank(OPENFORT_GUARDIAN);
+            vm.prank(openfortGuardian);
             openfortAccount.startRecovery(address(beneficiary));
             assertEq(openfortAccount.isLocked(), true);
         }
@@ -2342,11 +2303,11 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             // Expect that we will see an event containing the friend account and security period
             vm.expectEmit(true, true, false, true);
             emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-            vm.prank(accountAdmin);
+            vm.prank(openfortAdmin);
             openfortAccount.proposeGuardian(friendAccount);
             vm.expectEmit(true, true, false, true);
             emit GuardianProposed(friendAccount2, block.timestamp + SECURITY_PERIOD);
-            vm.prank(accountAdmin);
+            vm.prank(openfortAdmin);
             openfortAccount.proposeGuardian(friendAccount2);
 
             skip(1);
@@ -2357,7 +2318,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         {
             // Default Openfort guardian starts a recovery process because the owner lost the PK
-            vm.prank(OPENFORT_GUARDIAN);
+            vm.prank(openfortGuardian);
             openfortAccount.startRecovery(address(beneficiary));
             assertEq(openfortAccount.isLocked(), true);
         }
@@ -2376,7 +2337,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // it should still be locked and the admin still be the same
         assertEq(openfortAccount.isLocked(), true);
-        assertEq(openfortAccount.owner(), accountAdmin);
+        assertEq(openfortAccount.owner(), openfortAdmin);
     }
 
     /*
@@ -2403,7 +2364,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Adding and removing guardians
         {
-            vm.startPrank(accountAdmin);
+            vm.startPrank(openfortAdmin);
             openfortAccount.proposeGuardian(friendAccount);
             openfortAccount.proposeGuardian(friendAccount2);
             openfortAccount.proposeGuardian(friendAccount3);
@@ -2416,12 +2377,12 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             openfortAccount.confirmGuardianProposal(friendAccount3);
             openfortAccount.confirmGuardianProposal(friendAccount4);
 
-            vm.prank(accountAdmin);
-            openfortAccount.revokeGuardian(OPENFORT_GUARDIAN);
+            vm.prank(openfortAdmin);
+            openfortAccount.revokeGuardian(openfortGuardian);
             vm.expectRevert(PendingRevokeNotOver.selector);
-            openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+            openfortAccount.confirmGuardianRevocation(openfortGuardian);
             skip(SECURITY_PERIOD + 1);
-            openfortAccount.confirmGuardianRevocation(OPENFORT_GUARDIAN);
+            openfortAccount.confirmGuardianRevocation(openfortGuardian);
         }
 
         // Start the recovery process
@@ -2429,7 +2390,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             // Default Openfort guardian tries starts a recovery process because the owner lost the PK
             // It should not work as it is not a guardian anymore
             vm.expectRevert(MustBeGuardian.selector);
-            vm.prank(OPENFORT_GUARDIAN);
+            vm.prank(openfortGuardian);
             openfortAccount.startRecovery(address(beneficiary));
             vm.prank(friendAccount2);
             openfortAccount.startRecovery(address(beneficiary));
@@ -2473,11 +2434,11 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
             // Expect that we will see an event containing the friend account and security period
             vm.expectEmit(true, true, false, true);
             emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-            vm.prank(accountAdmin);
+            vm.prank(openfortAdmin);
             openfortAccount.proposeGuardian(friendAccount);
             vm.expectEmit(true, true, false, true);
             emit GuardianProposed(friendAccount2, block.timestamp + SECURITY_PERIOD);
-            vm.prank(accountAdmin);
+            vm.prank(openfortAdmin);
             openfortAccount.proposeGuardian(friendAccount2);
 
             skip(1);
@@ -2488,14 +2449,14 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         {
             // Default Openfort guardian starts a recovery process because the owner lost the PK
-            vm.prank(OPENFORT_GUARDIAN);
+            vm.prank(openfortGuardian);
             openfortAccount.startRecovery(address(beneficiary));
             assertEq(openfortAccount.isLocked(), true);
         }
 
         // notice: wrong new oner!!!
         bytes32 structHash =
-            keccak256(abi.encode(RECOVER_TYPEHASH, factoryAdmin, uint64(block.timestamp + RECOVERY_PERIOD), uint32(2)));
+            keccak256(abi.encode(RECOVER_TYPEHASH, openfortAdmin, uint64(block.timestamp + RECOVERY_PERIOD), uint32(2)));
 
         bytes[] memory signatures = new bytes[](2);
         signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address
@@ -2507,7 +2468,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // it should still be locked and the admin still be the same
         assertEq(openfortAccount.isLocked(), true);
-        assertEq(openfortAccount.owner(), accountAdmin);
+        assertEq(openfortAccount.owner(), openfortAdmin);
     }
 
     /*
@@ -2517,14 +2478,14 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
 
         // Default Openfort guardian starts a recovery process because the owner lost the PK
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         openfortAccount.startRecovery(address(beneficiary));
         assertEq(openfortAccount.isLocked(), true);
 
         vm.expectRevert("Ownable: caller is not the owner");
         openfortAccount.cancelRecovery();
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.cancelRecovery();
 
         bytes32 structHash = keccak256(
@@ -2532,14 +2493,14 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         );
 
         bytes[] memory signatures = new bytes[](1);
-        signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, OPENFORT_GUARDIAN_PKEY);
+        signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, openfortGuardianKey);
 
         skip(RECOVERY_PERIOD + 1);
         vm.expectRevert(NoOngoingRecovery.selector);
         openfortAccount.completeRecovery(signatures);
 
         assertEq(openfortAccount.isLocked(), false);
-        assertEq(openfortAccount.owner(), accountAdmin);
+        assertEq(openfortAccount.owner(), openfortAdmin);
     }
 
     /*
@@ -2549,18 +2510,18 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
 
         // Default Openfort guardian starts a recovery process because the owner lost the PK
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         openfortAccount.startRecovery(address(beneficiary));
         assertEq(openfortAccount.isLocked(), true);
 
         // Calling startRecovery() again should revert and have no effect
         vm.expectRevert(OngoingRecovery.selector);
-        vm.prank(OPENFORT_GUARDIAN);
+        vm.prank(openfortGuardian);
         openfortAccount.startRecovery(address(beneficiary));
 
         // The accounts should still be locked
         assertEq(openfortAccount.isLocked(), true);
-        assertEq(openfortAccount.owner(), accountAdmin);
+        assertEq(openfortAccount.owner(), openfortAdmin);
     }
 
     /**
@@ -2580,7 +2541,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Expect that we will see an event containing the friend account and security period
         vm.expectEmit(true, true, false, true);
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
 
         skip(1);
@@ -2605,7 +2566,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.expectRevert("Ownable: caller is not the owner");
         openfortAccount.transferOwnership(newOwner);
 
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.transferOwnership(newOwner);
 
         vm.prank(newOwner);
@@ -2630,7 +2591,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
 
         // Original owner registers a session key
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist);
 
         // Using the session key
@@ -2647,7 +2608,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Register a new owner
         address newOwner = makeAddr("newOwner");
-        vm.prank(accountAdmin);
+        vm.prank(openfortAdmin);
         openfortAccount.transferOwnership(newOwner);
         vm.prank(newOwner);
         openfortAccount.acceptOwnership();
@@ -2677,11 +2638,11 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Verify that the totalSupply is still 0
         assertEq(mockERC20.totalSupply(), 0);
 
-        address accountAddress2 = openfortFactory.createAccountWithNonce(accountAdmin, "2", true);
+        address accountAddress2 = openfortFactory.createAccountWithNonce(openfortAdmin, "2", true);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             accountAddress,
-            accountAdminPKey,
+            openfortAdminPKey,
             bytes(""),
             address(mockERC20),
             0,
@@ -2703,7 +2664,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         userOp = _setupUserOpExecute(
             accountAddress,
-            accountAdminPKey,
+            openfortAdminPKey,
             bytes(""),
             address(mockERC20),
             0,
@@ -2728,11 +2689,11 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     function testTransferERC721BetweenAccounts() public {
         assertEq(mockERC721.balanceOf(accountAddress), 0);
 
-        address accountAddress2 = openfortFactory.createAccountWithNonce(accountAdmin, "2", true);
+        address accountAddress2 = openfortFactory.createAccountWithNonce(openfortAdmin, "2", true);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             accountAddress,
-            accountAdminPKey,
+            openfortAdminPKey,
             bytes(""),
             address(mockERC721),
             0,
@@ -2754,7 +2715,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         userOp = _setupUserOpExecute(
             accountAddress,
-            accountAdminPKey,
+            openfortAdminPKey,
             bytes(""),
             address(mockERC721),
             0,
@@ -2771,7 +2732,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         userOp = _setupUserOpExecute(
             accountAddress2,
-            accountAdminPKey,
+            openfortAdminPKey,
             bytes(""),
             address(mockERC721),
             0,
@@ -2793,11 +2754,11 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     function testTransferERC1155BetweenAccounts() public {
         assertEq(mockERC1155.balanceOf(accountAddress, 1), 0);
 
-        address accountAddress2 = openfortFactory.createAccountWithNonce(accountAdmin, "2", true);
+        address accountAddress2 = openfortFactory.createAccountWithNonce(openfortAdmin, "2", true);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             accountAddress,
-            accountAdminPKey,
+            openfortAdminPKey,
             bytes(""),
             address(mockERC1155),
             0,
@@ -2819,7 +2780,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         userOp = _setupUserOpExecute(
             accountAddress,
-            accountAdminPKey,
+            openfortAdminPKey,
             bytes(""),
             address(mockERC1155),
             0,
@@ -2843,11 +2804,11 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     function testTransferERC1155BetweenAccountsBatch() public {
         assertEq(mockERC1155.balanceOf(accountAddress, 1), 0);
 
-        address accountAddress2 = openfortFactory.createAccountWithNonce(accountAdmin, "2", true);
+        address accountAddress2 = openfortFactory.createAccountWithNonce(openfortAdmin, "2", true);
 
-        mockERC1155.mint(accountAdmin, 1, 2);
+        mockERC1155.mint(openfortAdmin, 1, 2);
 
-        assertEq(mockERC1155.balanceOf(accountAdmin, 1), 2);
+        assertEq(mockERC1155.balanceOf(openfortAdmin, 1), 2);
         assertEq(mockERC1155.balanceOf(accountAddress2, 1), 0);
 
         uint256[] memory ids = new uint256[](2);
@@ -2857,21 +2818,11 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         amounts[0] = 1;
         amounts[1] = 1;
 
-        vm.prank(accountAdmin);
-        mockERC1155.safeBatchTransferFrom(accountAdmin, accountAddress2, ids, amounts, "");
+        vm.prank(openfortAdmin);
+        mockERC1155.safeBatchTransferFrom(openfortAdmin, accountAddress2, ids, amounts, "");
 
-        assertEq(mockERC1155.balanceOf(accountAdmin, 1), 0);
+        assertEq(mockERC1155.balanceOf(openfortAdmin, 1), 0);
         assertEq(mockERC1155.balanceOf(accountAddress2, 1), 2);
-    }
-
-    /*
-     * Test for coverage purposes.
-     * SimpleNFT is an NFT contract used by Openfort in some internal tests
-     */
-    function testSimpleNFT() public {
-        SimpleNFT simpleNFT = new SimpleNFT();
-        simpleNFT.mint(accountAddress);
-        assertEq(simpleNFT.balanceOf(accountAddress), 1);
     }
 
     function testSupportsInterface() public {
@@ -2887,11 +2838,11 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.expectRevert();
         openfortFactory.updateInitialGuardian(vm.addr(2));
 
-        vm.prank(factoryAdmin);
+        vm.prank(openfortAdmin);
         vm.expectRevert();
         openfortFactory.updateInitialGuardian(address(0));
 
-        vm.prank(factoryAdmin);
-        openfortFactory.updateInitialGuardian(address(accountAdmin));
+        vm.prank(openfortAdmin);
+        openfortFactory.updateInitialGuardian(address(openfortAdmin));
     }
 }
