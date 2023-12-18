@@ -2506,4 +2506,28 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         assertTrue(account.supportsInterface(type(IERC165).interfaceId));
         assertFalse(account.supportsInterface(bytes4(0x0000)));
     }
+
+    /*
+     * Testcase where a pending owner is proposed as guardian. It used to work, should fail now.
+     * From the CertiK audit, issue BRA-01
+     */
+    function testFailAddPendingOwnerAsGuardian() public {
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
+
+        address newOwner = makeAddr("newOwner");
+        vm.prank(openfortAdmin);
+        openfortAccount.transferOwnership(newOwner);
+
+        vm.prank(openfortAdmin);
+        openfortAccount.proposeGuardian(newOwner);
+
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(newOwner);
+
+        vm.prank(newOwner);
+        openfortAccount.acceptOwnership();
+
+        assertEq(openfortAccount.isGuardian(newOwner), true);
+        assertEq(openfortAccount.owner(), newOwner);
+    }
 }
