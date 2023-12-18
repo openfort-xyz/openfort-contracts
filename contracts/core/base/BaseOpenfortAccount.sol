@@ -105,12 +105,13 @@ abstract contract BaseOpenfortAccount is
     /*
      * @notice Return whether a sessionKey is valid.
      */
-    function isValidSessionKey(address _sessionKey, bytes calldata _callData) public virtual returns (bool) {
+    function isValidSessionKey(address _sessionKey, bytes calldata _callData) internal virtual returns (bool) {
         SessionKeyStruct storage sessionKey = sessionKeys[_sessionKey];
         // If not owner and the session key is revoked, return false
         if (sessionKey.validUntil == 0) return false;
 
         // If the sessionKey was not registered by the owner, return false
+        // If the account is transferred or sold, isValidSessionKey() will return false with old session keys
         if (sessionKey.registrarAddress != owner()) return false;
 
         // If the signer is a session key that is still valid
@@ -218,7 +219,9 @@ abstract contract BaseOpenfortAccount is
         address[] calldata _whitelist
     ) external virtual {
         _requireFromEntryPointOrOwner();
-
+        require(_validUntil > block.timestamp, "Cannot register an expired session key");
+        require(_validAfter < _validUntil, "_validAfter must be lower than _validUntil");
+        require(sessionKeys[_key].validUntil == 0, "SessionKey already registered");
         require(_whitelist.length < 11, "Whitelist too big");
         uint256 i;
         for (i; i < _whitelist.length;) {
@@ -228,10 +231,11 @@ abstract contract BaseOpenfortAccount is
             }
         }
         if (i != 0) {
-            // If there was some whitelisting, it is not a masterSessionKey
+            // If there is some whitelisting, it is not a masterSessionKey
             sessionKeys[_key].whitelisting = true;
             sessionKeys[_key].masterSessionKey = false;
         } else {
+            // If there is some limit, it is not a masterSessionKey
             if (_limit == ((2 ** 48) - 1)) sessionKeys[_key].masterSessionKey = true;
             else sessionKeys[_key].masterSessionKey = false;
         }
