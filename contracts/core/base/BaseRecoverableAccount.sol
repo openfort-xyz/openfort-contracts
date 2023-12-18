@@ -224,7 +224,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
 
         if (
             guardiansConfig.info[_guardian].pending != 0
-                && block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow
+                && block.timestamp <= guardiansConfig.info[_guardian].pending + securityWindow
         ) {
             revert DuplicatedProposal();
         }
