@@ -9,7 +9,6 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 import {IERC777Recipient} from "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
-import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {IBaseRecoverableAccount} from "contracts/interfaces/IBaseRecoverableAccount.sol";
 import {IUpgradeableOpenfortAccount} from "contracts/interfaces/IUpgradeableOpenfortAccount.sol";
 import {OpenfortErrorsAndEvents} from "contracts/interfaces/OpenfortErrorsAndEvents.sol";
@@ -40,7 +39,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         UpgradeableOpenfortDeploy upgradeableOpenfortDeploy = new UpgradeableOpenfortDeploy();
         (upgradeableOpenfortAccountImpl, openfortFactory) = upgradeableOpenfortDeploy.run();
 
-        // Create an upgradeable account wallet and get its address
+        // Create an upgradeable account and get its address
         vm.prank(openfortAdmin);
         accountAddress = openfortFactory.createAccountWithNonce(openfortAdmin, "1", true);
     }

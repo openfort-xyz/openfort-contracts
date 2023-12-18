@@ -5,7 +5,6 @@ import {console} from "lib/forge-std/src/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 import {IEntryPoint, UserOperation} from "account-abstraction/core/EntryPoint.sol";
-import {TestCounter} from "account-abstraction/test/TestCounter.sol";
 import {IBaseRecoverableAccount} from "contracts/interfaces/IBaseRecoverableAccount.sol";
 import {ManagedOpenfortAccount} from "contracts/core/managed/ManagedOpenfortAccount.sol";
 import {ManagedOpenfortFactory} from "contracts/core/managed/ManagedOpenfortFactory.sol";
@@ -39,7 +38,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         ManagedOpenfortDeploy managedOpenfortDeploy = new ManagedOpenfortDeploy();
         (managedOpenfortAccountImpl, openfortFactory) = managedOpenfortDeploy.run();
 
-        // Create a managed account wallet and get its address
+        // Create a managed account and get its address
         vm.prank(openfortAdmin);
         accountAddress = openfortFactory.createAccountWithNonce(openfortAdmin, "1", true);
     }
