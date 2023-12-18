@@ -91,7 +91,7 @@ abstract contract BaseOpenfortAccount is
         // If the signer is a session key that is still valid
         if (
             sessionKey.validUntil == 0 || sessionKey.validAfter > block.timestamp
-                || sessionKey.validUntil < block.timestamp || sessionKey.limit < 1
+                || sessionKey.validUntil < block.timestamp || (!sessionKey.masterSessionKey && sessionKey.limit < 1)
         ) {
             return 0xffffffff;
         } // Not owner or session key revoked
