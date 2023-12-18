@@ -1699,6 +1699,48 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     }
 
     /*
+     * Test proposing a guardian and cancel its REVOKATION (which should not make sense).
+     * Related to BRA-02 isee form CertiK audit.
+     */
+    function testFailBRA02Issue() public {
+        IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
+
+        // Verify that the number of guardians is 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+
+        // Create a friend EOA
+        address friendAccount = makeAddr("friend");
+
+        // Trying to propose a guardian not using the owner
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Expect that we will see an event containing the friend account and security period
+        vm.expectEmit(true, true, false, true);
+        emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
+        vm.prank(openfortAdmin);
+        openfortAccount.proposeGuardian(friendAccount);
+
+        // Verify that the number of guardians is still 1 (default)
+        assertEq(openfortAccount.guardianCount(), 1);
+        // Friend account should not be a guardian yet
+        assertEq(openfortAccount.isGuardian(friendAccount), false);
+
+        skip(1);
+        vm.expectRevert(PendingProposalNotOver.selector);
+        openfortAccount.confirmGuardianProposal(friendAccount);
+
+        skip(SECURITY_PERIOD);
+        vm.expectRevert("Ownable: caller is not the owner");
+        openfortAccount.cancelGuardianRevocation(friendAccount);
+
+        vm.expectEmit(true, true, false, true);
+        emit GuardianRevocationCancelled(friendAccount);
+        vm.prank(openfortAdmin);
+        openfortAccount.cancelGuardianRevocation(friendAccount);
+    }
+
+    /*
      * Test proposing owner as guardian. It should revert.
      * Successfully propose a guardian and confirm it after SECURITY_PERIOD
      */
