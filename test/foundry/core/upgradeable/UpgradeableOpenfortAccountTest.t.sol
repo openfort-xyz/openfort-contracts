@@ -1258,6 +1258,74 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         assertEq(valid, MAGICVALUE); // SHOULD PASS
     }
 
+    function testisValidSignatureTypedSessionKeyNotRegistered() public {
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
+        IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
+
+        // Original owner registers a session key
+        vm.prank(openfortAdmin);
+        openfortAccount.registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist);
+
+        string memory messageToSign = "Signed by Owner";
+        bytes32 hash = keccak256(abi.encodePacked(messageToSign));
+
+        bytes32 structHash = keccak256(abi.encode(OF_MSG_TYPEHASH, hash));
+
+        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+            IERC5267(accountAddress).eip712Domain();
+
+        bytes32 domainSeparator = keccak256(
+            abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
+        );
+
+        bytes memory signature = getEIP712SignatureFrom(accountAddress, structHash, sessionKeyPrivKey);
+        bytes32 hash712 = domainSeparator.toTypedDataHash(structHash);
+        address signer = hash712.recover(signature);
+
+        assertEq(sessionKey, signer); // [PASS]
+
+        bytes4 valid = IBaseRecoverableAccount(payable(accountAddress)).isValidSignature(hash, signature);
+        assertNotEq(valid, bytes4(0xffffffff)); // SHOULD PASS
+        assertEq(valid, MAGICVALUE); // SHOULD PASS
+    }
+
+    function testisValidSignatureTypedSessionKey() public {
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+
+        // address[] memory emptyWhitelist;
+        // IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
+        // Original owner registers a session key
+        // vm.prank(openfortAdmin);
+        // openfortAccount.registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist);
+
+        string memory messageToSign = "Signed by Owner";
+        bytes32 hash = keccak256(abi.encodePacked(messageToSign));
+
+        bytes32 structHash = keccak256(abi.encode(OF_MSG_TYPEHASH, hash));
+
+        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+            IERC5267(accountAddress).eip712Domain();
+
+        bytes32 domainSeparator = keccak256(
+            abi.encode(_TYPE_HASH, keccak256(bytes(name)), keccak256(bytes(version)), chainId, verifyingContract)
+        );
+
+        bytes memory signature = getEIP712SignatureFrom(accountAddress, structHash, sessionKeyPrivKey);
+        bytes32 hash712 = domainSeparator.toTypedDataHash(structHash);
+        address signer = hash712.recover(signature);
+
+        assertEq(sessionKey, signer); // [PASS]
+
+        bytes4 valid = IBaseRecoverableAccount(payable(accountAddress)).isValidSignature(hash, signature);
+        assertEq(valid, bytes4(0xffffffff)); // SHOULD PASS
+        assertNotEq(valid, MAGICVALUE); // SHOULD PASS
+    }
+
     function testAddDeposit() public {
         IBaseRecoverableAccount account = IBaseRecoverableAccount(payable(accountAddress));
         assertEq(0, account.getDeposit());
