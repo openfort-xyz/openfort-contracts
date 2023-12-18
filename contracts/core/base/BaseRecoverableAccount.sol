@@ -257,6 +257,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      */
     function cancelGuardianProposal(address _guardian) external onlyOwner {
         if (isLocked()) revert AccountLocked();
+        if (isGuardian(_guardian)) revert UnknownProposal();
         if (guardiansConfig.info[_guardian].pending == 0) revert UnknownProposal();
         guardiansConfig.info[_guardian].pending = 0;
         emit GuardianProposalCancelled(_guardian);
@@ -308,6 +309,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      */
     function cancelGuardianRevocation(address _guardian) external onlyOwner {
         if (isLocked()) revert AccountLocked();
+        if (!isGuardian(_guardian)) revert UnknownRevoke();
         if (guardiansConfig.info[_guardian].pending == 0) revert UnknownRevoke();
         guardiansConfig.info[_guardian].pending = 0;
         emit GuardianRevocationCancelled(_guardian);
