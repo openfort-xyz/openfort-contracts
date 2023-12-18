@@ -539,7 +539,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.expectRevert("Cannot register an expired session key");
         // Register a session key valid from 10 to 20 at time 30, should fail.
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 10, 20, 100, emptyWhitelist);
-        
+
         vm.prank(openfortAdmin);
         // Register a session key valid from 10 to 50 at time 30, should work.
         IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 10, 50, 100, emptyWhitelist);
