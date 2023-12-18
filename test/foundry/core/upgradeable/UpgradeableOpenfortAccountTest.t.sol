@@ -2844,4 +2844,28 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         vm.prank(openfortAdmin);
         openfortFactory.updateInitialGuardian(address(openfortAdmin));
     }
+
+    /*
+     * Testcase where a pending owner is proposed as guardian. It used to work, should fail now.
+     * From the CertiK audit, issue BRA-01
+     */
+    function testFailAddPendingOwnerAsGuardian() public {
+        IBaseRecoverableAccount openfortAccount = IBaseRecoverableAccount(payable(accountAddress));
+
+        address newOwner = makeAddr("newOwner");
+        vm.prank(openfortAdmin);
+        openfortAccount.transferOwnership(newOwner);
+
+        vm.prank(openfortAdmin);
+        openfortAccount.proposeGuardian(newOwner);
+
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(newOwner);
+
+        vm.prank(newOwner);
+        openfortAccount.acceptOwnership();
+
+        assertEq(openfortAccount.isGuardian(newOwner), true);
+        assertEq(openfortAccount.owner(), newOwner);
+    }
 }

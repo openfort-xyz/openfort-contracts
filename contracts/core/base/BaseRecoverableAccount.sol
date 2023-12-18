@@ -218,6 +218,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
     function proposeGuardian(address _guardian) external onlyOwner {
         if (isLocked()) revert AccountLocked();
         if (owner() == _guardian) revert GuardianCannotBeOwner();
+        if (pendingOwner() == _guardian) revert GuardianCannotBeOwner();
         if (isGuardian(_guardian)) revert DuplicatedGuardian();
         if (_guardian == address(0)) revert ZeroAddressNotAllowed();
 
