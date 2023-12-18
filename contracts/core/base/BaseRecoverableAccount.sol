@@ -270,6 +270,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      */
     function revokeGuardian(address _guardian) external onlyOwner {
         if (!isGuardian(_guardian)) revert MustBeGuardian();
+        if (isLocked()) revert AccountLocked();
         if (
             guardiansConfig.info[_guardian].pending > 0
                 && block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow
@@ -286,6 +287,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      */
     function confirmGuardianRevocation(address _guardian) external {
         if (guardiansConfig.info[_guardian].pending == 0) revert UnknownRevoke();
+        if (isLocked()) revert AccountLocked();
         if (!isGuardian(_guardian)) revert MustBeGuardian();
         if (guardiansConfig.info[_guardian].pending > block.timestamp) revert PendingRevokeNotOver();
         if (block.timestamp > guardiansConfig.info[_guardian].pending + securityWindow) revert PendingRevokeExpired();
