@@ -534,9 +534,17 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
         address[] memory emptyWhitelist;
 
-        vm.warp(100);
+        vm.warp(30);
         vm.prank(openfortAdmin);
-        IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 0, 99, 100, emptyWhitelist);
+        vm.expectRevert("Cannot register an expired session key");
+        // Register a session key valid from 10 to 20 at time 30, should fail.
+        IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 10, 20, 100, emptyWhitelist);
+        
+        vm.prank(openfortAdmin);
+        // Register a session key valid from 10 to 50 at time 30, should work.
+        IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(sessionKey, 10, 50, 100, emptyWhitelist);
+
+        vm.warp(200);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
