@@ -329,12 +329,18 @@ contract ERC6551OpenfortAccountTest is OpenfortBaseTest {
         assertTrue(erc6551OpenfortAccount.supportsInterface(type(IERC1155Receiver).interfaceId));
         assertTrue(erc6551OpenfortAccount.supportsInterface(type(IERC165).interfaceId));
         assertFalse(erc6551OpenfortAccount.supportsInterface(bytes4(0x0000)));
-        assertEq(erc6551OpenfortAccount.onERC1155Received(address(0), address(0), 0, 0, ""), bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)")));
+        assertEq(
+            erc6551OpenfortAccount.onERC1155Received(address(0), address(0), 0, 0, ""),
+            bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"))
+        );
         uint256[] memory ids = new uint256[](1);
         ids[0] = 1;
         uint256[] memory values = new uint256[](1);
         values[0] = 1;
-        assertEq(erc6551OpenfortAccount.onERC1155BatchReceived(address(0), address(0), ids, values, ""), bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)")));
+        assertEq(
+            erc6551OpenfortAccount.onERC1155BatchReceived(address(0), address(0), ids, values, ""),
+            bytes4(keccak256("onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)"))
+        );
     }
 
     function testUpdateEntryPoint() public {
