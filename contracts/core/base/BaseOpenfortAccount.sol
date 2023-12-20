@@ -120,6 +120,14 @@ abstract contract BaseOpenfortAccount is
             _callData[0] | (bytes4(_callData[1]) >> 8) | (bytes4(_callData[2]) >> 16) | (bytes4(_callData[3]) >> 24);
 
         if (funcSelector == EXECUTE_SELECTOR) {
+            address toContract;
+            (toContract,,) = abi.decode(_callData[4:], (address, uint256, bytes));
+            // Check if reenter, do not allow
+            if (toContract == address(this)) return false;
+
+            // Check if it is a masterSessionKey
+            if (sessionKey.masterSessionKey) return true;
+
             // Limit of transactions per sessionKey reached
             if (sessionKey.limit == 0) return false;
             // Deduct one use of the limit for the given session key
@@ -127,42 +135,29 @@ abstract contract BaseOpenfortAccount is
                 sessionKey.limit = sessionKey.limit - 1;
             }
 
-            // Check if it is a masterSessionKey
-            if (sessionKey.masterSessionKey) {
-                return true;
-            }
-
-            // If it is not a masterSessionKey, let's check for whitelisting and reentrancy
-            address toContract;
-            (toContract,,) = abi.decode(_callData[4:], (address, uint256, bytes));
-            if (toContract == address(this)) {
-                return false;
-            } // Only masterSessionKey can reenter
-
             // If there is no whitelist or there is, but the target is whitelisted, return true
-            if (!sessionKey.whitelisting || sessionKey.whitelist[toContract]) {
-                return true;
-            }
+            if (!sessionKey.whitelisting || sessionKey.whitelist[toContract]) return true;
 
             return false; // All other cases, deny
         } else if (funcSelector == EXECUTEBATCH_SELECTOR) {
             (address[] memory toContracts,,) = abi.decode(_callData[4:], (address[], uint256[], bytes[]));
             // Check if limit of transactions per sessionKey reached
             if (sessionKey.limit < toContracts.length || toContracts.length > 9) return false;
-            unchecked {
-                sessionKey.limit = sessionKey.limit - SafeCastUpgradeable.toUint48(toContracts.length);
+            if (!sessionKey.masterSessionKey) {
+                unchecked {
+                    sessionKey.limit = sessionKey.limit - SafeCastUpgradeable.toUint48(toContracts.length);
+                }
             }
 
-            // Check if it is a masterSessionKey (no whitelist applies)
-            if (sessionKey.masterSessionKey) return true;
             uint256 i;
             for (i; i < toContracts.length;) {
-                if (toContracts[i] == address(this)) {
+                // Check if reenter, do not allow
+                if (toContracts[i] == address(this)) return false;
+
+                // If not masterSessionKey, check whitelist
+                if (!sessionKey.masterSessionKey && sessionKey.whitelisting && !sessionKey.whitelist[toContracts[i]]) {
                     return false;
-                } // Only masterSessionKey can reenter
-                if (sessionKey.whitelisting && !sessionKey.whitelist[toContracts[i]]) {
-                    return false;
-                } // One contract's not in the sessionKey's whitelist (if any)
+                }
                 unchecked {
                     ++i;
                 }
