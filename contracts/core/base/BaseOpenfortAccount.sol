@@ -141,9 +141,9 @@ abstract contract BaseOpenfortAccount is
             return false; // All other cases, deny
         } else if (funcSelector == EXECUTEBATCH_SELECTOR) {
             (address[] memory toContracts,,) = abi.decode(_callData[4:], (address[], uint256[], bytes[]));
-            // Check if limit of transactions per sessionKey reached
-            if (sessionKey.limit < toContracts.length || toContracts.length > 9) return false;
             if (!sessionKey.masterSessionKey) {
+                // Check if limit of transactions per sessionKey reached
+                if (sessionKey.limit < toContracts.length || toContracts.length > 9) return false;
                 unchecked {
                     sessionKey.limit = sessionKey.limit - SafeCastUpgradeable.toUint48(toContracts.length);
                 }
