@@ -420,6 +420,12 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
     function transferOwnership(address _newOwner) public override {
         if (isLocked()) revert AccountLocked();
         if (isGuardian(_newOwner)) revert GuardianCannotBeOwner();
+        if (
+            guardiansConfig.info[_newOwner].pending != 0
+                && block.timestamp <= guardiansConfig.info[_newOwner].pending + securityWindow
+        ) {
+            revert GuardianCannotBeOwner();
+        }
         super.transferOwnership(_newOwner);
     }
 
