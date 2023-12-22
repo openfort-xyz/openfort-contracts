@@ -104,6 +104,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
             revert InsecurePeriod();
         }
         emit EntryPointUpdated(entrypointContract, _entrypoint);
+        __Ownable2Step_init();
         _transferOwnership(_defaultAdmin);
         entrypointContract = _entrypoint;
         __EIP712_init("Openfort", "0.5");
