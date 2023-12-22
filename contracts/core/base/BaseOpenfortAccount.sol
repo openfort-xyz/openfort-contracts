@@ -141,16 +141,18 @@ abstract contract BaseOpenfortAccount is
             return false; // All other cases, deny
         } else if (funcSelector == EXECUTEBATCH_SELECTOR) {
             (address[] memory toContracts,,) = abi.decode(_callData[4:], (address[], uint256[], bytes[]));
+            uint256 numberOfInteractions = toContracts.length;
+            if (numberOfInteractions > 9) return false;
             if (!sessionKey.masterSessionKey) {
-                // Check if limit of transactions per sessionKey reached
-                if (sessionKey.limit < toContracts.length || toContracts.length > 9) return false;
+                // Check if limit of transactions per sessionKey is reached
+                if (sessionKey.limit < numberOfInteractions) return false;
                 unchecked {
-                    sessionKey.limit = sessionKey.limit - SafeCastUpgradeable.toUint48(toContracts.length);
+                    sessionKey.limit = sessionKey.limit - SafeCastUpgradeable.toUint48(numberOfInteractions);
                 }
             }
 
             uint256 i;
-            for (i; i < toContracts.length;) {
+            for (i; i < numberOfInteractions;) {
                 // Check if reenter, do not allow
                 if (toContracts[i] == address(this)) return false;
 
