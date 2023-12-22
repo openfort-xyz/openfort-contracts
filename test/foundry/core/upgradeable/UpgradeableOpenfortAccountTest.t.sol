@@ -282,6 +282,88 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     }
 
     /*
+     * Use the executeBatch() with a big number
+     */
+    function testBatchingBigMasterSessionKey() public {
+        // Verify that the counter is still set to 0
+        assertEq(testCounter.counters(accountAddress), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
+
+        // Register masterSessionKey
+        vm.prank(openfortAdmin);
+        IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(
+            sessionKey, 0, 2 ** 48 - 1, 2 ** 48 - 1, emptyWhitelist
+        );
+
+        uint256 count = 9;
+        address[] memory targets = new address[](count);
+        uint256[] memory values = new uint256[](count);
+        bytes[] memory callData = new bytes[](count);
+
+        for (uint256 i = 0; i < count; i += 1) {
+            targets[i] = address(testCounter);
+            values[i] = 0;
+            callData[i] = abi.encodeWithSignature("count()");
+        }
+
+        UserOperation[] memory userOp =
+            _setupUserOpExecuteBatch(accountAddress, sessionKeyPrivKey, bytes(""), targets, values, callData);
+
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verify that the counter has increased
+        assertEq(testCounter.counters(accountAddress), count);
+    }
+
+    /*
+     * Use the executeBatch() with a "too big" number
+     */
+    function testFailBatchingBigMasterSessionKey() public {
+        // Verify that the counter is still set to 0
+        assertEq(testCounter.counters(accountAddress), 0);
+
+        address sessionKey;
+        uint256 sessionKeyPrivKey;
+        (sessionKey, sessionKeyPrivKey) = makeAddrAndKey("sessionKey");
+        address[] memory emptyWhitelist;
+
+        // Register masterSessionKey
+        vm.prank(openfortAdmin);
+        IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(
+            sessionKey, 0, 2 ** 48 - 1, 2 ** 48 - 1, emptyWhitelist
+        );
+
+        uint256 count = 10;
+        address[] memory targets = new address[](count);
+        uint256[] memory values = new uint256[](count);
+        bytes[] memory callData = new bytes[](count);
+
+        for (uint256 i = 0; i < count; i += 1) {
+            targets[i] = address(testCounter);
+            values[i] = 0;
+            callData[i] = abi.encodeWithSignature("count()");
+        }
+
+        UserOperation[] memory userOp =
+            _setupUserOpExecuteBatch(accountAddress, sessionKeyPrivKey, bytes(""), targets, values, callData);
+
+        entryPoint.depositTo{value: 1 ether}(accountAddress);
+        vm.expectRevert();
+        entryPoint.simulateValidation(userOp[0]);
+        entryPoint.handleOps(userOp, beneficiary);
+
+        // Verify that the counter has increased
+        assertEq(testCounter.counters(accountAddress), count);
+    }
+
+    /*
      *  Should fail, try to use a sessionKey that is not registered.
      */
     function testFailIncrementCounterViaSessionKeyNotregistered() public {
