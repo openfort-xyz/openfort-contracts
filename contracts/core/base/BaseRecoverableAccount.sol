@@ -273,7 +273,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         if (isLocked()) revert AccountLocked();
         if (
             guardiansConfig.info[_guardian].pending > 0
-                && block.timestamp < guardiansConfig.info[_guardian].pending + securityWindow
+                && block.timestamp <= guardiansConfig.info[_guardian].pending + securityWindow
         ) revert DuplicatedRevoke();
         // TODO need to allow if confirmation window passed
         guardiansConfig.info[_guardian].pending = block.timestamp + securityPeriod;
