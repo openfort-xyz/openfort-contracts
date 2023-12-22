@@ -2524,7 +2524,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
      * Testcase where a pending owner is proposed as guardian. It used to work, should fail now.
      * From the CertiK audit, issue BRA-01
      */
-    function testFailAddPendingOwnerAsGuardian() public {
+    function testFailAddPendingOwnerAsGuardian1() public {
         ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
 
         address newOwner = makeAddr("newOwner");
@@ -2542,5 +2542,28 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         assertEq(openfortAccount.isGuardian(newOwner), true);
         assertEq(openfortAccount.owner(), newOwner);
+    }
+
+    /*
+     * Testcase where a pending owner is proposed as guardian. It used to work, should fail now.
+     * From the CertiK audit, issue BRA-01
+     */
+    function testFailAddPendingOwnerAsGuardian2() public {
+        ManagedOpenfortAccount openfortAccount = ManagedOpenfortAccount(payable(accountAddress));
+        address newOwner = makeAddr("newOwner");
+
+        vm.prank(openfortAdmin);
+        openfortAccount.proposeGuardian(newOwner);
+
+        vm.prank(openfortAdmin);
+        openfortAccount.transferOwnership(newOwner);
+
+        skip(SECURITY_PERIOD);
+        openfortAccount.confirmGuardianProposal(newOwner);
+
+        vm.prank(newOwner);
+        openfortAccount.acceptOwnership();
+
+        assertEq(openfortAccount.isGuardian(newOwner), true);
     }
 }
