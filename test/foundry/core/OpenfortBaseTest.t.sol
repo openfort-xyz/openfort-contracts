@@ -177,7 +177,6 @@ contract OpenfortBaseTest is Test, CheckOrDeployEntryPoint {
     /**
      * AA events
      */
-
     event Deposited(address indexed account, uint256 totalDeposit);
 
     /*
