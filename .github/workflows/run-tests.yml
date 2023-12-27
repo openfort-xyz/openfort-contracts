@@ -25,10 +25,12 @@ jobs:
       - name: Local tests
         env: # Or as an environment variable
           ENTRY_POINT_ADDRESS: ${{ vars.ENTRY_POINT_ADDRESS }}
+          VERSION_SALT: 0x0510000000000000000000000000000000000000000000000000000000000051
         run: forge test --force -vvv --match-test test
 
       - name: Fork tests (Goerli)
         env: # Or as an environment variable
           ENTRY_POINT_ADDRESS: ${{ vars.ENTRY_POINT_ADDRESS }}
           GOERLI_RPC: ${{ secrets.GOERLI_RPC }}
+          VERSION_SALT: 0x0510000000000000000000000000000000000000000000000000000000000051
         run: forge test --force -vvv --match-test test --fork-url $GOERLI_RPC
