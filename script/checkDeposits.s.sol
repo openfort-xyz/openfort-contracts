@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity =0.8.19;
 
 import {console} from "forge-std/console.sol";
 import {IBaseOpenfortPaymaster} from "../contracts/interfaces/IBaseOpenfortPaymaster.sol";
@@ -26,7 +26,7 @@ contract CheckDeposits is OpenfortForksConfig {
             if (paymasterDeposit < 0.1 ether) {
                 console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
             }
-        } else if (block.chainid == BEAM_MAIN) {
+        } else if (block.chainid == BEAM_MAIN || block.chainid == BEAM_TESTNET_MAIN) {
             if (paymasterDeposit < 4 ether) {
                 console.log("ALERT: deposit too low on chain ID %s! Deposit: %s\n", block.chainid, paymasterDeposit);
             }
@@ -88,11 +88,11 @@ contract CheckDeposits is OpenfortForksConfig {
         console.log("Checking Paymaster and PaymasterOwner on BSC testnet:");
         checkPaymasterDepositAndOwnerBalance(uint256(Forks.BscTestFork));
 
-        console.log("Checking Paymaster and PaymasterOwner on Arbirtum Goerli testnet:");
+        console.log("Checking Paymaster and PaymasterOwner on Arbirtum Sepolia testnet:");
         checkPaymasterDepositAndOwnerBalance(uint256(Forks.ArbitrumTestFork));
 
-        console.log("Checking Paymaster and PaymasterOwner on Base Goerli testnet:");
-        checkPaymasterDepositAndOwnerBalance(uint256(Forks.BaseGoerliFork));
+        console.log("Checking Paymaster and PaymasterOwner on Base Sepolia testnet:");
+        checkPaymasterDepositAndOwnerBalance(uint256(Forks.BaseTestFork));
 
         console.log("Checking Paymaster and PaymasterOwner on Beam testnet:");
         checkPaymasterDepositAndOwnerBalance(uint256(Forks.BeamTestnetFork));

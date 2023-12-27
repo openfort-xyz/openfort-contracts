@@ -1,13 +1,13 @@
 {
   "name": "@openfort/openfort-contracts",
-  "version": "0.4.0",
+  "version": "0.5.1",
   "description": "Official Contracts of the Openfort Project",
   "license": "GPL-3.0",
   "scripts": {
     "build": "npm run clean-all && npm run compile",
     "clean-all": "npx hardhat clean && forge clean && rm -rf cache/ broadcast/",
     "compile": "npx hardhat compile",
-    "test-all": "npx hardhat test && forge test"
+    "test": "source .env && forge test"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.0.1",
@@ -26,7 +26,7 @@
     "eslint-plugin-n": "^15.7.0",
     "eslint-plugin-promise": "^6.1.1",
     "hardhat": "^2.14.0",
-    "solhint": "^3.4.1",
+    "solhint": "3.6.2",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.1",
     "typescript": "^5.0.4"

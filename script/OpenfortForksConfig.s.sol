@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity =0.8.19;
 
 import {Script} from "forge-std/Script.sol";
 
@@ -21,7 +21,7 @@ abstract contract OpenfortForksConfig is Script {
         FujiFork,
         BscTestFork,
         ArbitrumTestFork,
-        BaseGoerliFork,
+        BaseTestFork,
         BeamTestnetFork,
         ChiadoFork,
         LineaTestnetFork,
@@ -33,6 +33,7 @@ abstract contract OpenfortForksConfig is Script {
         ArbitrumNovaFork,
         BaseFork,
         BeamFork // NUM_ACCEPTED_CHAINS-1
+
     }
 
     address[NUM_ACCEPTED_CHAINS] internal paymasterAddresses;
@@ -51,6 +52,7 @@ abstract contract OpenfortForksConfig is Script {
     uint256 internal constant ARBITRUM_MAIN = 42161;
     uint256 internal constant ARBITRUM_NOVA = 42170;
     uint256 internal constant BEAM_MAIN = 4337;
+    uint256 internal constant BEAM_TESTNET_MAIN = 13337;
 
     constructor() {
         /*//////////////////////////////////////////////////////////////////////////
@@ -98,15 +100,15 @@ abstract contract OpenfortForksConfig is Script {
         paymasterOwnerAddresses[uint256(Forks.BscTestFork)] = openfortPaymasterOwnerTestnet;
         paymasterAddresses[uint256(Forks.BscTestFork)] = openfortPaymasterV2Testnet;
 
-        // Fork: Arbitrum Goerli testnet
-        vm.createFork(vm.envString("ARBITRUM_GOERLI_RPC"));
+        // Fork: Arbitrum Sepolia testnet
+        vm.createFork(vm.envString("ARBITRUM_SEPOLIA_RPC"));
         paymasterOwnerAddresses[uint256(Forks.ArbitrumTestFork)] = openfortPaymasterOwnerTestnet;
         paymasterAddresses[uint256(Forks.ArbitrumTestFork)] = openfortPaymasterV2Testnet;
 
-        // Fork: Base Goerli testnet
-        vm.createFork(vm.envString("GOERLI_BASE_RPC"));
-        paymasterOwnerAddresses[uint256(Forks.BaseGoerliFork)] = openfortPaymasterOwnerTestnet;
-        paymasterAddresses[uint256(Forks.BaseGoerliFork)] = openfortPaymasterV2Testnet;
+        // Fork: Base Sepolia testnet
+        vm.createFork(vm.envString("BASE_SEPOLIA_RPC"));
+        paymasterOwnerAddresses[uint256(Forks.BaseTestFork)] = openfortPaymasterOwnerTestnet;
+        paymasterAddresses[uint256(Forks.BaseTestFork)] = openfortPaymasterV2Testnet;
 
         // Fork: Beam testnet
         vm.createFork(vm.envString("BEAM_TESTNET_RPC"));
