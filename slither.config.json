@@ -1,9 +1,12 @@
 {
   "solc_remaps": [
-    "ds-test/=lib/ds-test/src/",
-    "forge-std/=lib/forge-std/src/",
     "@openzeppelin/=node_modules/@openzeppelin/",
-    "account-abstraction/=lib/account-abstraction/contracts/"
+    "account-abstraction/=lib/account-abstraction/contracts/",
+    "ds-test/=lib/forge-std/lib/ds-test/src/",
+    "eth-gas-reporter/=node_modules/eth-gas-reporter/",
+    "forge-std/=lib/forge-std/src/",
+    "hardhat/=node_modules/hardhat/",
+    "erc6551/=lib/erc6551/"
   ],
   "filter_paths": "(lib/|script/|test/|openzeppelin)",
   "exclude_informational": false,

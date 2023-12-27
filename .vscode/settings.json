@@ -1,3 +1,17 @@
 {
-    "solidity.compileUsingRemoteVersion": "v0.8.19+commit.7dd6d404"
+    "solidity.compileUsingRemoteVersion": "v0.8.19+commit.7dd6d404",
+    "solidity.defaultCompiler": "localFile",
+    "solidity.compileUsingLocalVersion": "v0.8.19+commit.7dd6d404",
+    "solidity.packageDefaultDependenciesDirectory": "node_modules/, lib/",
+    "solidity.formatter": "forge",
+    "solidity.packageDefaultDependenciesContractsDirectory": "node_modules/, lib/",
+    "solidity.remappings": [
+        "@openzeppelin/=node_modules/@openzeppelin/",
+        "account-abstraction/=lib/account-abstraction/contracts/",
+        "ds-test/=lib/forge-std/lib/ds-test/src/",
+        "eth-gas-reporter/=node_modules/eth-gas-reporter/",
+        "forge-std/=lib/forge-std/src/",
+        "hardhat/=node_modules/hardhat/",
+        "erc6551/=lib/erc6551/",
+    ]
 }

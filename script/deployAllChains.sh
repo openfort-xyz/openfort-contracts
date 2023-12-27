@@ -3,28 +3,6 @@
 source .env
 LOG_FILE=script/deployments/$(date +%Y-%m-%d_%H:%M)"-deploymentAllChains.log"
 
-# echo "------ StaticOpenfortDeploy ------ (Goerli)"
-# forge script StaticOpenfortDeploy --rpc-url $GOERLI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
-# sleep 3
-# echo "------ StaticOpenfortDeploy ------ (Mumbai)"
-# forge script StaticOpenfortDeploy --rpc-url $POLYGON_MUMBAI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $POLYGON_MUMBAI_KEY >> $LOG_FILE
-# sleep 3
-# echo "------ StaticOpenfortDeploy ------ (Fuji)"
-# forge script StaticOpenfortDeploy --rpc-url $AVALANCHE_FUJI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $FUJI_API_KEY >> $LOG_FILE
-# sleep 3
-# echo "------ StaticOpenfortDeploy ------ (BSC testnet)"
-# forge script StaticOpenfortDeploy --rpc-url $BSC_TESTNET_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $BSCSCAN_TESTNET_API_KEY >> $LOG_FILE
-# sleep 3
-# echo "------ StaticOpenfortDeploy ------ (Arbitrum Goerli testnet)"
-# forge script StaticOpenfortDeploy --rpc-url $ARBITRUM_GOERLI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $ARBISCAN_API_KEY >> $LOG_FILE
-# sleep 3
-# echo "------ StaticOpenfortDeploy ------ (Gnosis Chiado testnet)"
-# forge script StaticOpenfortDeploy --rpc-url $GNOSIS_CHIADO_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $GNOSIS_API_KEY_BLOCKSCOUT >> $LOG_FILE
-# sleep 3
-# echo "------ StaticOpenfortDeploy ------ (Base Goerli)"
-# forge script StaticOpenfortDeploy --rpc-url $BASE_TEST_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $BASE_API_KEY >> $LOG_FILE
-# sleep 3
-
 # echo "------ UpgradeableOpenfortDeploy ------ (Goerli)"
 # forge script UpgradeableOpenfortDeploy --rpc-url $GOERLI_RPC -vvvv --verify --broadcast --slow --etherscan-api-key $GOERLI_API_KEY >> $LOG_FILE
 # sleep 3
