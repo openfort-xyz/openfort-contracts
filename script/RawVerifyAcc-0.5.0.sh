@@ -1,0 +1,1 @@
+forge verify-contract --chain-id 5 --num-of-optimizations 1000000 --watch --compiler-version v0.8.19+commit.7dd6d404 0x36604309934A2Fc92C3445Cf4566b23b5b4BbAad contracts/core/managed/ManagedOpenfortAccount.sol:ManagedOpenfortAccount -e $ETHERSCAN_API_KEY --verifier etherscan

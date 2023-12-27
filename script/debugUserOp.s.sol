@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.19;
+pragma solidity =0.8.19;
 
-import "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
 import {UserOperation, EntryPoint} from "account-abstraction/core/EntryPoint.sol";
 
 contract DebugUserOp is Script {
@@ -26,6 +26,6 @@ contract DebugUserOp is Script {
 
         entryPoint.simulateHandleOp(userOp, address(0), "");
         // simulateHandleOp() will always return the following error:
-        //  error ExecutionResult(uint256 preOpGas, uint256 paid, uint48 validAfter, uint48 validUntil, bool targetSuccess, bytes targetResult);
+        // error ExecutionResult(uint256 preOpGas, uint256 paid, uint48 validAfter, uint48 validUntil, bool targetSuccess, bytes targetResult);
     }
 }

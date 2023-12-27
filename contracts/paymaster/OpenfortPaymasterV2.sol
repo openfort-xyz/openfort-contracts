@@ -12,7 +12,6 @@ import {OpenfortErrorsAndEvents} from "../interfaces/OpenfortErrorsAndEvents.sol
 
 /**
  * @title OpenfortPaymasterV2 (Non-upgradeable)
- * @author Eloi<eloi@openfort.xyz>
  * @notice A paymaster that uses external service to decide whether to pay for the UserOp.
  * The Paymaster trusts an external signer (owner) to sign each user operation.
  * The calling user must pass the UserOp to that external signer first, which performs

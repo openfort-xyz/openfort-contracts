@@ -9,6 +9,15 @@ cache_path  = 'cache_forge'
 no_match_test = 'testCounter'
 gas_reports = ["*"]
 gas_reports_ignore = ["TestToken", "TestCounter"]
+remappings = [
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "account-abstraction/=lib/account-abstraction/contracts/",
+    "ds-test/=lib/forge-std/lib/ds-test/src/",
+    "eth-gas-reporter/=node_modules/eth-gas-reporter/",
+    "forge-std/=lib/forge-std/src/",
+    "hardhat/=node_modules/hardhat/",
+    "erc6551/=lib/erc6551/",
+]
 
 # default
 optimizer = true

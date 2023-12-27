@@ -1,9 +1,17 @@
 {
-    "extends": "solhint:recommended",
-    "rules": {
-    "compiler-version": ["error",">=0.7.5"],
-      "func-visibility": ["off",{"ignoreConstructors":true}],
-      "mark-callable-contracts": ["off"]
-    }
+  "extends": "solhint:recommended",
+  "rules": {
+    "avoid-low-level-calls": "off",
+    "code-complexity": ["error", 9],
+    "compiler-version": ["error", ">=0.8.19"],
+    "contract-name-camelcase": "off",
+    "const-name-snakecase": "off",
+    "func-name-mixedcase": "off",
+    "func-visibility": ["error", { "ignoreConstructors": true }],
+    "max-line-length": ["error", 123],
+    "named-parameters-mapping": "warn",
+    "no-empty-blocks": "off",
+    "not-rely-on-time": "off",
+    "var-name-mixedcase": "off"
   }
-  
+}

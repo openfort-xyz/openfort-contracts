@@ -1,37 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.19;
+pragma solidity =0.8.19;
 
-// Base account contract to inherit from and EntryPoint interface
-import {BaseOpenfortAccount, IEntryPoint} from "../BaseOpenfortAccount.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {BaseRecoverableAccount, IEntryPoint} from "../base/BaseRecoverableAccount.sol";
 
 /**
  * @title UpgradeableOpenfortAccount
- * @author Eloi<eloi@openfort.xyz>
  * @notice Minimal smart contract wallet with session keys following the ERC-4337 standard.
  * It inherits from:
- *  - BaseOpenfortAccount
+ *  - BaseRecoverableAccount
  *  - UUPSUpgradeable
  */
-contract UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
-    address internal entrypointContract;
-
-    event EntryPointUpdated(address oldEntryPoint, address newEntryPoint);
-
-    /*
-     * @notice Initialize the smart contract wallet.
+contract UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgradeable {
+    /**
+     * Update the EntryPoint address
      */
-    function initialize(address _defaultAdmin, address _entrypoint) public initializer {
-        if (_defaultAdmin == address(0) || _entrypoint == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
-        emit EntryPointUpdated(entrypointContract, _entrypoint);
-        _transferOwnership(_defaultAdmin);
-        entrypointContract = _entrypoint;
-        __EIP712_init("Openfort", "0.4");
+    function updateEntryPoint(address _newEntrypoint) external onlyOwner {
+        if (!Address.isContract(_newEntrypoint)) revert NotAContract();
+        emit EntryPointUpdated(entrypointContract, _newEntrypoint);
+        entrypointContract = _newEntrypoint;
     }
-
-    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     /**
      * Return the current EntryPoint
@@ -40,14 +29,5 @@ contract UpgradeableOpenfortAccount is BaseOpenfortAccount, UUPSUpgradeable {
         return IEntryPoint(entrypointContract);
     }
 
-    /**
-     * Update the EntryPoint address
-     */
-    function updateEntryPoint(address _newEntrypoint) external onlyOwner {
-        if (_newEntrypoint == address(0)) {
-            revert ZeroAddressNotAllowed();
-        }
-        emit EntryPointUpdated(entrypointContract, _newEntrypoint);
-        entrypointContract = _newEntrypoint;
-    }
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }
