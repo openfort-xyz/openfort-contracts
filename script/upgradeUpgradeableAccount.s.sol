@@ -7,7 +7,7 @@ import {UpgradeableOpenfortAccount} from "../contracts/core/upgradeable/Upgradea
 import {UpgradeableOpenfortProxy} from "../contracts/core/upgradeable/UpgradeableOpenfortProxy.sol";
 import {CheckOrDeployEntryPoint} from "script/aux/checkOrDeployEntryPoint.sol";
 
-contract UpgradeableOpenfortDeploy is Script, CheckOrDeployEntryPoint {
+contract UpgradeableOpenfortUpgrade is Script, CheckOrDeployEntryPoint {
     uint256 internal deployPrivKey = vm.envUint("PK_PAYMASTER_OWNER_TESTNET");
     address internal deployAddress = vm.addr(deployPrivKey);
     IEntryPoint internal entryPoint;
