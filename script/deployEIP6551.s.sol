@@ -27,7 +27,7 @@ contract ERC6551OpenfortDeploy is Script {
         }
 
         // deploy a new MockERC721 collection
-        nft721 = new MockERC721();
+        nft721 = new MockERC721{salt: versionSalt}();
 
         // The first call should create a new account, while the second will just return the corresponding account address
         address account2 =
