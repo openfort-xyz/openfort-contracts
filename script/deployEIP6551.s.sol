@@ -21,6 +21,8 @@ contract ERC6551OpenfortDeploy is Script {
         // Create an acccount to serve as implementation
         ERC6551OpenfortAccount erc6551OpenfortAccount = new ERC6551OpenfortAccount{salt: versionSalt}();
 
+        vm.stopBroadcast();
+
         uint256 chainId;
         assembly {
             chainId := chainid()
@@ -33,7 +35,5 @@ contract ERC6551OpenfortDeploy is Script {
         address account2 =
             erc6551Registry.createAccount(address(erc6551OpenfortAccount), versionSalt, chainId, address(nft721), 1);
         console.log("Registry at address %s has created an account at address %s", address(erc6551Registry), account2);
-
-        vm.stopBroadcast();
     }
 }
