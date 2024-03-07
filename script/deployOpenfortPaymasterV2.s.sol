@@ -4,7 +4,7 @@ pragma solidity =0.8.19;
 import {Script} from "forge-std/Script.sol";
 import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {OpenfortPaymasterV2} from "../contracts/paymaster/OpenfortPaymasterV2.sol";
-import {CheckOrDeployEntryPoint} from "script/aux/checkOrDeployEntryPoint.sol";
+import {CheckOrDeployEntryPoint} from "script/auxiliary/checkOrDeployEntryPoint.sol";
 
 contract OpenfortPaymasterV2Deploy is Script, CheckOrDeployEntryPoint {
     uint256 internal deployPrivKey = vm.envUint("PK_PAYMASTER_OWNER_TESTNET");

@@ -5,7 +5,7 @@ import {Script, console} from "forge-std/Script.sol";
 import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {ManagedOpenfortAccount} from "../contracts/core/managed/ManagedOpenfortAccount.sol";
 import {ManagedOpenfortFactory} from "../contracts/core/managed/ManagedOpenfortFactory.sol";
-import {CheckOrDeployEntryPoint} from "script/aux/checkOrDeployEntryPoint.sol";
+import {CheckOrDeployEntryPoint} from "script/auxiliary/checkOrDeployEntryPoint.sol";
 
 contract ManagedOpenfortUpgrade is Script, CheckOrDeployEntryPoint {
     uint256 internal deployPrivKey = vm.envUint("PK_PAYMASTER_OWNER_TESTNET");
