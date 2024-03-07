@@ -5,7 +5,7 @@ import {Script, console} from "forge-std/Script.sol";
 import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {UpgradeableOpenfortAccount} from "../contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "../contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
-import {CheckOrDeployEntryPoint} from "script/aux/checkOrDeployEntryPoint.sol";
+import {CheckOrDeployEntryPoint} from "script/auxiliary/checkOrDeployEntryPoint.sol";
 
 contract UpgradeableOpenfortDeploy is Script, CheckOrDeployEntryPoint {
     address private CREATE2_DEPLOYER = 0x4e59b44847b379578588920cA78FbF26c0B4956C;

@@ -12,7 +12,7 @@ import {MockERC1155} from "contracts/mock/MockERC1155.sol";
 import {MockV2UpgradeableOpenfortAccount} from "contracts/mock/MockV2UpgradeableOpenfortAccount.sol";
 import {DeployMock} from "script/deployMock.s.sol";
 import {SimpleNFT} from "contracts/mock/SimpleNFT.sol";
-import {CheckOrDeployEntryPoint} from "script/aux/checkOrDeployEntryPoint.sol";
+import {CheckOrDeployEntryPoint} from "script/auxiliary/checkOrDeployEntryPoint.sol";
 
 contract OpenfortBaseTest is Test, CheckOrDeployEntryPoint {
     using ECDSA for bytes32;
