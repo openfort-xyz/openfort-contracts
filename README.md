@@ -157,8 +157,8 @@ There are two different categories of benchmarks measured in this test: User Ope
 |   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
 | :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
 |   UpgradeableOpenfortAccount  | Create a new upgradeable account | indefinite | ~350,000 |
-|   UpgradeableOpenfortAccount  | Send native tokens | indefinite | ~170,00   |
-|   UpgradeableOpenfortAccount  | Send ERC20 tokens | indefinite | ~190,000  |
+|   UpgradeableOpenfortAccount  | Send native tokens | NA | ~170,000   |
+|   UpgradeableOpenfortAccount  | Send ERC20 tokens | NA | ~190,000  |
 
 
 ## Gas Stats in USD
