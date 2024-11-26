@@ -131,27 +131,46 @@ If you run into the error `ImportError: cannot import name 'getargspec' from 'in
 
 ## Gas Stats
 
-As of June 2023, the current average gas cost for deploying or using the different smart contracts of this project is:
+There are two different categories of benchmarks measured in this test: User Operation and Runtime.
+
+- User Operation: Fees are calculated based on the transaction receipt and the serialized signed EIP-1559 transaction for entryPoint.handleUserOp([userOp]). As multi-user-op bundles become more prevalent, we can expect actual fees to undercut the data presented here.
+- Runtime: Runtime transactions are defined as those performed outside of the user operation flow, with the owner key interacting directly with the account factory or account, akin to the way you might use MetaMask today to interact directly with smart contracts.
+
+## Runtime
 
 ### Upgradeable Accounts
 |   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
 | :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
 | UpgradeableOpenfortFactory | Deploy factory (containing UpgradeableOpenfortAccount's implementation) | 1 | ~3,250,000  |
-|   UpgradeableOpenfortAccount  | Create a new upgradeable account using the `createAccountWithNonce()` of the factory | indefinite | ~200,000 |
+|   UpgradeableOpenfortAccount  | Create a new upgradeable account using the `createAccountWithNonce()` of the factory | indefinite | ~250,000 |
 |   UpgradeableOpenfortAccount  | Updating to a new implementation using `upgradeTo()` | indefinite | ~3,500  |
+
 
 ### Paymaster
 |   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
 | :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
 |   OpenfortPaymaster | Deploy Paymaster to pay gas in ERC20s | 1 | ~1,250,000  |
 
+## User Operation
+
+### Upgradeable Accounts
+|   Smart Contract   |    Description    |    # of deployments per game/ecosystem    |    Avg gas cost    |
+| :----------------- | :---------------------------------- | :---------------------------------- | :------------------------ |
+|   UpgradeableOpenfortAccount  | Create a new upgradeable account | indefinite | ~350,000 |
+|   UpgradeableOpenfortAccount  | Send native tokens | indefinite | ~170,00   |
+|   UpgradeableOpenfortAccount  | Send ERC20 tokens | indefinite | ~190,000  |
+
 
 ## Gas Stats in USD
-The gas price range is reported as the daily average gas price for the first 90 days of 2023 ± one standard deviation.
 
-|   Blockchain   |    Gas Price Range    |    Token Price    |     Create an Upgradeable account   |
-| :------------- | :-------------------- | :---------------- |  :------ |
-|  Ethereum  | 30.5 ± 10.5 gwei | ~$1800 | $7.5-15 |
-|  Polygon  | 220 ± 108 gwei | ~$0.67 | $0.015-$0.045 |
-|  Avalanche  | 36 ± 4.5 nAVAX | ~$12.8 |  $0.08-$0.11 |
-|  BSC  | 7 ± 0.55 gwei	| ~$240 | $0.32-$0.36 |
+As of April 2024, the gas price range is reported as the daily average gas price for the first 90 days of 2023 ± one standard deviation.
+
+|   Blockchain   |    Gas Price Range    |    Token Price    |     Create an Upgradeable account   |    Native Transfer    |    ERC20 Transfer    |
+| :------------- | :-------------------- | :---------------- |  :------ | :-------------------- | :------------------ |
+| Arbitrum | 0.01 ±0.00001853 gwei | ~$3000 | $0.0103-$0.0103 | $0.0050-$0.0050 | $0.0056-$0.0056 |
+| Optimism | 0.06102 ±24.05 gwei | ~$3000 | $0.0630-$24.8828 | $0.0306-$12.0859 | $0.0342-$13.5078 |
+| Base | 0.0535 ±24.05 gwei | ~$3000 | $0.0552-$24.8751 | $0.0268-$12.0822 | $0.0300-$13.5036 |
+| Polygon | 30 ±108 gwei | ~$0.67 | $0.0070-$0.0324 | $0.0034-$0.0157 | $0.0038-$0.0176 |
+| Avalanche | 29 ±4.5 nAVAX | ~$33 | $0.3350-$0.3869 | $0.1627-$0.1879 | $0.1818-$0.2100 |
+| BSC | 4 ±0.55 gwei | ~$580 | $0.8120-$0.9236 | $0.3944-$0.4486 | $0.4408-$0.5014 |
+| Ethereum | 3.5 ±24 gwei | ~$3000 | $3.6120-$28.3803 | $1.7544-$13.7847 | $1.9608-$15.4064 |
