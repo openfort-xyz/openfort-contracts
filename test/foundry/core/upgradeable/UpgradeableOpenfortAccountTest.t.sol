@@ -1534,6 +1534,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Create a friend EOA
         address friendAccount = makeAddr("friend");
+        address badFriendAccount = makeAddr("bad friend");
 
         // Trying to propose a guardian not using the owner
         vm.expectRevert("Ownable: caller is not the owner");
@@ -1544,6 +1545,8 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         emit GuardianProposed(friendAccount, block.timestamp + SECURITY_PERIOD);
         vm.prank(openfortAdmin);
         openfortAccount.proposeGuardian(friendAccount);
+        vm.prank(openfortAdmin);
+        openfortAccount.proposeGuardian(badFriendAccount);
 
         // Verify that the number of guardians is still 1 (default)
         assertEq(openfortAccount.guardianCount(), 1);
@@ -1561,12 +1564,18 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         skip(SECURITY_PERIOD);
         openfortAccount.confirmGuardianProposal(friendAccount);
-
         // Verify that the number of guardians is now 2
         assertEq(openfortAccount.guardianCount(), 2);
 
         // Friend account should be a guardian now
         assertEq(openfortAccount.isGuardian(friendAccount), true);
+
+        vm.prank(friendAccount);
+        openfortAccount.startRecovery(makeAddr("recovery address"));
+
+        // Can't confirm a guardian proposal while recovery is ongoing
+        vm.expectRevert(OngoingRecovery.selector);
+        openfortAccount.confirmGuardianProposal(badFriendAccount);
     }
 
     /*
