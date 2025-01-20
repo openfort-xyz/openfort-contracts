@@ -239,6 +239,7 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      * @param _guardian The guardian to be confirmed.
      */
     function confirmGuardianProposal(address _guardian) external {
+        _requireRecovery(false);
         if (isLocked()) revert AccountLocked();
         if (guardiansConfig.info[_guardian].pending == 0) revert UnknownProposal();
         if (guardiansConfig.info[_guardian].pending > block.timestamp) revert PendingProposalNotOver();
