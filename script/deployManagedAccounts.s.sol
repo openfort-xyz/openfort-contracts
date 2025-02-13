@@ -27,7 +27,7 @@ contract ManagedOpenfortDeploy is Script, CheckOrDeployEntryPoint {
         entryPoint = checkOrDeployEntryPoint();
 
         vm.startBroadcast(deployPrivKey);
-        // Create an acccount to serve as implementation
+        // Create an account to serve as implementation
         managedOpenfortAccountImpl = new ManagedOpenfortAccount{salt: versionSalt}();
         // deploy account factory (beacon)
         openfortFactory = new ManagedOpenfortFactory{salt: versionSalt}(

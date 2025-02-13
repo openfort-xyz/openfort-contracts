@@ -18,7 +18,7 @@ contract ERC6551OpenfortDeploy is Script {
         bytes32 versionSalt = vm.envBytes32("VERSION_SALT");
         vm.startBroadcast(deployPrivKey);
 
-        // Create an acccount to serve as implementation
+        // Create an account to serve as implementation
         ERC6551OpenfortAccount erc6551OpenfortAccount = new ERC6551OpenfortAccount{salt: versionSalt}();
 
         vm.stopBroadcast();

@@ -35,7 +35,7 @@ contract UpgradeableOpenfortDeploy is Script, CheckOrDeployEntryPoint {
         // deploy upgradeable account implementation
         vm.expectEmit(true, true, false, true);
         emit AccountImplementationDeployed(CREATE2_DEPLOYER);
-        // Create an acccount to serve as implementation
+        // Create an account to serve as implementation
         upgradeableOpenfortAccountImpl = new UpgradeableOpenfortAccount{salt: versionSalt}();
         // deploy account factory
         openfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(
