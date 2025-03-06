@@ -2492,7 +2492,7 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
     /*
      * Case: User added 2 guardians and keeps the default (Openfort)
      * The 2 added guardians (friends) are used to recover the account and transfer
-     * the ownership to beneficiary. Faild due to unsorted signatures
+     * the ownership to beneficiary. Failed due to unsorted signatures
      * @notice Remember that signatures need to be ordered by the guardian's address.
      */
     function test3GuardiansUnorderedCompleteRecovery() public {

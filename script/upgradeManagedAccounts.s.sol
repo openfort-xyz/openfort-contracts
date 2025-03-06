@@ -29,7 +29,7 @@ contract ManagedOpenfortUpgrade is Script, CheckOrDeployEntryPoint {
         console.log("Example account address: ", exampleAccountAddress);
 
         vm.startBroadcast(deployPrivKey);
-        // Create an acccount to serve as new implementation
+        // Create an account to serve as new implementation
         managedOpenfortAccountImpl = new ManagedOpenfortAccount{salt: versionSalt}();
 
         // Update the account implementation

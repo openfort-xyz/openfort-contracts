@@ -292,7 +292,7 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         vm.prank(paymasterAdmin);
         openfortPaymaster.unlockStake();
 
-        // The owner trying to unlock fails because it has not passed enought time
+        // The owner trying to unlock fails because it has not passed enough time
         vm.prank(paymasterAdmin);
         vm.expectRevert();
         openfortPaymaster.withdrawStake(payable(paymasterAdmin));
