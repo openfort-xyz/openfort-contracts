@@ -7,3 +7,12 @@
 [submodule "lib/erc6551"]
 	path = lib/erc6551
 	url = https://github.com/erc6551/reference
+[submodule "lib/account-abstractionV8"]
+	path = lib/account-abstractionV8
+	url = https://github.com/eth-infinitism/account-abstraction
+[submodule "lib/oz-v5.4.0"]
+	path = lib/oz-v5.4.0
+	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "lib/solady"]
+	path = lib/solady
+	url = https://github.com/Vectorized/solady
