@@ -40,4 +40,8 @@ contract BasePaymasterTest is Data {
             }
         }
     }
+
+    function _warp(uint256 _time) internal {
+        vm.warp(block.timestamp + _time);
+    }
 }
