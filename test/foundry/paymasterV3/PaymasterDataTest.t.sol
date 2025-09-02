@@ -3,8 +3,10 @@
 pragma solidity ^0.8.29;
 
 import {Test} from "lib/forge-std/src/Test.sol";
+import {IEntryPoint} from "@account-abstraction-v8/interfaces/IEntryPoint.sol";
 
 contract PaymasterDataTest is Test {
+    IEntryPoint ENTRY_POINT_V8 = IEntryPoint(0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108);
     uint256 ownerPK;
     address owner;
     uint256 managerPK;
