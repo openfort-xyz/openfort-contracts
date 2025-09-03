@@ -16,7 +16,7 @@ contract PaymasterDataTest is Test {
     uint256[] signersPK;
     address[] signers;
 
-    uint256 senderPk;
+    uint256 senderPK;
     address sender;
 
     uint256 constant signersLength = 3;
@@ -24,6 +24,9 @@ contract PaymasterDataTest is Test {
     uint256 forkId;
     string SEPOLIA_RPC_URL = "https://eth-sepolia.g.alchemy.com/v2/EIOmdDtOw7ulufI5S27isOfZfW51PQXB";
 
+    uint8 constant ERC20_MODE = 1;
+    uint8 constant VERIFYING_MODE = 0;
+    uint8 constant ERC20_PAYMASTER_DATA_LENGTH = 117;
     uint8 immutable VERIFYING_PAYMASTER_DATA_LENGTH = 12;
     uint8 immutable MODE_AND_ALLOW_ALL_BUNDLERS_LENGTH = 1;
     uint256 immutable PAYMASTER_DATA_OFFSET = UserOperationLib.PAYMASTER_DATA_OFFSET;
@@ -33,7 +36,7 @@ contract PaymasterDataTest is Test {
         vm.selectFork(forkId);
 
         (owner, ownerPK) = makeAddrAndKey("owner");
-        (sender, senderPk) = makeAddrAndKey("sender");
+        (sender, senderPK) = makeAddrAndKey("sender");
         (manager, managerPK) = makeAddrAndKey("manager");
 
         for (uint256 i = 0; i < signersLength;) {

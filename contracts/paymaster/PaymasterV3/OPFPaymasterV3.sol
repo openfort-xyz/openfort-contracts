@@ -10,6 +10,7 @@ import {_packValidationData} from "@account-abstraction-v8/core/Helpers.sol";
 import {UserOperationLib} from "@account-abstraction-v8/core/UserOperationLib.sol";
 import {MessageHashUtils} from "@oz-v5.4.0/utils/cryptography/MessageHashUtils.sol";
 import {PackedUserOperation} from "@account-abstraction-v8/interfaces/PackedUserOperation.sol";
+
 /**
  * @dev Paymaster implementation compatible with account-abstraction v0.0.8 and OpenZeppelin v5.4.0
  *
@@ -31,7 +32,6 @@ import {PackedUserOperation} from "@account-abstraction-v8/interfaces/PackedUser
  * - OpenZeppelin v5.4.0 provides stable API before breaking changes in v5.1+
  * - This setup maintains isolation from conflicting dependency versions
  */
-
 contract OPFPaymasterV3 is BaseSingletonPaymaster, IPaymasterV8 {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           USING                            */
@@ -42,7 +42,7 @@ contract OPFPaymasterV3 is BaseSingletonPaymaster, IPaymasterV8 {
     /*                   constant/immutable                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     uint256 private constant PENALTY_PERCENT = 10;
-    uint256 private immutable PAYMASTER_DATA_OFFSET = UserOperationLib.PAYMASTER_DATA_OFFSET;
+    uint256 private constant PAYMASTER_DATA_OFFSET = UserOperationLib.PAYMASTER_DATA_OFFSET;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        CONSTRUCTOR                         */
