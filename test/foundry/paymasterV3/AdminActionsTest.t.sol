@@ -5,14 +5,6 @@ pragma solidity ^0.8.29;
 import {BasePaymasterTest as Base} from "test/foundry/paymasterV3/BasePaymasterTest.t.sol";
 import {IStakeManager} from "lib/account-abstractionV8/contracts/interfaces/IStakeManager.sol";
 
-struct DepositInfo {
-    uint256 deposit;
-    bool staked;
-    uint112 stake;
-    uint32 unstakeDelaySec;
-    uint48 withdrawTime;
-}
-
 uint256 constant stakeAmount = 0.1 ether;
 uint32 constant unstakeDelay = 8600;
 
