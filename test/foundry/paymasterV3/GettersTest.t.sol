@@ -108,8 +108,8 @@ contract GettersTest is Base {
     function _testGetHashModeERC20_MODE(PackedUserOperation calldata _userOp) external {
         uint8 paymasterDataLength = MODE_AND_ALLOW_ALL_BUNDLERS_LENGTH + ERC20_PAYMASTER_DATA_LENGTH;
         bytes32 computeHash = _getHash(_userOp, paymasterDataLength);
-        
-        bytes32 hash = PM.getHash(uint8(1), _userOp); 
+
+        bytes32 hash = PM.getHash(uint8(1), _userOp);
         assertEq(computeHash, hash);
     }
 

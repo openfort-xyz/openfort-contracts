@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
+import {MockERC20} from "test/foundry/paymasterV3/mocks/MockERC20.sol";
 import {console2 as console} from "lib/forge-std/src/test.sol";
 import {PaymasterDataTest as Data} from "test/foundry/paymasterV3/PaymasterDataTest.t.sol";
 import {OPFPaymasterV3 as Paymaster} from "contracts/paymaster/PaymasterV3/OPFPaymasterV3.sol";
@@ -8,10 +9,12 @@ import {PackedUserOperation} from "@account-abstraction-v8/interfaces/PackedUser
 
 contract BasePaymasterTest is Data {
     Paymaster PM;
+    MockERC20 mockERC20;
 
     function setUp() public virtual override {
         super.setUp();
         PM = new Paymaster(owner, manager, signers);
+        mockERC20 = new MockERC20();
         _deal();
     }
 
@@ -75,5 +78,22 @@ contract BasePaymasterTest is Data {
             data := calldataload(userOp)
         }
         return address(uint160(data));
+    }
+
+    function _mint(address _addr, uint256 _amount) internal {
+        vm.prank(owner);
+        mockERC20.mint(_addr, _amount);
+    }
+
+    function _packAccountGasLimits(uint256 callGasLimit, uint256 verificationGasLimit)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return bytes32((callGasLimit << 128) | verificationGasLimit);
+    }
+
+    function _packGasFees(uint256 maxFeePerGas, uint256 maxPriorityFeePerGas) internal pure returns (bytes32) {
+        return bytes32((maxFeePerGas << 128) | maxPriorityFeePerGas);
     }
 }
