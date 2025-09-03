@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
-import {MockERC20} from "test/foundry/paymasterV3/mocks/MockERC20.sol";
 import {console2 as console} from "lib/forge-std/src/test.sol";
+import {MockERC20} from "test/foundry/paymasterV3/mocks/MockERC20.sol";
+import {Simple7702Account} from "test/foundry/paymasterV3/mocks/Simple7702Account.sol";
 import {PaymasterDataTest as Data} from "test/foundry/paymasterV3/PaymasterDataTest.t.sol";
 import {OPFPaymasterV3 as Paymaster} from "contracts/paymaster/PaymasterV3/OPFPaymasterV3.sol";
 import {PackedUserOperation} from "@account-abstraction-v8/interfaces/PackedUserOperation.sol";
@@ -10,11 +11,18 @@ import {PackedUserOperation} from "@account-abstraction-v8/interfaces/PackedUser
 contract BasePaymasterTest is Data {
     Paymaster PM;
     MockERC20 mockERC20;
+    Simple7702Account account;
+    Simple7702Account implementation;
 
     function setUp() public virtual override {
         super.setUp();
         PM = new Paymaster(owner, manager, signers);
         mockERC20 = new MockERC20();
+
+        account = new Simple7702Account();
+        implementation = account;
+        _etch();
+
         _deal();
     }
 
@@ -95,5 +103,10 @@ contract BasePaymasterTest is Data {
 
     function _packGasFees(uint256 maxFeePerGas, uint256 maxPriorityFeePerGas) internal pure returns (bytes32) {
         return bytes32((maxFeePerGas << 128) | maxPriorityFeePerGas);
+    }
+
+    function _etch() internal {
+        vm.etch(sender, abi.encodePacked(bytes3(0xef0100), address(implementation)));
+        account = Simple7702Account(payable(sender));
     }
 }
