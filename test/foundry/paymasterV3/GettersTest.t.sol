@@ -87,6 +87,32 @@ contract GettersTest is Base {
         assertEq(computeHash, hash);
     }
 
+    function test_getHashModeERC20_MODE() public {
+        PackedUserOperation memory userOp = _getFreshUserOp();
+
+        uint256 baseLength = PAYMASTER_DATA_OFFSET + MODE_AND_ALLOW_ALL_BUNDLERS_LENGTH + ERC20_PAYMASTER_DATA_LENGTH;
+        bytes memory paymasterAndData = new bytes(baseLength);
+
+        bytes20 paymasterAddress = bytes20(address(PM));
+        for (uint256 i = 0; i < 20; i++) {
+            paymasterAndData[i] = paymasterAddress[i];
+        }
+
+        uint256 combinedByteIndex = PAYMASTER_DATA_OFFSET + MODE_AND_ALLOW_ALL_BUNDLERS_LENGTH;
+        paymasterAndData[combinedByteIndex] = 0x00;
+
+        userOp.paymasterAndData = paymasterAndData;
+        this._testGetHashModeERC20_MODE(userOp);
+    }
+
+    function _testGetHashModeERC20_MODE(PackedUserOperation calldata _userOp) external {
+        uint8 paymasterDataLength = MODE_AND_ALLOW_ALL_BUNDLERS_LENGTH + ERC20_PAYMASTER_DATA_LENGTH;
+        bytes32 computeHash = _getHash(_userOp, paymasterDataLength);
+        
+        bytes32 hash = PM.getHash(uint8(1), _userOp); 
+        assertEq(computeHash, hash);
+    }
+
     function _signerCount() internal view returns (uint256 counter) {
         counter = PM.signerCount();
     }
