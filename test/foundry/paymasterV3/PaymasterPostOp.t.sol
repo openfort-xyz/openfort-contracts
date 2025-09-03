@@ -20,7 +20,7 @@ contract PaymasterPostOp is PaymasterHelpers {
         uint256 balance = IERC20(address(mockERC20)).balanceOf(sender);
         assertEq(mintTokens, balance);
     }
-
+    
     function test_postOpERC20_MODE_combinedByteBasic() public mint {
         PackedUserOperation memory userOp = _getFreshUserOp();
         userOp.nonce = ENTRY_POINT_V8.getNonce(userOp.sender, 0);

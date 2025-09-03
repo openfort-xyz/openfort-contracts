@@ -33,8 +33,8 @@ abstract contract PaymasterHelpers is Base {
     /// @notice The preFund is too high.
     error OPFPaymasterV3__PreFundTooHigh();
 
-    uint48 validUntil = uint48(block.timestamp + 1 days);
-    uint48 constant validAfter = 0;
+    uint48 validUntil; 
+    uint48 validAfter;
     uint128 constant postGas = 50000;
     uint128 constant paymasterValidationGasLimit = 100000;
     uint256 constant preVerificationGas = 800_000;
@@ -151,11 +151,10 @@ abstract contract PaymasterHelpers is Base {
 
     function _createPaymasterDataMode(PackedUserOperation memory userOp, uint8 _mode, uint8 _combinedByte)
         internal
-        view
         returns (bytes memory paymasterData)
     {
         uint128 verificationGasLimit = uint128(uint256(bytes32(userOp.accountGasLimits)) >> 128);
-
+        _validWindow();
         if (_mode == VERIFYING_MODE) {
             paymasterData = abi.encodePacked(
                 address(PM),
@@ -196,6 +195,11 @@ abstract contract PaymasterHelpers is Base {
                 paymasterData = abi.encodePacked(paymasterData, address(sender)); // recipient (20 bytes)
             }
         }
+    }
+
+    function _validWindow() internal {
+        validUntil = uint48(block.timestamp + 1 days);
+        validAfter = 0;
     }
 
     function _signUserOp(bytes32 hash) internal view returns (bytes memory signature) {
