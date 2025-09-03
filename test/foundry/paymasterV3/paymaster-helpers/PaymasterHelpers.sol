@@ -182,7 +182,7 @@ abstract contract PaymasterHelpers is Base {
             );
             if ((_combinedByte & 0x04) != 0) {
                 // preFundPresent
-                uint128 reasonablePreFund = uint128((requiredPreFund * exchangeRate) / 1e18 / 2); 
+                uint128 reasonablePreFund = uint128((requiredPreFund * exchangeRate) / 1e18 / 2);
                 paymasterData = abi.encodePacked(paymasterData, reasonablePreFund);
             }
 
@@ -340,5 +340,59 @@ abstract contract PaymasterHelpers is Base {
         bytes calldata paymasterConfig = _paymasterAndData[_paymasterDataOffset + 1:];
 
         return (mode, paymasterConfig);
+    }
+
+    function _calculateExpectedTokenTransfer(bytes memory context, uint256 actualGasCost, uint256 actualUserOpFeePerGas)
+        internal
+        pure
+        returns (uint256)
+    {
+        ERC20PostOpContext memory ctx = abi.decode(context, (ERC20PostOpContext));
+
+        uint256 expectedPenaltyGasCost = _expectedPenaltyGasCost(
+            actualGasCost, actualUserOpFeePerGas, ctx.postOpGas, ctx.preOpGasApproximation, ctx.executionGasLimit
+        );
+
+        uint256 totalActualGasCost = actualGasCost + expectedPenaltyGasCost;
+
+        uint256 costInToken =
+            getCostInToken(totalActualGasCost, ctx.postOpGas, actualUserOpFeePerGas, ctx.exchangeRate) + ctx.constantFee;
+
+        uint256 absoluteCostInToken =
+            costInToken > ctx.preFundCharged ? costInToken - ctx.preFundCharged : ctx.preFundCharged - costInToken;
+
+        return absoluteCostInToken;
+    }
+
+    function _expectedPenaltyGasCost(
+        uint256 _actualGasCost,
+        uint256 _actualUserOpFeePerGas,
+        uint128 postOpGas,
+        uint256 preOpGasApproximation,
+        uint256 executionGasLimit
+    ) internal pure returns (uint256) {
+        uint256 PENALTY_PERCENT = 10;
+        uint256 executionGasUsed = 0;
+        uint256 actualGas = _actualGasCost / _actualUserOpFeePerGas + postOpGas;
+
+        if (actualGas > preOpGasApproximation) {
+            executionGasUsed = actualGas - preOpGasApproximation;
+        }
+
+        uint256 expectedPenaltyGas = 0;
+        if (executionGasLimit > executionGasUsed) {
+            expectedPenaltyGas = ((executionGasLimit - executionGasUsed) * PENALTY_PERCENT) / 100;
+        }
+
+        return expectedPenaltyGas * _actualUserOpFeePerGas;
+    }
+
+    function getCostInToken(
+        uint256 _actualGasCost,
+        uint256 _postOpGas,
+        uint256 _actualUserOpFeePerGas,
+        uint256 _exchangeRate
+    ) internal pure returns (uint256) {
+        return ((_actualGasCost + (_postOpGas * _actualUserOpFeePerGas)) * _exchangeRate) / 1e18;
     }
 }
