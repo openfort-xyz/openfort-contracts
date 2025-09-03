@@ -24,6 +24,7 @@ contract PaymasterDataTest is Test {
     uint256 forkId;
     string SEPOLIA_RPC_URL = "https://eth-sepolia.g.alchemy.com/v2/EIOmdDtOw7ulufI5S27isOfZfW51PQXB";
 
+    address treasury;
     uint8 constant ERC20_MODE = 1;
     uint8 constant VERIFYING_MODE = 0;
     uint8 constant ERC20_PAYMASTER_DATA_LENGTH = 117;
@@ -35,6 +36,7 @@ contract PaymasterDataTest is Test {
         forkId = vm.createFork(SEPOLIA_RPC_URL);
         vm.selectFork(forkId);
 
+        treasury = makeAddr("treasury");
         (owner, ownerPK) = makeAddrAndKey("owner");
         (sender, senderPK) = makeAddrAndKey("sender");
         (manager, managerPK) = makeAddrAndKey("manager");
