@@ -15,7 +15,7 @@ contract FullCycleUserOp is PaymasterHelpers {
         _mint(sender, mintTokens);
         _;
     }
-    
+
     modifier approvePM() {
         vm.prank(sender);
         mockERC20.approve(address(PM), type(uint256).max);
@@ -42,7 +42,8 @@ contract FullCycleUserOp is PaymasterHelpers {
         uint256 value = 0;
         bytes memory data = abi.encodeWithSelector(MockERC20.mint.selector, sender, mintTokens);
 
-        bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
+        bytes memory callData =
+            abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
         userOp.callData = callData;
 
         userOp.accountGasLimits = _packAccountGasLimits(600_000, 400_000);
@@ -56,12 +57,11 @@ contract FullCycleUserOp is PaymasterHelpers {
         bytes32 userOpHash = ENTRY_POINT_V8.getUserOpHash(userOp);
         userOp.signature = _signUserOp(userOpHash);
 
-
         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
         ops[0] = userOp;
 
         _etch();
-        
+
         uint256 senderBalanceBefore = IERC20(address(mockERC20)).balanceOf(sender);
 
         vm.prank(owner);
@@ -71,7 +71,7 @@ contract FullCycleUserOp is PaymasterHelpers {
 
         assertEq(senderBalanceBefore + mintTokens, senderBalanceAfter);
     }
-    
+
     function test_FullCycleUserOpERC20_MODE_combinedByteBasic() public depositAndStakeEP mint approvePM {
         uint256 balanceSener = sender.balance;
         assertEq(balanceSener, 0);
@@ -85,9 +85,10 @@ contract FullCycleUserOp is PaymasterHelpers {
         uint256 value = 0;
         bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, random, sendTokens);
 
-        bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
+        bytes memory callData =
+            abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
         userOp.callData = callData;
-        
+
         userOp.accountGasLimits = _packAccountGasLimits(600_000, 400_000);
         userOp.preVerificationGas = preVerificationGas;
         userOp.gasFees = _packGasFees(80 gwei, 15 gwei);
@@ -99,12 +100,11 @@ contract FullCycleUserOp is PaymasterHelpers {
         bytes32 userOpHash = ENTRY_POINT_V8.getUserOpHash(userOp);
         userOp.signature = _signUserOp(userOpHash);
 
-
         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
         ops[0] = userOp;
 
         _etch();
-        
+
         uint256 randomBalanceBefore = IERC20(address(mockERC20)).balanceOf(random);
         uint256 treasuryBalanceBefore = IERC20(address(mockERC20)).balanceOf(treasury);
         uint256 senderBalanceBefore = IERC20(address(mockERC20)).balanceOf(sender);
@@ -120,7 +120,7 @@ contract FullCycleUserOp is PaymasterHelpers {
         assertEq(senderBalanceBefore - (15156 + sendTokens), senderBalanceAfter);
         assertNotEq(treasuryBalanceBefore, treasuryBalanceAfter);
     }
-    
+
     function test_FullCycleUserOpERC20_MODE_combinedByteFee() public depositAndStakeEP mint approvePM {
         uint256 balanceSener = sender.balance;
         assertEq(balanceSener, 0);
@@ -134,9 +134,10 @@ contract FullCycleUserOp is PaymasterHelpers {
         uint256 value = 0;
         bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, random, sendTokens);
 
-        bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
+        bytes memory callData =
+            abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
         userOp.callData = callData;
-        
+
         userOp.accountGasLimits = _packAccountGasLimits(600_000, 400_000);
         userOp.preVerificationGas = preVerificationGas;
         userOp.gasFees = _packGasFees(80 gwei, 15 gwei);
@@ -148,12 +149,11 @@ contract FullCycleUserOp is PaymasterHelpers {
         bytes32 userOpHash = ENTRY_POINT_V8.getUserOpHash(userOp);
         userOp.signature = _signUserOp(userOpHash);
 
-
         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
         ops[0] = userOp;
 
         _etch();
-        
+
         uint256 randomBalanceBefore = IERC20(address(mockERC20)).balanceOf(random);
         uint256 treasuryBalanceBefore = IERC20(address(mockERC20)).balanceOf(treasury);
         uint256 senderBalanceBefore = IERC20(address(mockERC20)).balanceOf(sender);
@@ -169,7 +169,7 @@ contract FullCycleUserOp is PaymasterHelpers {
         assertEq(senderBalanceBefore - (25167 + sendTokens), senderBalanceAfter);
         assertNotEq(treasuryBalanceBefore, treasuryBalanceAfter);
     }
-    
+
     function test_FullCycleUserOpERC20_MODE_combinedByteRecipient() public depositAndStakeEP mint approvePM {
         uint256 balanceSener = sender.balance;
         assertEq(balanceSener, 0);
@@ -183,9 +183,10 @@ contract FullCycleUserOp is PaymasterHelpers {
         uint256 value = 0;
         bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, random, sendTokens);
 
-        bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
+        bytes memory callData =
+            abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
         userOp.callData = callData;
-        
+
         userOp.accountGasLimits = _packAccountGasLimits(600_000, 400_000);
         userOp.preVerificationGas = preVerificationGas;
         userOp.gasFees = _packGasFees(80 gwei, 15 gwei);
@@ -197,12 +198,11 @@ contract FullCycleUserOp is PaymasterHelpers {
         bytes32 userOpHash = ENTRY_POINT_V8.getUserOpHash(userOp);
         userOp.signature = _signUserOp(userOpHash);
 
-
         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
         ops[0] = userOp;
 
         _etch();
-        
+
         uint256 randomBalanceBefore = IERC20(address(mockERC20)).balanceOf(random);
         uint256 treasuryBalanceBefore = IERC20(address(mockERC20)).balanceOf(treasury);
         uint256 senderBalanceBefore = IERC20(address(mockERC20)).balanceOf(sender);
@@ -218,7 +218,7 @@ contract FullCycleUserOp is PaymasterHelpers {
         assertEq(senderBalanceBefore - (15167 + sendTokens), senderBalanceAfter);
         assertNotEq(treasuryBalanceBefore, treasuryBalanceAfter);
     }
-    
+
     function test_FullCycleUserOpERC20_MODE_combinedBytePreFund() public depositAndStakeEP mint approvePM {
         uint256 balanceSener = sender.balance;
         assertEq(balanceSener, 0);
@@ -232,9 +232,10 @@ contract FullCycleUserOp is PaymasterHelpers {
         uint256 value = 0;
         bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, random, sendTokens);
 
-        bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
+        bytes memory callData =
+            abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
         userOp.callData = callData;
-        
+
         userOp.accountGasLimits = _packAccountGasLimits(600_000, 400_000);
         userOp.preVerificationGas = preVerificationGas;
         userOp.gasFees = _packGasFees(80 gwei, 15 gwei);
@@ -246,12 +247,11 @@ contract FullCycleUserOp is PaymasterHelpers {
         bytes32 userOpHash = ENTRY_POINT_V8.getUserOpHash(userOp);
         userOp.signature = _signUserOp(userOpHash);
 
-
         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
         ops[0] = userOp;
 
         _etch();
-        
+
         uint256 randomBalanceBefore = IERC20(address(mockERC20)).balanceOf(random);
         uint256 treasuryBalanceBefore = IERC20(address(mockERC20)).balanceOf(treasury);
         uint256 senderBalanceBefore = IERC20(address(mockERC20)).balanceOf(sender);
@@ -267,7 +267,7 @@ contract FullCycleUserOp is PaymasterHelpers {
         assertEq(senderBalanceBefore - (15167 + sendTokens), senderBalanceAfter);
         assertNotEq(treasuryBalanceBefore, treasuryBalanceAfter);
     }
-    
+
     function test_FullCycleUserOpERC20_MODE_combinedByteAll() public depositAndStakeEP mint approvePM {
         uint256 balanceSener = sender.balance;
         assertEq(balanceSener, 0);
@@ -281,9 +281,10 @@ contract FullCycleUserOp is PaymasterHelpers {
         uint256 value = 0;
         bytes memory data = abi.encodeWithSelector(IERC20.transfer.selector, random, sendTokens);
 
-        bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
+        bytes memory callData =
+            abi.encodeWithSelector(bytes4(keccak256("execute(address,uint256,bytes)")), target, value, data);
         userOp.callData = callData;
-        
+
         userOp.accountGasLimits = _packAccountGasLimits(600_000, 400_000);
         userOp.preVerificationGas = preVerificationGas;
         userOp.gasFees = _packGasFees(80 gwei, 15 gwei);
@@ -295,12 +296,11 @@ contract FullCycleUserOp is PaymasterHelpers {
         bytes32 userOpHash = ENTRY_POINT_V8.getUserOpHash(userOp);
         userOp.signature = _signUserOp(userOpHash);
 
-
         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
         ops[0] = userOp;
 
         _etch();
-        
+
         uint256 randomBalanceBefore = IERC20(address(mockERC20)).balanceOf(random);
         uint256 treasuryBalanceBefore = IERC20(address(mockERC20)).balanceOf(treasury);
         uint256 senderBalanceBefore = IERC20(address(mockERC20)).balanceOf(sender);

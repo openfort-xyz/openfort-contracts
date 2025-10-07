@@ -12,6 +12,9 @@ import {MessageHashUtils} from "@oz-v5.4.0/utils/cryptography/MessageHashUtils.s
 import {PackedUserOperation} from "@account-abstraction-v8/interfaces/PackedUserOperation.sol";
 
 /**
+ * @title PaymasterV3
+ * @author 0xKoiner@Openfort
+ * @notice Inspired by Pimlico and Solady Paymaster.
  * @dev Paymaster implementation compatible with account-abstraction v0.0.8 and OpenZeppelin v5.4.0
  *
  * @notice DEPENDENCY REQUIREMENTS:
