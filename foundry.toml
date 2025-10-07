@@ -1,6 +1,4 @@
 [profile.default]
-solc_version = '0.8.19'
-solc = '0.8.19'
 src = 'contracts'
 out = 'out'
 libs = ['node_modules', 'lib']
@@ -11,12 +9,15 @@ gas_reports = ["*"]
 gas_reports_ignore = ["TestToken", "TestCounter"]
 remappings = [
     "@openzeppelin/=node_modules/@openzeppelin/",
+    "@oz-v5.4.0/=lib/oz-v5.4.0/contracts/",
     "account-abstraction/=lib/account-abstraction/contracts/",
+    "@account-abstraction-v8/=lib/account-abstractionV8/contracts",
     "ds-test/=lib/forge-std/lib/ds-test/src/",
     "eth-gas-reporter/=node_modules/eth-gas-reporter/",
     "forge-std/=lib/forge-std/src/",
     "hardhat/=node_modules/hardhat/",
     "erc6551/=lib/erc6551/",
+    "solady/=lib/solady/src",
 ]
 
 # default
