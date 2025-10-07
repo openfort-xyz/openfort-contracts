@@ -33,7 +33,7 @@ abstract contract PaymasterHelpers is Base {
     /// @notice The preFund is too high.
     error OPFPaymasterV3__PreFundTooHigh();
 
-    uint48 validUntil; 
+    uint48 validUntil;
     uint48 validAfter;
     uint128 constant postGas = 50000;
     uint128 constant paymasterValidationGasLimit = 100000;

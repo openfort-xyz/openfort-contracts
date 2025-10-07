@@ -10,11 +10,6 @@ import {PackedUserOperation} from "@account-abstraction-v8/interfaces/PackedUser
 
 using UserOperationLib for PackedUserOperation;
 
-/// @title BaseSingletonPaymaster
-/// @author Pimlico (https://github.com/pimlicolabs/singleton-paymaster/blob/main/src/base/BaseSingletonPaymaster.sol)
-/// @notice Helper class for creating a singleton paymaster.
-/// @dev Inherits from BasePaymaster.
-/// @dev Inherits from MultiSigner.
 abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster, MultiSigner {
     /// @notice Holds all context needed during the EntryPoint's postOp call.
     struct ERC20PostOpContext {
