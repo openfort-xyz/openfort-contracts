@@ -1,0 +1,54 @@
+Offset | Field                | Bytes | Hex Value                                                            | Decoded Value
+-------|----------------------|-------|----------------------------------------------------------------------|---------------------------
+    0  | paymaster            |  20   | 0x5991a2df15a8f6a256d3ec51e99254cd3fb576a9                           | Paymaster address
+   20  | verificationGasLimit |  16   | 0x00000000000000000000000000061a80                                   | 400,000 gas
+   36  | postOpGasLimit       |  16   | 0x0000000000000000000000000000c350                                   | 50,000 gas
+   52  | mode byte            |   1   | 0x01                                                                 | VERIFYING_MODE << 1
+   53  | validUntil           |   6   | 0x00006914b824                                                       | 1,762,965,540 (Nov 12, 2025)
+   59  | validAfter           |   6   | 0x000000000000                                                       | 0 (Jan 1, 1970)
+   65  | signature            |  65   | 0x3182cc03a82f1ec61acbfc82819e77ed62e8d2b5858ddebf0dc5a001ca881612   | ECDSA signature
+       |                      |       |   4854c1951122f5f501d6c344a2d4a5342386d18298fa8469a49b04835c869a0a1c | (r, s, v format)
+  130  | sigLength            |   2   | 0x0041                                                               | 65 (signature length)
+  132  | PAYMASTER_SIG_MAGIC  |   8   | 0x22e325a297439656                                                   | Magic constant
+-------|----------------------|-------|----------------------------------------------------------------------|---------------------------
+Total: 140 bytes
+
+0x5991a2df15a8f6a256d3ec51e99254cd3fb576a9 00000000000000000000000000061a80 0000000000000000000000000000c350 01 00006914b824 000000000000 
+0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF FF FFFFFFFFFFFF FFFFFFFFFFFF
+
+3182cc03a82f1ec61acbfc82819e77ed62e8d2b5858ddebf0dc5a001ca8816124854c1951122f5f501d6c344a2d4a5342386d18298fa8469a49b04835c869a0a1c 0041 22e325a297439656
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF FFFF FFFFFFFFFFFFFFFF
+
+Offset | Field                | Bytes | Hex Value                                  | Decoded Value
+-------|----------------------|-------|--------------------------------------------|---------------------------
+    0  | paymaster            |  20   | 0x5991a2df15a8f6a256d3ec51e99254cd3fb576a9 | Paymaster address
+   20  | verificationGasLimit |  16   | 0x00000000000000000000000000061a80         | 400,000 gas
+   36  | postOpGasLimit       |  16   | 0x0000000000000000000000000000c350         | 50,000 gas
+   52  | mode byte            |   1   | 0x01                                       | 1 (mode << 1)
+   53  | validUntil           |   6   | 0x00006914b9ec                             | 1,762,965,996 (Nov 12, 2025 16:46:36)
+   59  | validAfter           |   6   | 0x000000000000                             | 0 (No start restriction)
+-------|----------------------|-------|------------------------------------------|---------------------------
+   65  | Additional data      |  65   | 0x0e4634b4a4c1c746843d9c75c969aae3c55780d07c383b0d1d6650c3ac1b517e | ECDSA Signature
+       | (appended externally)|       |   3052112cbc74a351dccf5fb3098dbadc0c86a3ab83f5b082f305563b339beaa91c  | (appended after packing)
+-------|----------------------|-------|------------------------------------------|---------------------------
+Grand Total: 130 bytes
+
+
+0x5991a2df15a8f6a256d3ec51e99254cd3fb576a9 00000000000000000000000000061a80 0000000000000000000000000000c350 01 00006914b9ec 000000000000 
+0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF FF FFFFFFFFFFFF FFFFFFFFFFFF
+
+0e4634b4a4c1c746843d9c75c969aae3c55780d07c383b0d1d6650c3ac1b517e3052112cbc74a351dccf5fb3098dbadc0c86a3ab83f5b082f305563b339beaa91c
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
+combinedByte 1
+mode 0
+0x00006914bb5400000000000021c5181fbb9e816c2a250403cd01d1d3638fb33eda155ffe21337a3981a22db53a65b3227daceca195436dd7ce0484c21839d74ddf397f1b3ac8061e85a3902a1b
+
+validUntil 1762968468
+validAfter 0
+0xe73bbd46df8d564d39c0b8f97f261fd6846e7d216e84a4c7fb9aaa150a81cc25126d0ef038bbff47c0e2524242736162b79e1d346643b8d7bee3c8652f1006c51b
+
+
+combinedByte 1
+mode 0
+0x00006914bbb400000000000048373405c8923adb79176e34a32f32029dc9fe9d096514b23fa6ccdd4f56931a5ade5ce610aa4e69b9e081148f1342455e0c1ff2e82617d7c8013507c119bdff1b 0041 22e325a297439656
