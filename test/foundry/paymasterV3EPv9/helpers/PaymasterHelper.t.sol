@@ -19,12 +19,15 @@ contract PaymasterHelper is AAHelper {
         (mode, paymasterConfig) = _parsePaymasterAndData(_userOp.paymasterAndData, PAYMASTER_DATA_OFFSET);
     }
 
-    function _parseErc20ConfigCallData(bytes calldata paymasterConfig)
+    function _parseErc20ConfigCallData(
+        bytes calldata paymasterConfig,
+        uint256 sigLength
+    )
         external
         pure
         returns (ERC20PaymasterData memory cfg)
     {
-        cfg = _parseErc20Config(paymasterConfig);
+        cfg = _parseErc20Config(paymasterConfig, sigLength);
     }
 
     function _createPostOpContextCallData(
@@ -74,8 +77,7 @@ contract PaymasterHelper is AAHelper {
                 postGas,
                 (_mode << 1) | MODE_AND_ALLOW_ALL_BUNDLERS_LENGTH,
                 validUntil,
-                validAfter,
-                UserOperationLibV9.PAYMASTER_SIG_MAGIC
+                validAfter
             );
         } else if (_mode == ERC20_MODE) {
             paymasterData = abi.encodePacked(
@@ -155,7 +157,10 @@ contract PaymasterHelper is AAHelper {
         );
     }
 
-    function _parseErc20Config(bytes calldata _paymasterConfig)
+    function _parseErc20Config(
+        bytes calldata _paymasterConfig,
+        uint256 _sigLength
+    )
         internal
         pure
         returns (ERC20PaymasterData memory config)
@@ -218,7 +223,16 @@ contract PaymasterHelper is AAHelper {
             config.recipient = address(bytes20(_paymasterConfig[configPointer:configPointer + 20])); // 20 bytes
             configPointer += 20;
         }
-        config.signature = _paymasterConfig[configPointer:];
+
+        // Extract signature based on mode
+        if (_sigLength > 0) {
+            // Async mode: Exclude [uint16(2)][magic(8)] suffix
+            uint256 signatureEnd = _paymasterConfig.length - 10; // Exclude suffix (2 + 8 bytes)
+            config.signature = _paymasterConfig[configPointer:signatureEnd];
+        } else {
+            // Sync mode: Everything remaining is signature
+            config.signature = _paymasterConfig[configPointer:];
+        }
 
         if (config.token == address(0)) {
             revert OPFPaymasterV3__TokenAddressInvalid();

@@ -173,30 +173,12 @@ contract AsyncSignature is Deploy {
             userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
         );
 
-        uint128 verificationGasLimit = uint128(uint256(bytes32(userOp.accountGasLimits)) >> 128);
-        _validWindow();
+        userOp.paymasterAndData = _createPaymasterDataMode(userOp, VERIFYING_MODE, 0);
 
-        // Step 1: Build paymasterAndData without signature for paymaster to sign
-        userOp.paymasterAndData = abi.encodePacked(
-            address(PM),
-            verificationGasLimit,
-            postGas,
-            (VERIFYING_MODE << 1) | MODE_AND_ALLOW_ALL_BUNDLERS_LENGTH,
-            validUntil,
-            validAfter
-        );
-
-        // Step 2: Get paymaster signature
         bytes memory paymasterSignature = this._signPaymasterData(VERIFYING_MODE, userOp, 0);
 
-        // Step 3: Build FINAL paymasterAndData with paymaster signature
         userOp.paymasterAndData = abi.encodePacked(
-            address(PM),
-            verificationGasLimit,
-            postGas,
-            (VERIFYING_MODE << 1) | MODE_AND_ALLOW_ALL_BUNDLERS_LENGTH,
-            validUntil,
-            validAfter,
+            userOp.paymasterAndData,
             paymasterSignature
         );
 
@@ -239,31 +221,10 @@ contract AsyncSignature is Deploy {
             userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
         );
 
-        uint128 verificationGasLimit = uint128(uint256(bytes32(userOp.accountGasLimits)) >> 128);
-        _validWindow();
-
-        // Step 1: For Account signing, use dummy signature placeholder
-        // This ensures EntryPoint calculates the same hash as it will during validation
-        // When sigLen > 0, EntryPoint hashes [data][MAGIC] excluding the signature
-        bytes memory dummySignature = new bytes(65); // 65-byte placeholder
-        userOp.paymasterAndData = abi.encodePacked(
-            address(PM),
-            verificationGasLimit,
-            postGas,
-            (ERC20_MODE << 1) | MODE_AND_ALLOW_ALL_BUNDLERS_LENGTH,
-            uint8(combinedByteBasic),
-            validUntil,
-            validAfter,
-            address(mockERC20),
-            postGas,
-            exchangeRate,
-            paymasterValidationGasLimit,
-            treasury
-        );
+        userOp.paymasterAndData = _createPaymasterDataMode(userOp, ERC20_MODE, combinedByteBasic);
 
         bytes memory paymasterSignature = this._signPaymasterData(ERC20_MODE, userOp, 1);
 
-        // Build final paymasterAndData with signature
         userOp.paymasterAndData = abi.encodePacked(userOp.paymasterAndData, paymasterSignature);
 
         bytes32 userOpHash = _getUserOpHash(userOp);
