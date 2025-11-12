@@ -15,23 +15,23 @@ import { PackedUserOperation } from "lib/account-abstraction-v09/contracts/inter
  * @title PaymasterV3
  * @author 0xKoiner@Openfort
  * @notice Inspired by Pimlico and Solady Paymaster.
- * @dev Paymaster implementation compatible with account-abstraction v0.0.8 and OpenZeppelin v5.4.0
+ * @dev Paymaster implementation compatible with account-abstraction v0.0.9 and OpenZeppelin v5.4.0
  *
  * @notice DEPENDENCY REQUIREMENTS:
  * This contract requires specific versions to avoid compatibility conflicts with newer versions:
  *
- * - Account Abstraction: v0.0.8 (conflicts with v0.6/v0.7)
+ * - Account Abstraction: v0.0.9 (conflicts with v0.6/v0.7/v0.8)
  * - OpenZeppelin Contracts: v5.4.0 (conflicts with v5.1+)
  *
  * @dev INSTALLATION:
  * Install the required dependencies with custom aliases to avoid conflicts:
  *
  * ```bash
- * forge install account-abstractionV8=eth-infinitism/account-abstraction v0.8.0
+ * forge install account-abstractionV8=eth-infinitism/account-abstraction v0.9.0
  * forge install oz-v5.4.0=OpenZeppelin/openzeppelin-contracts v5.4.0
  * ```
  * @dev COMPATIBILITY NOTES:
- * - Uses legacy EntryPoint interface from account-abstraction v0.0.8
+ * - Uses legacy EntryPoint interface from account-abstraction v0.0.9
  * - OpenZeppelin v5.4.0 provides stable API before breaking changes in v5.1+
  * - This setup maintains isolation from conflicting dependency versions
  */
@@ -40,6 +40,7 @@ contract OPFPaymasterV3 is BaseSingletonPaymaster, IPaymasterV8 {
     /*                           USING                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     using UserOperationLib for PackedUserOperation;
+    using UserOperationLib for bytes;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   constant/immutable                       */
@@ -108,6 +109,7 @@ contract OPFPaymasterV3 is BaseSingletonPaymaster, IPaymasterV8 {
      * - validUntil (6 bytes)
      * - validAfter (6 bytes)
      * - signature (64 or 65 bytes)
+     * @dev Async flow: +10 bytes [uint16(signature.length)] + [PAYMASTER_SIG_MAGIC]
      *
      * @dev paymasterAndData for mode 1:
      * - paymaster address (20 bytes)
@@ -126,8 +128,7 @@ contract OPFPaymasterV3 is BaseSingletonPaymaster, IPaymasterV8 {
      * - constantFee (16 bytes - only if constantFeePresent is 1)
      * - recipient (20 bytes - only if recipientPresent is 1)
      * - signature (64 or 65 bytes)
-     *
-     *
+     * @dev Async flow: +10 bytes [uint16(signature.length)] + [PAYMASTER_SIG_MAGIC]
      */
     function _validatePaymasterUserOp(
         PackedUserOperation calldata _userOp,
@@ -140,6 +141,8 @@ contract OPFPaymasterV3 is BaseSingletonPaymaster, IPaymasterV8 {
         (uint8 mode, bytes calldata paymasterConfig) =
             _parsePaymasterAndData(_userOp.paymasterAndData, PAYMASTER_DATA_OFFSET);
 
+        uint256 sigLength = _userOp.paymasterAndData.getPaymasterSignatureLength();
+
         if (mode != ERC20_MODE && mode != VERIFYING_MODE) {
             revert OPFPaymasterV3__PaymasterModeInvalid();
         }
@@ -148,12 +151,12 @@ contract OPFPaymasterV3 is BaseSingletonPaymaster, IPaymasterV8 {
         uint256 validationData;
 
         if (mode == VERIFYING_MODE) {
-            (context, validationData) = _validateVerifyingMode(_userOp, paymasterConfig, _userOpHash);
+            (context, validationData) = _validateVerifyingMode(_userOp, paymasterConfig, _userOpHash, sigLength);
         }
 
         if (mode == ERC20_MODE) {
             (context, validationData) =
-                _validateERC20Mode(mode, _userOp, paymasterConfig, _userOpHash, _requiredPreFund);
+                _validateERC20Mode(mode, _userOp, paymasterConfig, _userOpHash, _requiredPreFund, sigLength);
         }
 
         return (context, validationData);
@@ -162,12 +165,13 @@ contract OPFPaymasterV3 is BaseSingletonPaymaster, IPaymasterV8 {
     function _validateVerifyingMode(
         PackedUserOperation calldata _userOp,
         bytes calldata _paymasterConfig,
-        bytes32 _userOpHash
+        bytes32 _userOpHash,
+        uint256 _sigLength
     )
         internal
         returns (bytes memory, uint256)
     {
-        (uint48 validUntil, uint48 validAfter, bytes calldata signature) = _parseVerifyingConfig(_paymasterConfig);
+        (uint48 validUntil, uint48 validAfter, bytes calldata signature) = _parseVerifyingConfig(_paymasterConfig, _sigLength);
 
         bytes32 hash = MessageHashUtils.toEthSignedMessageHash(getHash(VERIFYING_MODE, _userOp));
         address recoveredSigner = ECDSA.recover(hash, signature);
@@ -184,12 +188,13 @@ contract OPFPaymasterV3 is BaseSingletonPaymaster, IPaymasterV8 {
         PackedUserOperation calldata _userOp,
         bytes calldata _paymasterConfig,
         bytes32 _userOpHash,
-        uint256 _requiredPreFund
+        uint256 _requiredPreFund,
+        uint256 _sigLength
     )
         internal
         returns (bytes memory, uint256)
     {
-        ERC20PaymasterData memory cfg = _parseErc20Config(_paymasterConfig);
+        ERC20PaymasterData memory cfg = _parseErc20Config(_paymasterConfig, _sigLength);
 
         bytes32 hash = MessageHashUtils.toEthSignedMessageHash(getHash(_mode, _userOp));
         address recoveredSigner = ECDSA.recover(hash, cfg.signature);

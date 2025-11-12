@@ -8,6 +8,9 @@ import { ManagerAccessControl } from "./ManagerAccessControl.sol";
 import { UserOperationLib } from "lib/account-abstraction-v09/contracts/core/UserOperationLib.sol";
 import { PackedUserOperation } from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
 
+import {console2 as console} from "lib/forge-std/src/console2.sol";
+
+using UserOperationLib for bytes;
 using UserOperationLib for PackedUserOperation;
 
 abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster, MultiSigner {
@@ -176,11 +179,13 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
         pure
         returns (uint8, bytes calldata)
     {
+
         if (_paymasterAndData.length < _paymasterDataOffset + 1) {
             revert OPFPaymasterV3__PaymasterAndDataLengthInvalid();
         }
 
         uint8 combinedByte = uint8(_paymasterAndData[_paymasterDataOffset]);
+
         // rest of the bits represent the mode
         uint8 mode = uint8((combinedByte >> 1));
 
@@ -192,9 +197,14 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
     /**
      * @notice Parses the paymaster configuration when used in ERC-20 mode.
      * @param _paymasterConfig The paymaster configuration in bytes.
+     * @param _sigLength The paymaster signature length (0 for sync mode, >0 for async mode).
      * @return config The parsed paymaster configuration values.
+     * @dev For async mode (sigLength > 0), the signature is extracted excluding the [uint16(len)][magic] suffix.
      */
-    function _parseErc20Config(bytes calldata _paymasterConfig)
+    function _parseErc20Config(
+        bytes calldata _paymasterConfig,
+        uint256 _sigLength
+    )
         internal
         pure
         returns (ERC20PaymasterData memory config)
@@ -257,7 +267,16 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
             config.recipient = address(bytes20(_paymasterConfig[configPointer:configPointer + 20])); // 20 bytes
             configPointer += 20;
         }
-        config.signature = _paymasterConfig[configPointer:];
+
+        // Extract signature based on mode
+        if (_sigLength > 0) {
+            // Async mode: Exclude [uint16(2)][magic(8)] suffix
+            uint256 signatureEnd = _paymasterConfig.length - UserOperationLib.PAYMASTER_SUFFIX_LEN; // Exclude suffix (2 + 8 bytes)
+            config.signature = _paymasterConfig[configPointer:signatureEnd];
+        } else {
+            // Sync mode: Everything remaining is signature
+            config.signature = _paymasterConfig[configPointer:];
+        }
 
         if (config.token == address(0)) {
             revert OPFPaymasterV3__TokenAddressInvalid();
@@ -281,13 +300,18 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
     /**
      * @notice Parses the paymaster configuration when used in verifying mode.
      * @param _paymasterConfig The paymaster configuration in bytes.
+     * @param _sigLength The paymaster signature length (0 for sync mode, >0 for async mode).
      * @return validUntil The timestamp until which the sponsorship is valid.
      * @return validAfter The timestamp after which the sponsorship is valid.
      * @return signature The signature over the hashed sponsorship fields.
      * @dev The function reverts if the configuration length is invalid or if the signature length is not 64 or 65
      * bytes.
+     * @dev For async mode (sigLength > 0), the signature is extracted excluding the [uint16(len)][magic] suffix.
      */
-    function _parseVerifyingConfig(bytes calldata _paymasterConfig)
+    function _parseVerifyingConfig(
+        bytes calldata _paymasterConfig,
+        uint256 _sigLength
+    )
         internal
         pure
         returns (uint48, uint48, bytes calldata)
@@ -298,7 +322,18 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
 
         uint48 validUntil = uint48(bytes6(_paymasterConfig[0:6]));
         uint48 validAfter = uint48(bytes6(_paymasterConfig[6:12]));
-        bytes calldata signature = _paymasterConfig[12:];
+
+        bytes calldata signature;
+
+        if (_sigLength > 0) {
+            // Async mode: Extract just the signature bytes (exclude [uint16(2)][magic(8)] suffix)
+            // Structure: [validUntil 6][validAfter 6][signature N][uint16 2][magic 8]
+            uint256 signatureEnd = _paymasterConfig.length - UserOperationLib.PAYMASTER_SUFFIX_LEN; // Exclude suffix (2 + 8 bytes)
+            signature = _paymasterConfig[12:signatureEnd];
+        } else {
+            // Sync mode: Everything after validUntil/validAfter is signature
+            signature = _paymasterConfig[12:];
+        }
 
         if (signature.length != 64 && signature.length != 65) {
             revert OPFPaymasterV3__PaymasterSignatureLengthInvalid();
