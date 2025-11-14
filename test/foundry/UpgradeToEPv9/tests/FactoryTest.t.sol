@@ -23,6 +23,7 @@ contract FactoryTest is Deploy {
 
         _depositTo(_RandomOwner, _RandomOwnerSC, EP_Version.V6);
         _depositTo(_RandomOwner, _RandomOwnerSC, EP_Version.V9);
+        _sendAssetsToSC(_RandomOwner, _RandomOwnerSC);
 
         UserOperation memory userOp;
         (userOp, ) = _getFreshUserOp(_RandomOwnerSC);
@@ -48,5 +49,7 @@ contract FactoryTest is Deploy {
 
         vm.prank(_OpenfortAdmin, _OpenfortAdmin);
         entryPointV6.handleOps(ops, payable(_OpenfortAdmin));
+
+        assertEq(address(0xbabe).balance, 0.1 ether);
     }
 }

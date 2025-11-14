@@ -8,4 +8,10 @@ abstract contract Helper is Data {
     function _deal(address _addr, uint256 _amount) internal {
         deal(_addr, _amount);
     }
+
+    function _sendAssetsToSC(address _depositor, address _sc) internal {
+        vm.prank(_depositor);
+        (bool succ, ) = _sc.call{value: 0.5 ether}("");
+        require(succ, "Revert");
+    }
 }
