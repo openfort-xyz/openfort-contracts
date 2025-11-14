@@ -3,11 +3,11 @@
 pragma solidity ^0.8.19;
 
 import {AAHelper} from "test/foundry/UpgradeToEPv9/helpers/AAHelper.t.sol";
+import {IStakeManager} from "lib/account-abstraction/contracts/interfaces/IStakeManager.sol";
 import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
 import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {EntryPoint as EntryPointV6, IEntryPoint as IEntryPointv6} from "lib/account-abstraction/contracts/core/EntryPoint.sol";
 import {EntryPoint as EntryPointV9, IEntryPoint as IEntryPointv9} from "lib/account-abstraction-v09/contracts/core/EntryPoint.sol";
-
 contract Deploy is AAHelper {
     function setUp() public virtual override {
         super.setUp();
@@ -37,6 +37,7 @@ contract Deploy is AAHelper {
         vm.stopPrank();
         
         _dealAll();
+        _depositToEp();
     }
 
     function test_AfterDeploy() external {
@@ -50,6 +51,7 @@ contract Deploy is AAHelper {
         assertEq(openfortFactory.recoveryPeriod(), RECOVERY_PERIOD);
         assertEq(openfortFactory.securityPeriod(), SECURITY_PERIOD);
         assertEq(openfortFactory.securityWindow(), SECURITY_WINDOW);
+        _assertEPDeposits();
     }
 
     function _dealAll() internal {
@@ -63,5 +65,17 @@ contract Deploy is AAHelper {
         _depositTo(_OpenfortAdmin, EP_Version.V9);
         _depositTo(_AccountOwner, EP_Version.V6);
         _depositTo(_AccountOwner, EP_Version.V9);
+    }
+
+    function _assertEPDeposits() internal {
+        IStakeManager.DepositInfo memory DI;
+        DI = entryPointV6.getDepositInfo(_OpenfortAdmin);
+        assertEq(DI.deposit, 0.1 ether);
+        DI = entryPointV6.getDepositInfo(_OpenfortAdmin);
+        assertEq(DI.deposit, 0.1 ether);
+        DI = entryPointV6.getDepositInfo(_AccountOwner);
+        assertEq(DI.deposit, 0.1 ether);
+        DI = entryPointV6.getDepositInfo(_AccountOwner);
+        assertEq(DI.deposit, 0.1 ether);
     }
 }
