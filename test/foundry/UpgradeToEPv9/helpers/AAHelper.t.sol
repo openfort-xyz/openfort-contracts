@@ -7,8 +7,10 @@ import {UserOperation} from "lib/account-abstraction/contracts/interfaces/UserOp
 import {IEntryPoint as IEntryPointv6} from "lib/account-abstraction/contracts/core/EntryPoint.sol";
 import {IEntryPoint as IEntryPointv9} from "lib/account-abstraction-v09/contracts/core/EntryPoint.sol";
 import {PackedUserOperation} from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 abstract contract AAHelper is Helper {
+    using ECDSA for bytes32;
     enum EP_Version {
         V6,
         V9
@@ -99,7 +101,8 @@ abstract contract AAHelper is Helper {
     }
 
     function _signUserOp(bytes32 _userOpHash, uint256 _PK) internal pure returns (bytes memory signature) {
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_PK, _userOpHash);
+        bytes32 msgHash = _userOpHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_PK, msgHash);
         signature = abi.encodePacked(r, s, v);
     }
 
