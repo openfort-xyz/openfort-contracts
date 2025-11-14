@@ -35,6 +35,8 @@ contract Deploy is AAHelper {
             _Guardian
         );
         vm.stopPrank();
+        
+        _dealAll();
     }
 
     function test_AfterDeploy() external {
@@ -48,5 +50,18 @@ contract Deploy is AAHelper {
         assertEq(openfortFactory.recoveryPeriod(), RECOVERY_PERIOD);
         assertEq(openfortFactory.securityPeriod(), SECURITY_PERIOD);
         assertEq(openfortFactory.securityWindow(), SECURITY_WINDOW);
+    }
+
+    function _dealAll() internal {
+        _deal(_OpenfortAdmin, 5 ether);
+        _deal(_AccountOwner, 5 ether);
+        _deal(_Guardian, 5 ether);
+    }
+
+    function _depositToEp()  internal {
+        _depositTo(_OpenfortAdmin, EP_Version.V6);
+        _depositTo(_OpenfortAdmin, EP_Version.V9);
+        _depositTo(_AccountOwner, EP_Version.V6);
+        _depositTo(_AccountOwner, EP_Version.V9);
     }
 }
