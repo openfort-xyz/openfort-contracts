@@ -61,10 +61,10 @@ contract Deploy is AAHelper {
     }
 
     function _depositToEp()  internal {
-        _depositTo(_OpenfortAdmin, EP_Version.V6);
-        _depositTo(_OpenfortAdmin, EP_Version.V9);
-        _depositTo(_AccountOwner, EP_Version.V6);
-        _depositTo(_AccountOwner, EP_Version.V9);
+        _depositTo(_OpenfortAdmin, _OpenfortAdmin, EP_Version.V6);
+        _depositTo(_OpenfortAdmin, _OpenfortAdmin, EP_Version.V9);
+        _depositTo(_AccountOwner, _AccountOwner, EP_Version.V6);
+        _depositTo(_AccountOwner, _AccountOwner, EP_Version.V9);
     }
 
     function _assertEPDeposits() internal {
