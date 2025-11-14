@@ -84,4 +84,29 @@ abstract contract AAHelper is Data{
     function _getNonce(address _sender, EP_Version _epVersion) internal view returns (uint256) {
         return _epVersion == EP_Version.V6 ? entryPointV6.getNonce(_sender, 0) : entryPointV9.getNonce(_sender, 0);
     }
+
+    function _getUserOpHashV6(UserOperation memory _userOp) internal view returns (bytes32 hash) {
+        hash = entryPointV6.getUserOpHash(_userOp);
+    }
+
+    function _getUserOpHashV9(PackedUserOperation memory _userOp) internal view returns (bytes32 hash) {
+        hash = entryPointV9.getUserOpHash(_userOp);
+    }
+
+    function _signUserOp(bytes32 _userOpHash, uint256 _PK) internal pure returns (bytes memory signature) {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_PK, _userOpHash);
+        signature = abi.encodePacked(r, s, v);
+    }
+
+    function _packAccountGasLimits(uint256 verificationGasLimit, uint256 callGasLimit)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return bytes32((verificationGasLimit << 128) | callGasLimit);
+    }
+
+    function _packGasFees(uint256 maxPriorityFeePerGas, uint256 maxFeePerGas) internal pure returns (bytes32) {
+        return bytes32((maxPriorityFeePerGas << 128) | maxFeePerGas);
+    }
 }
