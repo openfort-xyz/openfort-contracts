@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.19;
 
-import {Data} from "test/foundry/UpgradeToEPv9/Data/Data.t.sol";
+import {Helper} from "test/foundry/UpgradeToEPv9/helpers/Helper.t.sol";
 import {UserOperation} from "lib/account-abstraction/contracts/interfaces/UserOperation.sol";
 import {IEntryPoint as IEntryPointv6} from "lib/account-abstraction/contracts/core/EntryPoint.sol";
 import {IEntryPoint as IEntryPointv9} from "lib/account-abstraction-v09/contracts/core/EntryPoint.sol";
 import {PackedUserOperation} from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
 
-abstract contract AAHelper is Data{
+abstract contract AAHelper is Helper {
     enum EP_Version {
         V6,
         V9
@@ -91,6 +91,11 @@ abstract contract AAHelper is Data{
 
     function _getUserOpHashV9(PackedUserOperation memory _userOp) internal view returns (bytes32 hash) {
         hash = entryPointV9.getUserOpHash(_userOp);
+    }
+
+    function _depositTo(address _sender, EP_Version _epVersion) internal {
+        vm.prank(_sender);
+        _epVersion == EP_Version.V6 ? entryPointV6.depositTo{value: 0.1 ether}(_sender) : entryPointV9.depositTo{value: 0.1 ether}(_sender);
     }
 
     function _signUserOp(bytes32 _userOpHash, uint256 _PK) internal pure returns (bytes memory signature) {
