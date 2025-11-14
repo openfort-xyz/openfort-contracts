@@ -3,5 +3,50 @@
 pragma solidity ^0.8.19;
 
 import {Deploy} from "test/foundry/UpgradeToEPv9/Deploy.t.sol";
+import {console2 as console} from "lib/forge-std/src/console2.sol";
+import {UserOperation} from "lib/account-abstraction/contracts/interfaces/UserOperation.sol";
 
-contract FactoryTest is Deploy {}
+contract FactoryTest is Deploy {
+    address internal _RandomOwner;
+    address internal _RandomOwnerSC;
+    uint256 internal _RandomOwnerPK;
+    bytes32 internal _RandomOwnerSalt;
+
+    function setUp() public override {
+        super.setUp();
+        (_RandomOwner, _RandomOwnerPK) = makeAddrAndKey("_RandomOwner");
+        _deal(_RandomOwner, 5 ether);
+        _RandomOwnerSalt = keccak256(abi.encodePacked("0xbebe_0001"));
+    }
+    function test_CreateNewAccountWithEPv6() external {
+        _RandomOwnerSC = openfortFactory.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
+
+        _depositTo(_RandomOwner, _RandomOwnerSC, EP_Version.V6);
+        _depositTo(_RandomOwner, _RandomOwnerSC, EP_Version.V9);
+
+        UserOperation memory userOp;
+        (userOp, ) = _getFreshUserOp(_RandomOwnerSC);
+
+        bytes memory callData = abi.encodeWithSignature("execute(address,uint256,bytes)", address(0xbabe), 0.1 ether, hex"");
+        userOp = _populateUserOpV6(userOp, callData, 400_000, 600_000, 800_000, 15 gwei, 80 gwei, hex"");
+
+        bytes memory initCode = abi.encodeWithSignature(
+            "createAccountWithNonce(address,bytes32,bool)", 
+            _RandomOwner, 
+            _RandomOwnerSalt, 
+            false
+        );
+        userOp.initCode = abi.encodePacked(address(openfortFactory), initCode);
+        bytes32 userOpHash = _getUserOpHashV6(userOp);
+
+        console.log(vm.toString(userOpHash));
+
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        UserOperation[] memory ops = new UserOperation[](1);
+        ops[0] = userOp;
+
+        vm.prank(_OpenfortAdmin, _OpenfortAdmin);
+        entryPointV6.handleOps(ops, payable(_OpenfortAdmin));
+    }
+}

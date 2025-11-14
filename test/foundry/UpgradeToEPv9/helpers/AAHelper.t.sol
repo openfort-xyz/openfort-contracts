@@ -93,8 +93,8 @@ abstract contract AAHelper is Helper {
         hash = entryPointV9.getUserOpHash(_userOp);
     }
 
-    function _depositTo(address _sender, EP_Version _epVersion) internal {
-        vm.prank(_sender);
+    function _depositTo(address _depositor, address _sender, EP_Version _epVersion) internal {
+        vm.prank(_depositor);
         _epVersion == EP_Version.V6 ? entryPointV6.depositTo{value: 0.1 ether}(_sender) : entryPointV9.depositTo{value: 0.1 ether}(_sender);
     }
 
@@ -114,4 +114,6 @@ abstract contract AAHelper is Helper {
     function _packGasFees(uint256 maxPriorityFeePerGas, uint256 maxFeePerGas) internal pure returns (bytes32) {
         return bytes32((maxPriorityFeePerGas << 128) | maxFeePerGas);
     }
+
+    function _getSCAddress() internal {}
 }
