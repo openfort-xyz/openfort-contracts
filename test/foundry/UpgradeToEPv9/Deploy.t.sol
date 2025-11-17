@@ -23,11 +23,11 @@ contract Deploy is AAHelper {
         entryPointV9 = IEntryPointv9(payable(ENTRY_POINT_V9));
 
         vm.startPrank(_OpenfortAdmin);
-        upgradeableOpenfortAccountImpl = new UpgradeableOpenfortAccount{salt: versionSalt}();
-        openfortFactory = new UpgradeableOpenfortFactory{salt: versionSalt}(
+        upgradeableOpenfortAccountImplV6 = new UpgradeableOpenfortAccount{salt: versionSalt}();
+        openfortFactoryV6 = new UpgradeableOpenfortFactory{salt: versionSalt}(
             _OpenfortAdmin,
             address(entryPointV6),
-            address(upgradeableOpenfortAccountImpl),
+            address(upgradeableOpenfortAccountImplV6),
             RECOVERY_PERIOD,
             SECURITY_PERIOD,
             SECURITY_WINDOW,
@@ -43,14 +43,14 @@ contract Deploy is AAHelper {
     function test_AfterDeploy() external {
         assertEq(address(entryPointV6), ENTRY_POINT_V6);
         assertEq(address(entryPointV9), ENTRY_POINT_V9);
-        assertEq(openfortFactory.owner(), _OpenfortAdmin);
-        assertEq(openfortFactory.initialGuardian(), _Guardian);
-        assertEq(openfortFactory.implementation(), address(upgradeableOpenfortAccountImpl));
-        assertEq(openfortFactory.entrypointContract(), ENTRY_POINT_V6);
-        assertEq(openfortFactory.lockPeriod(), LOCK_PERIOD);
-        assertEq(openfortFactory.recoveryPeriod(), RECOVERY_PERIOD);
-        assertEq(openfortFactory.securityPeriod(), SECURITY_PERIOD);
-        assertEq(openfortFactory.securityWindow(), SECURITY_WINDOW);
+        assertEq(openfortFactoryV6.owner(), _OpenfortAdmin);
+        assertEq(openfortFactoryV6.initialGuardian(), _Guardian);
+        assertEq(openfortFactoryV6.implementation(), address(upgradeableOpenfortAccountImplV6));
+        assertEq(openfortFactoryV6.entrypointContract(), ENTRY_POINT_V6);
+        assertEq(openfortFactoryV6.lockPeriod(), LOCK_PERIOD);
+        assertEq(openfortFactoryV6.recoveryPeriod(), RECOVERY_PERIOD);
+        assertEq(openfortFactoryV6.securityPeriod(), SECURITY_PERIOD);
+        assertEq(openfortFactoryV6.securityWindow(), SECURITY_WINDOW);
         _assertEPDeposits();
     }
 

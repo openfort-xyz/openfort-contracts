@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.8.19;
+pragma solidity ^0.8.19;
 
 // Base account contract to inherit from and EntryPoint interface
 import {BaseRecoverableAccount, IEntryPoint} from "../core/base/BaseRecoverableAccount.sol";

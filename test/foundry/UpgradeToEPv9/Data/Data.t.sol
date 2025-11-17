@@ -10,8 +10,8 @@ import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/Upgradeable
 import {IEntryPoint as IEntryPointv9} from "lib/account-abstraction-v09/contracts/core/EntryPoint.sol";
 
 abstract contract Data is Test, Constants {
-    UpgradeableOpenfortFactory public openfortFactory;
-    UpgradeableOpenfortAccount public upgradeableOpenfortAccountImpl;
+    UpgradeableOpenfortFactory public openfortFactoryV6;
+    UpgradeableOpenfortAccount public upgradeableOpenfortAccountImplV6;
 
     IEntryPointv6 public entryPointV6;
     IEntryPointv9 public entryPointV9;
