@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
-import { ManagerAccessControl } from "./ManagerAccessControl.sol";
-import { EnumerableSet } from "lib/oz-v5.4.0/contracts/utils/structs/EnumerableSet.sol";
+import {ManagerAccessControl} from "./ManagerAccessControl.sol";
+import {EnumerableSet} from "lib/oz-v5.4.0/contracts/utils/structs/EnumerableSet.sol";
 
 /**
  * Helper class for creating a contract with multiple valid signers.

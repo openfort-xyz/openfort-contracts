@@ -18,8 +18,9 @@ contract FactoryTest is Deploy {
         _deal(_RandomOwner, 5 ether);
         _RandomOwnerSalt = keccak256(abi.encodePacked("0xbebe_0001"));
     }
+
     function test_CreateNewAccountWithEPv6() external {
-        _RandomOwnerSC = openfortFactory.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
+        _RandomOwnerSC = openfortFactoryV6.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
 
         _depositTo(_RandomOwner, _RandomOwnerSC, EP_Version.V6);
         _depositTo(_RandomOwner, _RandomOwnerSC, EP_Version.V9);
@@ -37,7 +38,7 @@ contract FactoryTest is Deploy {
             _RandomOwnerSalt, 
             false
         );
-        userOp.initCode = abi.encodePacked(address(openfortFactory), initCode);
+        userOp.initCode = abi.encodePacked(address(openfortFactoryV6), initCode);
         bytes32 userOpHash = _getUserOpHashV6(userOp);
 
         console.log(vm.toString(userOpHash));

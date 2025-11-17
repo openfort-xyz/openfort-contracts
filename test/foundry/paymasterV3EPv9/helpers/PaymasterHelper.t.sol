@@ -2,11 +2,11 @@
 
 pragma solidity 0.8.29;
 
-import { AAHelper } from "./AAHelper.t.sol";
-import { UserOperationLib } from "lib/account-abstraction-v09/contracts/core/UserOperationLib.sol";
-import { MessageHashUtils } from "lib/oz-v5.4.0/contracts/utils/cryptography/MessageHashUtils.sol";
-import { PackedUserOperation } from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
-import { UserOperationLib as UserOperationLibV9 } from "lib/account-abstraction-v09/contracts/core/UserOperationLib.sol";
+import {AAHelper} from "./AAHelper.t.sol";
+import {UserOperationLib} from "lib/account-abstraction-v09/contracts/core/UserOperationLib.sol";
+import {MessageHashUtils} from "lib/oz-v5.4.0/contracts/utils/cryptography/MessageHashUtils.sol";
+import {PackedUserOperation} from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
+import {UserOperationLib as UserOperationLibV9} from "lib/account-abstraction-v09/contracts/core/UserOperationLib.sol";
 
 contract PaymasterHelper is AAHelper {
     using UserOperationLib for PackedUserOperation;
@@ -19,10 +19,7 @@ contract PaymasterHelper is AAHelper {
         (mode, paymasterConfig) = _parsePaymasterAndData(_userOp.paymasterAndData, PAYMASTER_DATA_OFFSET);
     }
 
-    function _parseErc20ConfigCallData(
-        bytes calldata paymasterConfig,
-        uint256 sigLength
-    )
+    function _parseErc20ConfigCallData(bytes calldata paymasterConfig, uint256 sigLength)
         external
         pure
         returns (ERC20PaymasterData memory cfg)
@@ -35,19 +32,11 @@ contract PaymasterHelper is AAHelper {
         bytes32 _userOpHash,
         ERC20PaymasterData memory _cfg,
         uint256 _requiredPreFund
-    )
-        external
-        pure
-        returns (bytes memory context)
-    {
+    ) external pure returns (bytes memory context) {
         context = _createPostOpContext(_userOp, _userOpHash, _cfg, _requiredPreFund);
     }
 
-    function _signPaymasterData(
-        uint8 _mode,
-        PackedUserOperation calldata _userOp,
-        uint256 _signerIndx
-    )
+    function _signPaymasterData(uint8 _mode, PackedUserOperation calldata _userOp, uint256 _signerIndx)
         external
         view
         returns (bytes memory paymasterSignature)
@@ -60,11 +49,7 @@ contract PaymasterHelper is AAHelper {
         paymasterSignature = abi.encodePacked(r, s, v);
     }
 
-    function _createPaymasterDataMode(
-        PackedUserOperation memory userOp,
-        uint8 _mode,
-        uint8 _combinedByte
-    )
+    function _createPaymasterDataMode(PackedUserOperation memory userOp, uint8 _mode, uint8 _combinedByte)
         internal
         returns (bytes memory paymasterData)
     {
@@ -122,11 +107,7 @@ contract PaymasterHelper is AAHelper {
         bytes32 _userOpHash,
         ERC20PaymasterData memory _cfg,
         uint256 _requiredPreFund
-    )
-        internal
-        pure
-        returns (bytes memory)
-    {
+    ) internal pure returns (bytes memory) {
         // the limit we have for executing the userOp.
         uint256 executionGasLimit = _userOp.unpackCallGasLimit() + _userOp.unpackPostOpGasLimit();
 
@@ -157,10 +138,7 @@ contract PaymasterHelper is AAHelper {
         );
     }
 
-    function _parseErc20Config(
-        bytes calldata _paymasterConfig,
-        uint256 _sigLength
-    )
+    function _parseErc20Config(bytes calldata _paymasterConfig, uint256 _sigLength)
         internal
         pure
         returns (ERC20PaymasterData memory config)
@@ -253,10 +231,7 @@ contract PaymasterHelper is AAHelper {
         return config;
     }
 
-    function _parsePaymasterAndData(
-        bytes calldata _paymasterAndData,
-        uint256 _paymasterDataOffset
-    )
+    function _parsePaymasterAndData(bytes calldata _paymasterAndData, uint256 _paymasterDataOffset)
         internal
         pure
         returns (uint8, bytes calldata)
@@ -274,11 +249,7 @@ contract PaymasterHelper is AAHelper {
         return (mode, paymasterConfig);
     }
 
-    function _calculateExpectedTokenTransfer(
-        bytes memory context,
-        uint256 actualGasCost,
-        uint256 actualUserOpFeePerGas
-    )
+    function _calculateExpectedTokenTransfer(bytes memory context, uint256 actualGasCost, uint256 actualUserOpFeePerGas)
         internal
         pure
         returns (uint256)
@@ -306,11 +277,7 @@ contract PaymasterHelper is AAHelper {
         uint128 postOpGas,
         uint256 preOpGasApproximation,
         uint256 executionGasLimit
-    )
-        internal
-        pure
-        returns (uint256)
-    {
+    ) internal pure returns (uint256) {
         uint256 PENALTY_PERCENT = 10;
         uint256 executionGasUsed = 0;
         uint256 actualGas = _actualGasCost / _actualUserOpFeePerGas + postOpGas;
@@ -332,18 +299,14 @@ contract PaymasterHelper is AAHelper {
         uint256 _postOpGas,
         uint256 _actualUserOpFeePerGas,
         uint256 _exchangeRate
-    )
-        internal
-        pure
-        returns (uint256)
-    {
+    ) internal pure returns (uint256) {
         return ((_actualGasCost + (_postOpGas * _actualUserOpFeePerGas)) * _exchangeRate) / 1e18;
     }
 
     function _depositToEP() internal {
         vm.startPrank(owner);
-        PM.deposit{ value: 1 ether }();
-        PM.addStake{ value: 1 ether }(860);
+        PM.deposit{value: 1 ether}();
+        PM.addStake{value: 1 ether}(860);
         vm.stopPrank();
     }
 }
