@@ -23,10 +23,7 @@ contract Simple7702Account is BaseAccount, IERC165, IERC1271, ERC1155Holder, ERC
      * Make this account callable through ERC-4337 EntryPoint.
      * The UserOperation should be signed by this account's private key.
      */
-    function _validateSignature(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
-    )
+    function _validateSignature(PackedUserOperation calldata userOp, bytes32 userOpHash)
         internal
         virtual
         override
@@ -53,7 +50,7 @@ contract Simple7702Account is BaseAccount, IERC165, IERC1271, ERC1155Holder, ERC
     }
 
     // accept incoming calls (with or without value), to mimic an EOA.
-    fallback() external payable { }
+    fallback() external payable {}
 
-    receive() external payable { }
+    receive() external payable {}
 }

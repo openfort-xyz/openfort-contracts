@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.29;
 
-import { MultiSigner } from "./MultiSigner.sol";
-import { BasePaymaster } from "./BasePaymaster.sol";
-import { ManagerAccessControl } from "./ManagerAccessControl.sol";
-import { UserOperationLib } from "lib/account-abstraction-v09/contracts/core/UserOperationLib.sol";
-import { PackedUserOperation } from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
+import {MultiSigner} from "./MultiSigner.sol";
+import {BasePaymaster} from "./BasePaymaster.sol";
+import {ManagerAccessControl} from "./ManagerAccessControl.sol";
+import {UserOperationLib} from "lib/account-abstraction-v09/contracts/core/UserOperationLib.sol";
+import {PackedUserOperation} from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
 
 import {console2 as console} from "lib/forge-std/src/console2.sol";
 
@@ -149,14 +149,10 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
      * @notice Initializes a SingletonPaymaster instance.
      * @param _owner The initial contract owner.
      */
-    constructor(
-        address _owner,
-        address _manager,
-        address[] memory _signers
-    )
+    constructor(address _owner, address _manager, address[] memory _signers)
         BasePaymaster(_owner, _manager)
         MultiSigner(_signers)
-    { }
+    {}
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      INTERNAL HELPERS                      */
@@ -171,15 +167,11 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
      * @return mode The paymaster mode.
      * @return paymasterConfig The paymaster config bytes.
      */
-    function _parsePaymasterAndData(
-        bytes calldata _paymasterAndData,
-        uint256 _paymasterDataOffset
-    )
+    function _parsePaymasterAndData(bytes calldata _paymasterAndData, uint256 _paymasterDataOffset)
         internal
         pure
         returns (uint8, bytes calldata)
     {
-
         if (_paymasterAndData.length < _paymasterDataOffset + 1) {
             revert OPFPaymasterV3__PaymasterAndDataLengthInvalid();
         }
@@ -201,10 +193,7 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
      * @return config The parsed paymaster configuration values.
      * @dev For async mode (sigLength > 0), the signature is extracted excluding the [uint16(len)][magic] suffix.
      */
-    function _parseErc20Config(
-        bytes calldata _paymasterConfig,
-        uint256 _sigLength
-    )
+    function _parseErc20Config(bytes calldata _paymasterConfig, uint256 _sigLength)
         internal
         pure
         returns (ERC20PaymasterData memory config)
@@ -308,10 +297,7 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
      * bytes.
      * @dev For async mode (sigLength > 0), the signature is extracted excluding the [uint16(len)][magic] suffix.
      */
-    function _parseVerifyingConfig(
-        bytes calldata _paymasterConfig,
-        uint256 _sigLength
-    )
+    function _parseVerifyingConfig(bytes calldata _paymasterConfig, uint256 _sigLength)
         internal
         pure
         returns (uint48, uint48, bytes calldata)
@@ -354,11 +340,7 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
         bytes32 _userOpHash,
         ERC20PaymasterData memory _cfg,
         uint256 _requiredPreFund
-    )
-        internal
-        pure
-        returns (bytes memory)
-    {
+    ) internal pure returns (bytes memory) {
         // the limit we have for executing the userOp.
         uint256 executionGasLimit = _userOp.unpackCallGasLimit() + _userOp.unpackPostOpGasLimit();
 
@@ -406,11 +388,7 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
         uint256 _postOpGas,
         uint256 _actualUserOpFeePerGas,
         uint256 _exchangeRate
-    )
-        public
-        pure
-        returns (uint256)
-    {
+    ) public pure returns (uint256) {
         return ((_actualGasCost + (_postOpGas * _actualUserOpFeePerGas)) * _exchangeRate) / 1e18;
     }
 

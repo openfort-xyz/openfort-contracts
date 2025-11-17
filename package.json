@@ -40,7 +40,8 @@
     "@openzeppelin/contracts-upgradeable": "^4.9.0",
     "dotenv": "^16.0.3",
     "hardhat-gas-reporter": "^1.0.9",
-    "solidity-coverage": "^0.8.2"
+    "solidity-coverage": "^0.8.2",
+    "viem": "^2.39.0"
   },
   "repository": {
     "type": "git",
