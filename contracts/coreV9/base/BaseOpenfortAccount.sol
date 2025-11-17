@@ -6,8 +6,9 @@ import {ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/crypto
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
-import {BaseAccount, UserOperation, IEntryPoint, UserOperationLib} from "account-abstraction/core/BaseAccount.sol";
-import {_packValidationData} from "account-abstraction/core/Helpers.sol";
+import {SIG_VALIDATION_FAILED} from "lib/account-abstraction-v09/contracts/core/Helpers.sol";
+import {BaseAccount, PackedUserOperation, IEntryPoint, UserOperationLib} from "lib/account-abstraction-v09/contracts/core/BaseAccount.sol";
+import {_packValidationData} from "lib/account-abstraction-v09/contracts/core/Helpers.sol";
 import {TokenCallbackHandler} from "./TokenCallbackHandler.sol";
 import {OpenfortErrorsAndEvents} from "../../interfaces/OpenfortErrorsAndEvents.sol";
 
@@ -174,7 +175,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * Execute a transaction (called directly from owner, or by entryPoint)
      */
-    function execute(address dest, uint256 value, bytes calldata func) public payable virtual {
+    function execute(address dest, uint256 value, bytes calldata func) public virtual override {
         _requireFromEntryPointOrOwner();
         _call(dest, value, func);
     }
@@ -275,7 +276,7 @@ abstract contract BaseOpenfortAccount is
     /**
      * @inheritdoc BaseAccount
      */
-    function _validateSignature(UserOperation calldata userOp, bytes32 userOpHash)
+    function _validateSignature(PackedUserOperation calldata userOp, bytes32 userOpHash)
         internal
         virtual
         override

@@ -4,10 +4,13 @@ pragma solidity ^0.8.19;
 
 import {AAHelper} from "test/foundry/UpgradeToEPv9/helpers/AAHelper.t.sol";
 import {IStakeManager} from "lib/account-abstraction/contracts/interfaces/IStakeManager.sol";
-import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
-import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {EntryPoint as EntryPointV6, IEntryPoint as IEntryPointv6} from "lib/account-abstraction/contracts/core/EntryPoint.sol";
 import {EntryPoint as EntryPointV9, IEntryPoint as IEntryPointv9} from "lib/account-abstraction-v09/contracts/core/EntryPoint.sol";
+import {UpgradeableOpenfortFactory as UpgradeableOpenfortFactoryV6} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
+import {UpgradeableOpenfortAccount as UpgradeableOpenfortAccountV6} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
+import {UpgradeableOpenfortFactory as UpgradeableOpenfortFactoryV9} from "contracts/coreV9/upgradeable/UpgradeableOpenfortFactory.sol";
+import {UpgradeableOpenfortAccount as UpgradeableOpenfortAccountV9} from "contracts/coreV9/upgradeable/UpgradeableOpenfortAccount.sol";
+
 contract Deploy is AAHelper {
     function setUp() public virtual override {
         super.setUp();
@@ -23,8 +26,8 @@ contract Deploy is AAHelper {
         entryPointV9 = IEntryPointv9(payable(ENTRY_POINT_V9));
 
         vm.startPrank(_OpenfortAdmin);
-        upgradeableOpenfortAccountImplV6 = new UpgradeableOpenfortAccount{salt: versionSalt}();
-        openfortFactoryV6 = new UpgradeableOpenfortFactory{salt: versionSalt}(
+        upgradeableOpenfortAccountImplV6 = new UpgradeableOpenfortAccountV6{salt: versionSalt}();
+        openfortFactoryV6 = new UpgradeableOpenfortFactoryV6{salt: versionSalt}(
             _OpenfortAdmin,
             address(entryPointV6),
             address(upgradeableOpenfortAccountImplV6),

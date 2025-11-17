@@ -5,13 +5,18 @@ pragma solidity ^0.8.19;
 import {Constants} from "./Constants.sol";
 import {Test} from "lib/forge-std/src/Test.sol";
 import {IEntryPoint as IEntryPointv6} from "lib/account-abstraction/contracts/core/EntryPoint.sol";
-import {UpgradeableOpenfortAccount} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
-import {UpgradeableOpenfortFactory} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
 import {IEntryPoint as IEntryPointv9} from "lib/account-abstraction-v09/contracts/core/EntryPoint.sol";
+import {UpgradeableOpenfortFactory as UpgradeableOpenfortFactoryV6} from "contracts/core/upgradeable/UpgradeableOpenfortFactory.sol";
+import {UpgradeableOpenfortAccount as UpgradeableOpenfortAccountV6} from "contracts/core/upgradeable/UpgradeableOpenfortAccount.sol";
+import {UpgradeableOpenfortFactory as UpgradeableOpenfortFactoryV9} from "contracts/coreV9/upgradeable/UpgradeableOpenfortFactory.sol";
+import {UpgradeableOpenfortAccount as UpgradeableOpenfortAccountV9} from "contracts/coreV9/upgradeable/UpgradeableOpenfortAccount.sol";
 
 abstract contract Data is Test, Constants {
-    UpgradeableOpenfortFactory public openfortFactoryV6;
-    UpgradeableOpenfortAccount public upgradeableOpenfortAccountImplV6;
+    UpgradeableOpenfortFactoryV6 public openfortFactoryV6;
+    UpgradeableOpenfortAccountV6 public upgradeableOpenfortAccountImplV6;
+
+    UpgradeableOpenfortFactoryV9 public openfortFactoryV9;
+    UpgradeableOpenfortAccountV9 public upgradeableOpenfortAccountImplV9;
 
     IEntryPointv6 public entryPointV6;
     IEntryPointv9 public entryPointV9;
