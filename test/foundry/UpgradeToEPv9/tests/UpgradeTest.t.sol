@@ -55,7 +55,6 @@ contract UpgradeTest is Deploy {
         _assertAfterUpdateImpl();
     }
 
-
     function test_UpgradeImplDAAEveryOneReverts() external {
         (address _Random, uint256 _RandomPK) = makeAddrAndKey("_Random");
         _deal(_Random, 10 ether);
@@ -115,6 +114,41 @@ contract UpgradeTest is Deploy {
         userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
 
         _relayUserOpV9(userOp);
+        _assertAfterUpdateEPAddress();
+    }
+
+    function test_UpdateAndUpgradeDirect() external {
+        bytes memory upgradeTo = abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
+        bytes memory updateEntryPoint = abi.encodeWithSignature("updateEntryPoint(address)", address(entryPointV6));
+        address[] memory addrs = new address[](2);
+        uint256[] memory values = new uint256[](2);
+        bytes[] memory datas = new bytes[](2);
+
+        addrs[0] = address(_RandomOwnerSC);
+        addrs[1] = address(_RandomOwnerSC);
+        values[0] = 0;
+        values[1] = 0;
+        datas[0] = updateEntryPoint;
+        datas[1] = upgradeTo;
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteBatchCall(addrs, values, datas),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        _relayUserOpV9(userOp);
+        _assertAfterUpdateImpl();
         _assertAfterUpdateEPAddress();
     }
 
