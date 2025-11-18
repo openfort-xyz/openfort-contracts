@@ -32,7 +32,31 @@ contract UpgradeTest is Deploy {
         _assertAfterUpdateImpl();
     }
 
-    function test_UpgradeImplDAAEveryOne() external {
+    function test_UpgradeImplsAA() external {
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        bytes memory callData = abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteCall(address(_RandomOwnerSC), 0, callData),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        _relayUserOpV9(userOp);
+        _assertAfterUpdateImpl();
+    }
+
+
+    function test_UpgradeImplDAAEveryOneReverts() external {
         (address _Random, uint256 _RandomPK) = makeAddrAndKey("_Random");
         _deal(_Random, 10 ether);
 
@@ -63,29 +87,6 @@ contract UpgradeTest is Deploy {
         vm.expectEmit(true, true, false, false);
         emit IEntryPoint.UserOperationRevertReason(0xa2f64c8cd99e8e978e8e5fe956484a78ef4faad0a6b2bea61aef8b67e2163dbb, 0xcac5AE5981ACBf9E11aA4bc6c703F546D3Fafcc4, 0, revertMSG);
         _relayUserOpV9(userOp);
-    }
-
-    function test_UpgradeImplsAA() external {
-        PackedUserOperation memory userOp;
-        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
-
-        bytes memory callData = abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
-
-        userOp = _populateUserOpV9(
-            userOp,
-            _createExecuteCall(address(_RandomOwnerSC), 0, callData),
-            _packAccountGasLimits(400_000, 600_000),
-            800_000,
-            _packGasFees(15 gwei, 80 gwei),
-            hex""
-        );
-
-        bytes32 userOpHash = _getUserOpHashV9(userOp);
-
-        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
-
-        _relayUserOpV9(userOp);
-        _assertAfterUpdateImpl();
     }
 
     function _createAccountV9() internal {
