@@ -150,6 +150,17 @@ contract ExecutionTest is Deploy {
         assertEq(_SC_BALANCE_BEFORE + 5 ether,_SC_BALANCE_AFTER);
     }
 
+    function test_SendERC20ToAnyAddressDirect() external {
+        _mint(address(_RandomOwnerSC), 100 ether);
+        _assertBalancesERC20(address(0xbabe), true, 0.01 ether);
+
+        bytes memory callData = abi.encodeWithSignature("transfer(address,uint256)", address(0xbabe), 5 ether);
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.execute(address(erc20), 0 ether, callData);
+
+        _assertBalancesERC20(address(0xbabe), false, 5 ether);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
@@ -216,7 +227,7 @@ contract ExecutionTest is Deploy {
         if (_isBefore) {
             _SC_BALANCE_BEFORE = IERC20(erc20).balanceOf(address(_RandomOwnerSC));
             _SC_RECIVER_BEFORE = IERC20(erc20).balanceOf(_reciver);
-            assertEq(_SC_BALANCE_BEFORE, 0 ether);
+            assertEq(_SC_BALANCE_BEFORE, 100 ether);
             assertEq(_SC_RECIVER_BEFORE, 0);
         } else {
             _SC_BALANCE_AFTER = IERC20(erc20).balanceOf(address(_RandomOwnerSC));
