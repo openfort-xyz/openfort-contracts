@@ -187,6 +187,31 @@ contract ExecutionTest is Deploy {
         _assertBalancesERC20(address(0xbabe), false, 5 ether);
     }
 
+    function test_SendBatchERC20ToAnyAddressDirect() external {
+        _mint(address(_RandomOwnerSC), 100 ether);
+        _assertBalancesERC20(address(0xbabe), true, 0.01 ether);
+
+        address[] memory addrs = new address[](5);
+        uint256[] memory values = new uint256[](5);
+        bytes[] memory datas = new bytes[](5);
+
+        bytes memory callData = abi.encodeWithSignature("transfer(address,uint256)", address(0xbabe), 5 ether);
+
+        for (uint256 i = 0; i < 5;) {
+            addrs[i] = address(erc20);
+            values[i] = 0;
+            datas[i] = callData;
+            unchecked {
+                ++i;
+            }
+        }
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.executeBatch(addrs, values, datas);
+
+        _assertBalancesERC20(address(0xbabe), false, 5 ether * 5);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
