@@ -5,4 +5,5 @@ import {IBaseRecoverableAccount} from "./IBaseRecoverableAccount.sol";
 
 interface IUpgradeableOpenfortAccount is IBaseRecoverableAccount {
     function updateEntryPoint(address _newEntrypoint) external;
+    function implementation() external view returns (address);
 }

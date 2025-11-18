@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
-import { AccessControl } from "lib/oz-v5.4.0/contracts/access/AccessControl.sol";
+import {AccessControl} from "lib/oz-v5.4.0/contracts/access/AccessControl.sol";
 
 interface IManagerAccessControl {
     function MANAGER_ROLE() external view returns (bytes32);

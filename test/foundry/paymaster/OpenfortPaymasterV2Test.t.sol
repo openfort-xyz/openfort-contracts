@@ -92,8 +92,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         bytes memory _callData,
         bytes memory paymasterAndData
     ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint =
-            abi.encodeWithSignature("execute(address,uint256,bytes)", _target, _value, _callData);
+        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
+            "execute(address,uint256,bytes)", _target, _value, _callData
+        );
 
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint, paymasterAndData);
     }
@@ -111,8 +112,9 @@ contract OpenfortPaymasterV2Test is OpenfortBaseTest {
         bytes[] memory _callData,
         bytes memory paymasterAndData
     ) internal returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint =
-            abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
+        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
+            "executeBatch(address[],uint256[],bytes[])", _target, _value, _callData
+        );
 
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint, paymasterAndData);
     }

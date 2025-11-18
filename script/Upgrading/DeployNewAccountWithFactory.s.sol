@@ -10,7 +10,7 @@ contract DeployNewAccountWithFactory is Script {
     address internal deployAddress = vm.addr(deployPrivKey);
 
     address internal factory = 0xCf275C0FE29a16078D78EDd312AA0c93279F2973;
-    
+
     function run() public {
         bytes32 accountNonce = keccak256(abi.encodePacked("account", block.timestamp));
 
@@ -25,7 +25,7 @@ contract DeployNewAccountWithFactory is Script {
     }
 }
 /**
-== Logs ==
-  Account Proxy: 0x2898201c9075FBE8D7bfF185aF02fb9442695f26
-  Account Proxy: 0x7fBCFb9ABeaeaAcb81A20EA220104Fa08C56b7A7
-*/
+ * == Logs ==
+ *   Account Proxy: 0x2898201c9075FBE8D7bfF185aF02fb9442695f26
+ *   Account Proxy: 0x7fBCFb9ABeaeaAcb81A20EA220104Fa08C56b7A7
+ */

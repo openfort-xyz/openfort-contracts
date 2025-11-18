@@ -191,9 +191,8 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Make the admin of the upgradeable account wallet (deployer) call "count"
         vm.prank(openfortAdmin);
-        IBaseRecoverableAccount(payable(accountAddress)).execute(
-            address(testCounter), 0, abi.encodeWithSignature("count()")
-        );
+        IBaseRecoverableAccount(payable(accountAddress))
+            .execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
 
         // Verify that the counter has increased
         assertEq(testCounter.counters(accountAddress), 1);
@@ -295,9 +294,8 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Register masterSessionKey
         vm.prank(openfortAdmin);
-        IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(
-            sessionKey, 0, 2 ** 48 - 1, 2 ** 48 - 1, emptyWhitelist
-        );
+        IBaseRecoverableAccount(payable(accountAddress))
+            .registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 2 ** 48 - 1, emptyWhitelist);
 
         uint256 count = 9;
         address[] memory targets = new address[](count);
@@ -336,9 +334,8 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Register masterSessionKey
         vm.prank(openfortAdmin);
-        IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(
-            sessionKey, 0, 2 ** 48 - 1, 2 ** 48 - 1, emptyWhitelist
-        );
+        IBaseRecoverableAccount(payable(accountAddress))
+            .registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 2 ** 48 - 1, emptyWhitelist);
 
         uint256 count = 10;
         address[] memory targets = new address[](count);
@@ -400,9 +397,8 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         address[] memory emptyWhitelist;
 
         vm.prank(openfortAdmin);
-        IBaseRecoverableAccount(payable(accountAddress)).registerSessionKey(
-            sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist
-        );
+        IBaseRecoverableAccount(payable(accountAddress))
+            .registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
@@ -1008,9 +1004,8 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Make the admin of the upgradeable account wallet (deployer) call "count"
         vm.prank(openfortAdmin2);
-        IBaseRecoverableAccount(payable(accountAddress)).execute(
-            address(testCounter), 0, abi.encodeWithSignature("count()")
-        );
+        IBaseRecoverableAccount(payable(accountAddress))
+            .execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
 
         // Verify that the counter has increased
         assertEq(testCounter.counters(accountAddress), 1);
@@ -1083,9 +1078,8 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Make the admin of the account wallet call "count"
         vm.prank(openfortAdmin);
-        IBaseRecoverableAccount(payable(accountAddress)).execute(
-            address(testCounter), 0, abi.encodeWithSignature("count()")
-        );
+        IBaseRecoverableAccount(payable(accountAddress))
+            .execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
 
         // Verify that the counter has increased
         assertEq(testCounter.counters(accountAddress), 1);
@@ -1093,13 +1087,14 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         // Make the admin of the account wallet call "execute" which call count
         vm.expectRevert(OpenfortErrorsAndEvents.NotOwnerOrEntrypoint.selector);
         vm.prank(openfortAdmin);
-        IBaseRecoverableAccount(payable(accountAddress)).execute(
-            address(accountAddress),
-            0,
-            abi.encodeWithSignature(
-                "execute(address,uint256,bytes)", testCounter, 0, abi.encodeWithSignature("count()")
-            )
-        );
+        IBaseRecoverableAccount(payable(accountAddress))
+            .execute(
+                address(accountAddress),
+                0,
+                abi.encodeWithSignature(
+                    "execute(address,uint256,bytes)", testCounter, 0, abi.encodeWithSignature("count()")
+                )
+            );
     }
 
     /*
@@ -1111,9 +1106,8 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
 
         // Make the admin of the account wallet call "count"
         vm.prank(openfortAdmin);
-        IBaseRecoverableAccount(payable(accountAddress)).execute(
-            address(testCounter), 0, abi.encodeWithSignature("count()")
-        );
+        IBaseRecoverableAccount(payable(accountAddress))
+            .execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
 
         // Verify that the counter has increased
         assertEq(testCounter.counters(accountAddress), 1);
@@ -2663,8 +2657,9 @@ contract UpgradeableOpenfortAccountTest is OpenfortBaseTest {
         }
 
         // notice: wrong new oner!!!
-        bytes32 structHash =
-            keccak256(abi.encode(RECOVER_TYPEHASH, openfortAdmin, uint64(block.timestamp + RECOVERY_PERIOD), uint32(2)));
+        bytes32 structHash = keccak256(
+            abi.encode(RECOVER_TYPEHASH, openfortAdmin, uint64(block.timestamp + RECOVERY_PERIOD), uint32(2))
+        );
 
         bytes[] memory signatures = new bytes[](2);
         signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address

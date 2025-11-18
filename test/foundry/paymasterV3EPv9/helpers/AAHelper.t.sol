@@ -58,11 +58,7 @@ contract AAHelper is Data {
         signature = abi.encodePacked(r, s, v);
     }
 
-    function _packAccountGasLimits(uint256 verificationGasLimit, uint256 callGasLimit)
-        internal
-        pure
-        returns (bytes32)
-    {
+    function _packAccountGasLimits(uint256 verificationGasLimit, uint256 callGasLimit) internal pure returns (bytes32) {
         return bytes32((verificationGasLimit << 128) | callGasLimit);
     }
 

@@ -243,7 +243,9 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         if (isLocked()) revert AccountLocked();
         if (guardiansConfig.info[_guardian].pending == 0) revert UnknownProposal();
         if (guardiansConfig.info[_guardian].pending > block.timestamp) revert PendingProposalNotOver();
-        if (block.timestamp > guardiansConfig.info[_guardian].pending + securityWindow) revert PendingProposalExpired();
+        if (block.timestamp > guardiansConfig.info[_guardian].pending + securityWindow) {
+            revert PendingProposalExpired();
+        }
         if (isGuardian(_guardian)) revert DuplicatedGuardian();
 
         guardiansConfig.guardians.push(_guardian);
