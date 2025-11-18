@@ -89,6 +89,12 @@ contract UpgradeTest is Deploy {
         _relayUserOpV9(userOp);
     }
 
+    function test_UpdateEPAddressDirect() external {
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.updateEntryPoint(ENTRY_POINT_V6);
+        _assertAfterUpdateEPAddress();
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
@@ -134,5 +140,9 @@ contract UpgradeTest is Deploy {
     function _assertAfterUpdateImpl() internal {
         UpgradeableOpenfortProxy proxy = UpgradeableOpenfortProxy(payable(address(_RandomOwnerSC)));
         assertEq(proxy.implementation(), address(upgradeableOpenfortAccountImplV6));
+    }
+
+    function _assertAfterUpdateEPAddress() internal {
+        assertEq(address(_RandomOwnerSC.entryPoint()), address(entryPointV6));
     }
 }
