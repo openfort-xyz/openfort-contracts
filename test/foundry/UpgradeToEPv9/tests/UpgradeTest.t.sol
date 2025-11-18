@@ -3,7 +3,7 @@
 pragma solidity ^0.8.29;
 
 import {Deploy} from "test/foundry/UpgradeToEPv9/Deploy.t.sol";
-
+import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import {PackedUserOperation} from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
 import {
     UpgradeableOpenfortAccount as UpgradeableOpenfortAccountV9
@@ -15,6 +15,7 @@ contract UpgradeTest is Deploy {
     uint256 internal _RandomOwnerPK;
     bytes32 internal _RandomOwnerSalt;
     UpgradeableOpenfortAccountV9 internal _RandomOwnerSC;
+    UpgradeableOpenfortAccountV9 internal _RandomSC;
 
     function setUp() public override {
         super.setUp();
@@ -28,6 +29,62 @@ contract UpgradeTest is Deploy {
     function test_UpgradeImplDirect() external {
         vm.prank(_RandomOwner);
         _RandomOwnerSC.upgradeTo(address(upgradeableOpenfortAccountImplV6));
+        _assertAfterUpdateImpl();
+    }
+
+    function test_UpgradeImplDAAEveryOne() external {
+        (address _Random, uint256 _RandomPK) = makeAddrAndKey("_Random");
+        _deal(_Random, 10 ether);
+
+        address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_Random, _RandomOwnerSalt);
+        _RandomSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
+        _depositTo(_Random, address(_RandomSC), EP_Version.V9);
+        _sendAssetsToSC(_Random, address(_RandomSC));
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomSC));
+
+        bytes memory callData = abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
+
+        userOp = _populateUserOpV9(
+            userOp, _createExecuteCall(address(_RandomOwnerSC), 0, callData), _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
+        );
+
+        bytes memory initCode = abi.encodeWithSignature(
+            "createAccountWithNonce(address,bytes32,bool)", _Random, _RandomOwnerSalt, false
+        );
+        userOp.initCode = abi.encodePacked(address(openfortFactoryV9), initCode);
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, _RandomPK);
+
+        bytes memory revertMSG = abi.encodeWithSelector(0xbe8de9b8);
+        vm.expectEmit(true, true, false, false);
+        emit IEntryPoint.UserOperationRevertReason(0xa2f64c8cd99e8e978e8e5fe956484a78ef4faad0a6b2bea61aef8b67e2163dbb, 0xcac5AE5981ACBf9E11aA4bc6c703F546D3Fafcc4, 0, revertMSG);
+        _relayUserOpV9(userOp);
+    }
+
+    function test_UpgradeImplsAA() external {
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        bytes memory callData = abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteCall(address(_RandomOwnerSC), 0, callData),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        _relayUserOpV9(userOp);
         _assertAfterUpdateImpl();
     }
 
