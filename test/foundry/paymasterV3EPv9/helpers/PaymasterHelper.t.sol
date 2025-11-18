@@ -113,10 +113,11 @@ contract PaymasterHelper is AAHelper {
 
         // the limit we are allowed for everything before the userOp is executed.
         uint256 preOpGasApproximation = _userOp.preVerificationGas + _userOp.unpackVerificationGasLimit() // VerificationGasLimit
+            + 
             // is an overestimation.
-            + _cfg.paymasterValidationGasLimit; // paymasterValidationGasLimit has to be an under estimation to compensate
-            // for
-            // the overestimation.
+            _cfg.paymasterValidationGasLimit; // paymasterValidationGasLimit has to be an under estimation to compensate
+        // for
+        // the overestimation.
 
         return abi.encode(
             ERC20PostOpContext({
@@ -168,7 +169,7 @@ contract PaymasterHelper is AAHelper {
         config.exchangeRate = uint256(bytes32(_paymasterConfig[configPointer:configPointer + 32])); // 32 bytes
         configPointer += 32;
         config.paymasterValidationGasLimit = uint128(bytes16(_paymasterConfig[configPointer:configPointer + 16])); // 16
-            // bytes
+        // bytes
         configPointer += 16;
         config.treasury = address(bytes20(_paymasterConfig[configPointer:configPointer + 20])); // 20 bytes
         configPointer += 20;
@@ -262,8 +263,8 @@ contract PaymasterHelper is AAHelper {
 
         uint256 totalActualGasCost = actualGasCost + expectedPenaltyGasCost;
 
-        uint256 costInToken =
-            getCostInToken(totalActualGasCost, ctx.postOpGas, actualUserOpFeePerGas, ctx.exchangeRate) + ctx.constantFee;
+        uint256 costInToken = getCostInToken(totalActualGasCost, ctx.postOpGas, actualUserOpFeePerGas, ctx.exchangeRate)
+            + ctx.constantFee;
 
         uint256 absoluteCostInToken =
             costInToken > ctx.preFundCharged ? costInToken - ctx.preFundCharged : ctx.preFundCharged - costInToken;

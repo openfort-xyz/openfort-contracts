@@ -216,7 +216,8 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      * Guardians must either be an EOA or a contract with an owner() (ERC-173).
      * @param _guardian The guardian to propose.
      */
-    function proposeGuardian(address _guardian) external onlyOwner {
+    function proposeGuardian(address _guardian) external {
+        _requireFromEntryPointOrOwner();
         if (isLocked()) revert AccountLocked();
         if (owner() == _guardian) revert GuardianCannotBeOwner();
         if (pendingOwner() == _guardian) revert GuardianCannotBeOwner();
@@ -243,7 +244,9 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
         if (isLocked()) revert AccountLocked();
         if (guardiansConfig.info[_guardian].pending == 0) revert UnknownProposal();
         if (guardiansConfig.info[_guardian].pending > block.timestamp) revert PendingProposalNotOver();
-        if (block.timestamp > guardiansConfig.info[_guardian].pending + securityWindow) revert PendingProposalExpired();
+        if (block.timestamp > guardiansConfig.info[_guardian].pending + securityWindow) {
+            revert PendingProposalExpired();
+        }
         if (isGuardian(_guardian)) revert DuplicatedGuardian();
 
         guardiansConfig.guardians.push(_guardian);
@@ -257,7 +260,8 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      * @notice Lets the owner cancel a pending guardian addition.
      * @param _guardian The guardian which proposal will be cancelled.
      */
-    function cancelGuardianProposal(address _guardian) external onlyOwner {
+    function cancelGuardianProposal(address _guardian) external {
+        _requireFromEntryPointOrOwner();
         if (isLocked()) revert AccountLocked();
         if (isGuardian(_guardian)) revert UnknownProposal();
         if (guardiansConfig.info[_guardian].pending == 0) revert UnknownProposal();
@@ -270,7 +274,8 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      * @dev Revocation must be confirmed by calling the confirmGuardianRevocation() method.
      * @param _guardian The guardian to revoke.
      */
-    function revokeGuardian(address _guardian) external onlyOwner {
+    function revokeGuardian(address _guardian) external {
+        _requireFromEntryPointOrOwner();
         if (!isGuardian(_guardian)) revert MustBeGuardian();
         if (isLocked()) revert AccountLocked();
         if (
@@ -311,7 +316,8 @@ abstract contract BaseRecoverableAccount is BaseOpenfortAccount, Ownable2StepUpg
      * @notice Lets the owner cancel a pending guardian revocation.
      * @param _guardian The guardian to cancel its revocation.
      */
-    function cancelGuardianRevocation(address _guardian) external onlyOwner {
+    function cancelGuardianRevocation(address _guardian) external {
+        _requireFromEntryPointOrOwner();
         if (isLocked()) revert AccountLocked();
         if (!isGuardian(_guardian)) revert UnknownRevoke();
         if (guardiansConfig.info[_guardian].pending == 0) revert UnknownRevoke();

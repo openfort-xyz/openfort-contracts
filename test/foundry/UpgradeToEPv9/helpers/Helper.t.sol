@@ -11,7 +11,14 @@ abstract contract Helper is Data {
 
     function _sendAssetsToSC(address _depositor, address _sc) internal {
         vm.prank(_depositor);
-        (bool succ, ) = _sc.call{value: 0.5 ether}("");
+        (bool succ,) = _sc.call{value: 0.5 ether}("");
         require(succ, "Revert");
+    }
+
+    function _createExecuteCall(address _to, uint256 _value, bytes memory _data)
+        internal
+        returns (bytes memory callData)
+    {
+        callData = abi.encodeWithSignature("execute(address,uint256,bytes)", _to, _value, _data);
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import { PackedUserOperation } from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
+import {PackedUserOperation} from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
 
 /**
  * The interface exposed by a paymaster contract, who agrees to pay the gas for user's operations.
@@ -35,11 +35,7 @@ interface IPaymasterV8 {
      *                          <6-byte> validAfter - first timestamp this operation is valid
      *                          Note that the validation code cannot use block.timestamp (or block.number) directly.
      */
-    function validatePaymasterUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash,
-        uint256 maxCost
-    )
+    function validatePaymasterUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash, uint256 maxCost)
         external
         returns (bytes memory context, uint256 validationData);
 
@@ -56,11 +52,6 @@ interface IPaymasterV8 {
      *                        and maxPriorityFee (and basefee)
      *                        It is not the same as tx.gasprice, which is what the bundler pays.
      */
-    function postOp(
-        PostOpMode mode,
-        bytes calldata context,
-        uint256 actualGasCost,
-        uint256 actualUserOpFeePerGas
-    )
+    function postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost, uint256 actualUserOpFeePerGas)
         external;
 }

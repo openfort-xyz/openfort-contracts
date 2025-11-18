@@ -16,7 +16,11 @@ abstract contract AAHelper is Helper {
         V9
     }
 
-    function _getFreshUserOp(address _owner) internal pure returns (UserOperation memory userOpV6, PackedUserOperation memory userOpV9) {
+    function _getFreshUserOp(address _owner)
+        internal
+        pure
+        returns (UserOperation memory userOpV6, PackedUserOperation memory userOpV9)
+    {
         userOpV6 = UserOperation({
             sender: _owner,
             nonce: 0,
@@ -64,7 +68,7 @@ abstract contract AAHelper is Helper {
 
         return _userOp;
     }
-    
+
     function _populateUserOpV9(
         PackedUserOperation memory _userOp,
         bytes memory _callData,
@@ -97,7 +101,9 @@ abstract contract AAHelper is Helper {
 
     function _depositTo(address _depositor, address _sender, EP_Version _epVersion) internal {
         vm.prank(_depositor);
-        _epVersion == EP_Version.V6 ? entryPointV6.depositTo{value: 0.1 ether}(_sender) : entryPointV9.depositTo{value: 0.1 ether}(_sender);
+        _epVersion == EP_Version.V6
+            ? entryPointV6.depositTo{value: 0.1 ether}(_sender)
+            : entryPointV9.depositTo{value: 0.1 ether}(_sender);
     }
 
     function _signUserOp(bytes32 _userOpHash, uint256 _PK) internal pure returns (bytes memory signature) {
@@ -106,11 +112,7 @@ abstract contract AAHelper is Helper {
         signature = abi.encodePacked(r, s, v);
     }
 
-    function _packAccountGasLimits(uint256 verificationGasLimit, uint256 callGasLimit)
-        internal
-        pure
-        returns (bytes32)
-    {
+    function _packAccountGasLimits(uint256 verificationGasLimit, uint256 callGasLimit) internal pure returns (bytes32) {
         return bytes32((verificationGasLimit << 128) | callGasLimit);
     }
 

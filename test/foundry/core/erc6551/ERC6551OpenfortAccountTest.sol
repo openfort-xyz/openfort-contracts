@@ -173,7 +173,7 @@ contract ERC6551OpenfortAccountTest is OpenfortBaseTest {
     /*
      * Test owner() function.
      * Check that the owner of the erc6551 account is the owner of the NFT
-     * Notice, no need to initialize yet. 
+     * Notice, no need to initialize yet.
      */
     function testOwner() public {
         assertEq(erc6551OpenfortAccount.owner(), mockERC721.ownerOf(1));
