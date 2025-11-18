@@ -17,8 +17,17 @@ abstract contract Helper is Data {
 
     function _createExecuteCall(address _to, uint256 _value, bytes memory _data)
         internal
+        pure
         returns (bytes memory callData)
     {
         callData = abi.encodeWithSignature("execute(address,uint256,bytes)", _to, _value, _data);
+    }
+
+    function _createExecuteBatchCall(address[] memory _to, uint256[] memory _value, bytes[] memory _data)
+        internal
+        pure
+        returns (bytes memory callData)
+    {
+        callData = abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _to, _value, _data);
     }
 }
