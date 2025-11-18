@@ -131,6 +131,27 @@ contract UpgradeTest is Deploy {
         datas[0] = updateEntryPoint;
         datas[1] = upgradeTo;
 
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.executeBatch(addrs, values, datas);
+        
+        _assertAfterUpdateImpl();
+        _assertAfterUpdateEPAddress();
+    }
+
+    function test_UpdateAndUpgradeAA() external {
+        bytes memory upgradeTo = abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
+        bytes memory updateEntryPoint = abi.encodeWithSignature("updateEntryPoint(address)", address(entryPointV6));
+        address[] memory addrs = new address[](2);
+        uint256[] memory values = new uint256[](2);
+        bytes[] memory datas = new bytes[](2);
+
+        addrs[0] = address(_RandomOwnerSC);
+        addrs[1] = address(_RandomOwnerSC);
+        values[0] = 0;
+        values[1] = 0;
+        datas[0] = updateEntryPoint;
+        datas[1] = upgradeTo;
+
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
