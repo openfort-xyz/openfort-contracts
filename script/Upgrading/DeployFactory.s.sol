@@ -60,11 +60,11 @@ contract DeployFactory is Script, CheckOrDeployEntryPoint {
 }
 
 /**
-== Return ==
-upgradeableOpenfortAccountImpl: contract UpgradeableOpenfortAccount 0x8BE0246CEEF3a2adD7C7b11c3d3b0303F410403d
-openfortFactory: contract UpgradeableOpenfortFactory 0x3331e1A69Af3B4974a2ee3E1cE77cF656fCF9652
-
-== Logs ==
-  Account implementation:  0x8BE0246CEEF3a2adD7C7b11c3d3b0303F410403d
-  Account Proxy: 0x4c3db33E23635A448E6C560e6782423D9a2Bc81b 
-*/
+ * == Return ==
+ * upgradeableOpenfortAccountImpl: contract UpgradeableOpenfortAccount 0x8BE0246CEEF3a2adD7C7b11c3d3b0303F410403d
+ * openfortFactory: contract UpgradeableOpenfortFactory 0x3331e1A69Af3B4974a2ee3E1cE77cF656fCF9652
+ *
+ * == Logs ==
+ *   Account implementation:  0x8BE0246CEEF3a2adD7C7b11c3d3b0303F410403d
+ *   Account Proxy: 0x4c3db33E23635A448E6C560e6782423D9a2Bc81b
+ */

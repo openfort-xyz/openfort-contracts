@@ -16,7 +16,8 @@ contract UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgradeable {
     /**
      * Update the EntryPoint address
      */
-    function updateEntryPoint(address _newEntrypoint) external onlyOwner {
+    function updateEntryPoint(address _newEntrypoint) external {
+        _requireFromEntryPointOrOwner();
         if (!Address.isContract(_newEntrypoint)) revert NotAContract();
         emit EntryPointUpdated(entrypointContract, _newEntrypoint);
         entrypointContract = _newEntrypoint;
@@ -29,5 +30,7 @@ contract UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgradeable {
         return IEntryPoint(entrypointContract);
     }
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+    function _authorizeUpgrade(address) internal view override {
+        _requireFromEntryPointOrOwner();
+    }
 }

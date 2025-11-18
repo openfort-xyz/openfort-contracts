@@ -68,15 +68,16 @@ contract UpgradeableOpenfortFactory is BaseOpenfortFactory {
         emit AccountCreated(account, _admin);
         account = address(new UpgradeableOpenfortProxy{salt: salt}(_implementation, ""));
 
-        UpgradeableOpenfortAccount(payable(account)).initialize(
-            _admin,
-            entrypointContract,
-            recoveryPeriod,
-            securityPeriod,
-            securityWindow,
-            lockPeriod,
-            _initializeGuardian ? initialGuardian : address(0)
-        );
+        UpgradeableOpenfortAccount(payable(account))
+            .initialize(
+                _admin,
+                entrypointContract,
+                recoveryPeriod,
+                securityPeriod,
+                securityWindow,
+                lockPeriod,
+                _initializeGuardian ? initialGuardian : address(0)
+            );
     }
 
     /*

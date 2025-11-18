@@ -7,7 +7,12 @@ import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/crypt
 import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 import {IERC1271Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC1271Upgradeable.sol";
 import {SIG_VALIDATION_FAILED} from "lib/account-abstraction-v09/contracts/core/Helpers.sol";
-import {BaseAccount, PackedUserOperation, IEntryPoint, UserOperationLib} from "lib/account-abstraction-v09/contracts/core/BaseAccount.sol";
+import {
+    BaseAccount,
+    PackedUserOperation,
+    IEntryPoint,
+    UserOperationLib
+} from "lib/account-abstraction-v09/contracts/core/BaseAccount.sol";
 import {_packValidationData} from "lib/account-abstraction-v09/contracts/core/Helpers.sol";
 import {TokenCallbackHandler} from "./TokenCallbackHandler.sol";
 import {OpenfortErrorsAndEvents} from "../../interfaces/OpenfortErrorsAndEvents.sol";

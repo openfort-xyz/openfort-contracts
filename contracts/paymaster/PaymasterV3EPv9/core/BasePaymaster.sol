@@ -4,8 +4,8 @@ pragma solidity ^0.8.29;
 
 /* solhint-disable reason-string */
 
-import { ManagerAccessControl } from "./ManagerAccessControl.sol";
-import { IEntryPoint } from "lib/account-abstraction-v09/contracts/interfaces/IEntryPoint.sol";
+import {ManagerAccessControl} from "./ManagerAccessControl.sol";
+import {IEntryPoint} from "lib/account-abstraction-v09/contracts/interfaces/IEntryPoint.sol";
 
 /**
  * Helper class for creating a paymaster.
@@ -36,7 +36,7 @@ abstract contract BasePaymaster is ManagerAccessControl {
      * Add a deposit for this paymaster, used for paying for transaction fees.
      */
     function deposit() public payable {
-        ENTRY_POINT_V9.depositTo{ value: msg.value }(address(this));
+        ENTRY_POINT_V9.depositTo{value: msg.value}(address(this));
     }
 
     /**
@@ -54,7 +54,7 @@ abstract contract BasePaymaster is ManagerAccessControl {
      * @param unstakeDelaySec - The unstake delay for this paymaster. Can only be increased.
      */
     function addStake(uint32 unstakeDelaySec) external payable onlyAdminOrManager {
-        ENTRY_POINT_V9.addStake{ value: msg.value }(unstakeDelaySec);
+        ENTRY_POINT_V9.addStake{value: msg.value}(unstakeDelaySec);
     }
 
     /**

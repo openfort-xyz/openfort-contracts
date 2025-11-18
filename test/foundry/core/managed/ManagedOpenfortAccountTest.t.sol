@@ -192,9 +192,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         // Make the admin of the managed account wallet (deployer) call "count"
         vm.prank(openfortAdmin);
-        ManagedOpenfortAccount(payable(accountAddress)).execute(
-            address(testCounter), 0, abi.encodeWithSignature("count()")
-        );
+        ManagedOpenfortAccount(payable(accountAddress))
+            .execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
 
         // Verify that the counter has increased
         assertEq(testCounter.counters(accountAddress), 1);
@@ -289,9 +288,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         address[] memory emptyWhitelist;
 
         vm.prank(openfortAdmin);
-        ManagedOpenfortAccount(payable(accountAddress)).registerSessionKey(
-            sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist
-        );
+        ManagedOpenfortAccount(payable(accountAddress))
+            .registerSessionKey(sessionKey, 0, 2 ** 48 - 1, 100, emptyWhitelist);
 
         UserOperation[] memory userOp = _setupUserOpExecute(
             accountAddress, sessionKeyPrivKey, bytes(""), address(testCounter), 0, abi.encodeWithSignature("count()")
@@ -883,9 +881,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
 
         // Make the admin of the managed account wallet (deployer) call "count"
         vm.prank(openfortAdmin2);
-        ManagedOpenfortAccount(payable(accountAddress)).execute(
-            address(testCounter), 0, abi.encodeWithSignature("count()")
-        );
+        ManagedOpenfortAccount(payable(accountAddress))
+            .execute(address(testCounter), 0, abi.encodeWithSignature("count()"));
 
         // Verify that the counter has increased
         assertEq(testCounter.counters(accountAddress), 1);
@@ -1020,7 +1017,7 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     // }
 
     /*
-     * 1- Deploy a new account implementation with the new EntryPoint address and disabled 
+     * 1- Deploy a new account implementation with the new EntryPoint address and disabled
      * 2- Upgrade the implementation address
      */
     function testUpgradeBeacon() public {
@@ -1968,8 +1965,8 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
     }
 
     /*
-     * 
-     * 
+     *
+     *
      */
     function testUpdateInitialGuardian() public {
         IBaseRecoverableAccount(payable(accountAddress)).getGuardians();
@@ -2339,8 +2336,9 @@ contract ManagedOpenfortAccountTest is OpenfortBaseTest {
         }
 
         // notice: wrong new oner!!!
-        bytes32 structHash =
-            keccak256(abi.encode(RECOVER_TYPEHASH, openfortAdmin, uint64(block.timestamp + RECOVERY_PERIOD), uint32(2)));
+        bytes32 structHash = keccak256(
+            abi.encode(RECOVER_TYPEHASH, openfortAdmin, uint64(block.timestamp + RECOVERY_PERIOD), uint32(2))
+        );
 
         bytes[] memory signatures = new bytes[](2);
         signatures[0] = getEIP712SignatureFrom(accountAddress, structHash, friendAccount2PK); // Using friendAccount2 first because it has a lower address

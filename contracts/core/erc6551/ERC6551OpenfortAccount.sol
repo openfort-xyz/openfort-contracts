@@ -128,11 +128,10 @@ contract ERC6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
     }
 
     function supportsInterface(bytes4 _interfaceId) external pure override returns (bool) {
-        return (
-            _interfaceId == type(IERC6551Account).interfaceId || _interfaceId == type(IERC6551Executable).interfaceId
-                || _interfaceId == type(IERC1155Receiver).interfaceId || _interfaceId == type(IERC721Receiver).interfaceId
-                || _interfaceId == type(IERC165).interfaceId
-        );
+        return (_interfaceId == type(IERC6551Account).interfaceId
+                || _interfaceId == type(IERC6551Executable).interfaceId
+                || _interfaceId == type(IERC1155Receiver).interfaceId
+                || _interfaceId == type(IERC721Receiver).interfaceId || _interfaceId == type(IERC165).interfaceId);
     }
 
     function onERC721Received(address, address, uint256 receivedTokenId, bytes memory)

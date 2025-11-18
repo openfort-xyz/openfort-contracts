@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.29;
 
-import { UserOperationLib } from "lib/account-abstraction-v09/contracts/core/UserOperationLib.sol";
+import {UserOperationLib} from "lib/account-abstraction-v09/contracts/core/UserOperationLib.sol";
 
 abstract contract PaymasterConstants {
     uint8 constant ERC20_MODE = 1;

@@ -104,10 +104,7 @@ contract UpgradeProxyTest is Script {
         console.log("New Implementation deployed at:", newImplementation);
         console.log("");
 
-        bytes memory updateEntryPointCall = abi.encodeWithSignature(
-            "updateEntryPoint(address)",
-            NEW_ENTRYPOINT
-        );
+        bytes memory updateEntryPointCall = abi.encodeWithSignature("updateEntryPoint(address)", NEW_ENTRYPOINT);
 
         console.log("--- Upgrading Proxy ---");
         console.log("Calling upgradeToAndCall...");

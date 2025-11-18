@@ -60,11 +60,11 @@ contract DeployFactoryEPv9 is Script, CheckOrDeployEntryPoint {
 }
 
 /**
-== Return ==
-upgradeableOpenfortAccountImpl: contract UpgradeableOpenfortAccount 0x21E34D952aD526F18C50843e5dA4B8AeE5E21A95
-openfortFactory: contract UpgradeableOpenfortFactory 0xCf275C0FE29a16078D78EDd312AA0c93279F2973
-
-== Logs ==
-  Account implementation:  0x21E34D952aD526F18C50843e5dA4B8AeE5E21A95
-  Account Proxy: 0x77D56D2A8FB389604f48ed17631B788631530d25
-*/
+ * == Return ==
+ * upgradeableOpenfortAccountImpl: contract UpgradeableOpenfortAccount 0x21E34D952aD526F18C50843e5dA4B8AeE5E21A95
+ * openfortFactory: contract UpgradeableOpenfortFactory 0xCf275C0FE29a16078D78EDd312AA0c93279F2973
+ *
+ * == Logs ==
+ *   Account implementation:  0x21E34D952aD526F18C50843e5dA4B8AeE5E21A95
+ *   Account Proxy: 0x77D56D2A8FB389604f48ed17631B788631530d25
+ */
