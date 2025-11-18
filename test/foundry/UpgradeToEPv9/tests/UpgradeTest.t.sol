@@ -83,8 +83,9 @@ contract UpgradeTest is Deploy {
         userOp.signature = _signUserOp(userOpHash, _RandomPK);
 
         bytes memory revertMSG = abi.encodeWithSelector(0xbe8de9b8);
+
         vm.expectEmit(true, true, false, false);
-        emit IEntryPoint.UserOperationRevertReason(0xa2f64c8cd99e8e978e8e5fe956484a78ef4faad0a6b2bea61aef8b67e2163dbb, 0xcac5AE5981ACBf9E11aA4bc6c703F546D3Fafcc4, 0, revertMSG);
+        emit IEntryPoint.UserOperationRevertReason(userOpHash, address(_RandomSC), 0, revertMSG);
         _relayUserOpV9(userOp);
     }
 
