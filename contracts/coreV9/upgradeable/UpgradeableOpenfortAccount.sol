@@ -31,6 +31,6 @@ contract UpgradeableOpenfortAccount is BaseRecoverableAccount, UUPSUpgradeable {
     }
 
     function _authorizeUpgrade(address) internal view override {
-        _requireFromEntryPointOrOwner();
+        _requireFromEntryPointOrOwnerOrSC();
     }
 }
