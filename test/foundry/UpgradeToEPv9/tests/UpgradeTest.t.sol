@@ -103,7 +103,7 @@ contract UpgradeTest is Deploy {
 
         userOp = _populateUserOpV9(
             userOp,
-            _createExecuteCall(address(_RandomOwnerSC), 0, callData),
+            callData,
             _packAccountGasLimits(400_000, 600_000),
             800_000,
             _packGasFees(15 gwei, 80 gwei),
