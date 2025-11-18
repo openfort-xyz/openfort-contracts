@@ -40,7 +40,7 @@ contract UpgradeTest is Deploy {
 
         userOp = _populateUserOpV9(
             userOp,
-            _createExecuteCall(address(_RandomOwnerSC), 0, callData),
+            callData,
             _packAccountGasLimits(400_000, 600_000),
             800_000,
             _packGasFees(15 gwei, 80 gwei),
@@ -92,6 +92,29 @@ contract UpgradeTest is Deploy {
     function test_UpdateEPAddressDirect() external {
         vm.prank(_RandomOwner);
         _RandomOwnerSC.updateEntryPoint(ENTRY_POINT_V6);
+        _assertAfterUpdateEPAddress();
+    }
+
+    function test_UpdateEPAddressAA() external {
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        bytes memory callData = abi.encodeWithSignature("updateEntryPoint(address)", ENTRY_POINT_V6);
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteCall(address(_RandomOwnerSC), 0, callData),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        _relayUserOpV9(userOp);
         _assertAfterUpdateEPAddress();
     }
 
