@@ -61,6 +61,18 @@ contract ExecutionTest is Deploy {
         _assertBalances(address(0xbabe), false, 0.01 ether);
     }
 
+    function test_ReciveETH() external {
+        _SC_BALANCE_BEFORE = address(_RandomOwnerSC).balance;
+
+        address random = makeAddr("random");
+        _deal(random, 1 ether);
+
+        address(_RandomOwnerSC).call{value: 0.5 ether}("");
+        _SC_BALANCE_AFTER = address(_RandomOwnerSC).balance;
+
+        assertEq(_SC_BALANCE_BEFORE + 0.5 ether,_SC_BALANCE_AFTER);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
