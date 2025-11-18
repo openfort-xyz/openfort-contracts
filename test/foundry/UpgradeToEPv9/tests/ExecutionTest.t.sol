@@ -96,6 +96,42 @@ contract ExecutionTest is Deploy {
         _assertBalances(address(0xbabe), false, 0.01 ether * 5);
     }
 
+    function test_SendBatchEthToAnyAddressAA() external {
+        _assertBalances(address(0xbabe), true, 0.01 ether);
+
+        address[] memory addrs = new address[](5);
+        uint256[] memory values = new uint256[](5);
+        bytes[] memory datas = new bytes[](5);
+
+        for (uint256 i = 0; i < 5;) {
+            addrs[i] = address(0xbabe);
+            values[i] = 0.01 ether;
+            datas[i] = hex"";
+            unchecked {
+                ++i;
+            }
+        }
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteBatchCall(addrs, values, datas),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        _relayUserOpV9(userOp);
+        _assertBalances(address(0xbabe), false, 0.01 ether * 5);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
