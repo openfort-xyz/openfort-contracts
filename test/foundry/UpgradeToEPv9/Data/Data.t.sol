@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 
 import {Constants} from "./Constants.sol";
 import {Test} from "lib/forge-std/src/Test.sol";
+import {MockERC20} from "test/foundry/UpgradeToEPv9/mocks/MockERC20.sol";
 import {IEntryPoint as IEntryPointv6} from "lib/account-abstraction/contracts/core/EntryPoint.sol";
 import {IEntryPoint as IEntryPointv9} from "lib/account-abstraction-v09/contracts/core/EntryPoint.sol";
 import {
@@ -28,6 +29,8 @@ abstract contract Data is Test, Constants {
 
     IEntryPointv6 public entryPointV6;
     IEntryPointv9 public entryPointV9;
+
+    MockERC20 erc20;
 
     address internal _OpenfortAdmin;
     uint256 internal _OpenfortAdminPK;

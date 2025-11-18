@@ -3,6 +3,7 @@
 pragma solidity ^0.8.29;
 
 import {Deploy} from "test/foundry/UpgradeToEPv9/Deploy.t.sol";
+import {IERC20} from "lib/oz-v5.4.0/contracts/token/ERC20/IERC20.sol";
 import {PackedUserOperation} from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
 import {
     UpgradeableOpenfortAccount as UpgradeableOpenfortAccountV9
@@ -34,7 +35,8 @@ contract ExecutionTest is Deploy {
 
         address random = makeAddr("random");
         _deal(random, 1 ether);
-
+        
+        vm.prank(random);
         (bool res,) = address(_RandomOwnerSC).call{value: 0.5 ether}("");
         if (!res) revert("BAD CALL!!!");
         _SC_BALANCE_AFTER = address(_RandomOwnerSC).balance;
@@ -132,6 +134,22 @@ contract ExecutionTest is Deploy {
         _assertBalances(address(0xbabe), false, 0.01 ether * 5);
     }
 
+    function test_ReciveERC20() external {
+        _SC_BALANCE_BEFORE = IERC20(erc20).balanceOf(address(_RandomOwnerSC));
+
+        address random = makeAddr("random");
+        _mint(random, 100 ether);
+
+        bytes memory callData = abi.encodeWithSignature("transfer(address,uint256)", address(_RandomOwnerSC), 5 ether);
+
+        vm.prank(random);
+        (bool res,) = address(erc20).call{value: 0}(callData);
+        if (!res) revert("BAD CALL!!!");
+        _SC_BALANCE_AFTER = IERC20(erc20).balanceOf(address(_RandomOwnerSC));
+
+        assertEq(_SC_BALANCE_BEFORE + 5 ether,_SC_BALANCE_AFTER);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
@@ -183,6 +201,26 @@ contract ExecutionTest is Deploy {
         } else {
             _SC_BALANCE_AFTER = address(_RandomOwnerSC).balance;
             _SC_RECIVER_AFTER = _reciver.balance;
+
+            assertEq(_SC_RECIVER_AFTER - _SC_RECIVER_BEFORE, _expectedTransferAmount, "Receiver didn't get expected amount");
+
+            uint256 scLoss = _SC_BALANCE_BEFORE - _SC_BALANCE_AFTER;
+            assertGe(scLoss, _expectedTransferAmount, "SC didn't lose enough (less than transfer amount)");
+
+            uint256 gasFees = scLoss - _expectedTransferAmount;
+            assertLt(gasFees, 0.1 ether, "Gas fees unexpectedly high");
+        }
+    }
+
+    function _assertBalancesERC20(address _reciver, bool _isBefore, uint256 _expectedTransferAmount) internal {
+        if (_isBefore) {
+            _SC_BALANCE_BEFORE = IERC20(erc20).balanceOf(address(_RandomOwnerSC));
+            _SC_RECIVER_BEFORE = IERC20(erc20).balanceOf(_reciver);
+            assertEq(_SC_BALANCE_BEFORE, 0 ether);
+            assertEq(_SC_RECIVER_BEFORE, 0);
+        } else {
+            _SC_BALANCE_AFTER = IERC20(erc20).balanceOf(address(_RandomOwnerSC));
+            _SC_RECIVER_AFTER = IERC20(erc20).balanceOf(_reciver);
 
             assertEq(_SC_RECIVER_AFTER - _SC_RECIVER_BEFORE, _expectedTransferAmount, "Receiver didn't get expected amount");
 

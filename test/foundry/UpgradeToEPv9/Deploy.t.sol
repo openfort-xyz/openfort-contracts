@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.19;
 
+import {MockERC20} from "test/foundry/UpgradeToEPv9/mocks/MockERC20.sol";
 import {AAHelper} from "test/foundry/UpgradeToEPv9/helpers/AAHelper.t.sol";
 import {IStakeManager} from "lib/account-abstraction/contracts/interfaces/IStakeManager.sol";
 import {
@@ -37,6 +38,8 @@ contract Deploy is AAHelper {
         EntryPointV9 deployedEntryPointV9 = new EntryPointV9();
         entryPointV9 = IEntryPointv9(payable(address(deployedEntryPointV9)));
         vm.label(address(entryPointV9), "EntryPointV9");
+
+        erc20 = new MockERC20();
 
         vm.startPrank(_OpenfortAdmin);
         upgradeableOpenfortAccountImplV6 = new UpgradeableOpenfortAccountV6{salt: versionSaltV6}();
