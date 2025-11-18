@@ -29,6 +29,19 @@ contract ExecutionTest is Deploy {
         _deal(address(_RandomOwnerSC), 5 ether);
     }
 
+    function test_ReciveETH() external {
+        _SC_BALANCE_BEFORE = address(_RandomOwnerSC).balance;
+
+        address random = makeAddr("random");
+        _deal(random, 1 ether);
+
+        (bool res,) = address(_RandomOwnerSC).call{value: 0.5 ether}("");
+        if (!res) revert("BAD CALL!!!");
+        _SC_BALANCE_AFTER = address(_RandomOwnerSC).balance;
+
+        assertEq(_SC_BALANCE_BEFORE + 0.5 ether,_SC_BALANCE_AFTER);
+    }
+
     function test_SendEthToAnyAddressDirect() external {
         _assertBalances(address(0xbabe), true, 0.01 ether);
 
@@ -61,16 +74,26 @@ contract ExecutionTest is Deploy {
         _assertBalances(address(0xbabe), false, 0.01 ether);
     }
 
-    function test_ReciveETH() external {
-        _SC_BALANCE_BEFORE = address(_RandomOwnerSC).balance;
+    function test_SendBatchEthToAnyAddressDirect() external {
+        _assertBalances(address(0xbabe), true, 0.01 ether);
 
-        address random = makeAddr("random");
-        _deal(random, 1 ether);
+        address[] memory addrs = new address[](5);
+        uint256[] memory values = new uint256[](5);
+        bytes[] memory datas = new bytes[](5);
 
-        address(_RandomOwnerSC).call{value: 0.5 ether}("");
-        _SC_BALANCE_AFTER = address(_RandomOwnerSC).balance;
+        for (uint256 i = 0; i < 5;) {
+            addrs[i] = address(0xbabe);
+            values[i] = 0.01 ether;
+            datas[i] = hex"";
+            unchecked {
+                ++i;
+            }
+        }
 
-        assertEq(_SC_BALANCE_BEFORE + 0.5 ether,_SC_BALANCE_AFTER);
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.executeBatch(addrs, values, datas);
+
+        _assertBalances(address(0xbabe), false, 0.01 ether * 5);
     }
 
     function _createAccountV9() internal {
