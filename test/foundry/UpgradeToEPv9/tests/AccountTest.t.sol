@@ -65,7 +65,7 @@ contract AccountTest is Deploy {
         _assertAfterCreation();
     }
 
-    function _relayUserOpV9(PackedUserOperation memory _userOp) internal {  
+    function _relayUserOpV9(PackedUserOperation memory _userOp) internal {
         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
         ops[0] = _userOp;
 

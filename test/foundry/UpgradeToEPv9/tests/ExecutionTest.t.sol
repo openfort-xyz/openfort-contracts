@@ -35,13 +35,13 @@ contract ExecutionTest is Deploy {
 
         address random = makeAddr("random");
         _deal(random, 1 ether);
-        
+
         vm.prank(random);
         (bool res,) = address(_RandomOwnerSC).call{value: 0.5 ether}("");
         if (!res) revert("BAD CALL!!!");
         _SC_BALANCE_AFTER = address(_RandomOwnerSC).balance;
 
-        assertEq(_SC_BALANCE_BEFORE + 0.5 ether,_SC_BALANCE_AFTER);
+        assertEq(_SC_BALANCE_BEFORE + 0.5 ether, _SC_BALANCE_AFTER);
     }
 
     function test_SendEthToAnyAddressDirect() external {
@@ -147,7 +147,7 @@ contract ExecutionTest is Deploy {
         if (!res) revert("BAD CALL!!!");
         _SC_BALANCE_AFTER = IERC20(erc20).balanceOf(address(_RandomOwnerSC));
 
-        assertEq(_SC_BALANCE_BEFORE + 5 ether,_SC_BALANCE_AFTER);
+        assertEq(_SC_BALANCE_BEFORE + 5 ether, _SC_BALANCE_AFTER);
     }
 
     function test_SendERC20ToAnyAddressDirect() external {
@@ -303,7 +303,9 @@ contract ExecutionTest is Deploy {
             _SC_BALANCE_AFTER = address(_RandomOwnerSC).balance;
             _SC_RECIVER_AFTER = _reciver.balance;
 
-            assertEq(_SC_RECIVER_AFTER - _SC_RECIVER_BEFORE, _expectedTransferAmount, "Receiver didn't get expected amount");
+            assertEq(
+                _SC_RECIVER_AFTER - _SC_RECIVER_BEFORE, _expectedTransferAmount, "Receiver didn't get expected amount"
+            );
 
             uint256 scLoss = _SC_BALANCE_BEFORE - _SC_BALANCE_AFTER;
             assertGe(scLoss, _expectedTransferAmount, "SC didn't lose enough (less than transfer amount)");
@@ -323,7 +325,9 @@ contract ExecutionTest is Deploy {
             _SC_BALANCE_AFTER = IERC20(erc20).balanceOf(address(_RandomOwnerSC));
             _SC_RECIVER_AFTER = IERC20(erc20).balanceOf(_reciver);
 
-            assertEq(_SC_RECIVER_AFTER - _SC_RECIVER_BEFORE, _expectedTransferAmount, "Receiver didn't get expected amount");
+            assertEq(
+                _SC_RECIVER_AFTER - _SC_RECIVER_BEFORE, _expectedTransferAmount, "Receiver didn't get expected amount"
+            );
 
             uint256 scLoss = _SC_BALANCE_BEFORE - _SC_BALANCE_AFTER;
             assertGe(scLoss, _expectedTransferAmount, "SC didn't lose enough (less than transfer amount)");
