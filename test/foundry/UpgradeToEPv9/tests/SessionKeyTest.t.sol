@@ -44,28 +44,28 @@ contract SessionKeyTest is Deploy {
     }
 
     function test_RegisterMKDirect() external {
-        _registerMKDirect();
-        _assertRegistratedMK(SK);
+        _registerKey(true);
+        _assertRegistratedKey(SK, true);
     }
 
     function test_RegisterSKDirect() external {
-        _registerSKDirect();
-        _assertRegistratedSK(SK);
+        _registerKey(false);
+        _assertRegistratedKey(SK, false);
     }
 
     function test_RegisterMKAA() external {
-        _registerMKAA();
-        _assertRegistratedMK(SK);
+        _registerKeyAA(true);
+        _assertRegistratedKey(SK, true);
     }
 
     function test_RegisterSKAA() external {
-        _registerSKAA();
-        _assertRegistratedSK(SK);
+        _registerKeyAA(false);
+        _assertRegistratedKey(SK, false);
     }
 
     function test_RevokeSKDirect() external {
-        _registerSKAA();
-        _assertRegistratedSK(SK);
+        _registerKeyAA(false);
+        _assertRegistratedKey(SK, false);
 
         vm.prank(_RandomOwner);
         _RandomOwnerSC.revokeSessionKey(SK);
@@ -74,8 +74,8 @@ contract SessionKeyTest is Deploy {
     }
     
     function test_RevokeSKAA() external {
-        _registerSKAA();
-        _assertRegistratedSK(SK);
+        _registerKeyAA(false);
+        _assertRegistratedKey(SK, false); 
 
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
@@ -104,8 +104,8 @@ contract SessionKeyTest is Deploy {
     }
 
     function test_SendEthToAnyAddressWithSKAA() external {
-        _registerSKAA();
-        _assertRegistratedSK(SK);
+        _registerKeyAA(false);
+        _assertRegistratedKey(SK, false); 
         _deal(address(_RandomOwnerSC), 5 ether);
         _assertBalances(address(0xbabe), true, 0.01 ether);
     
@@ -130,8 +130,8 @@ contract SessionKeyTest is Deploy {
     }
 
     function test_SendBatchEthToAnyAddressWithSKAA() external {
-        _registerSKAA();
-        _assertRegistratedSK(SK);
+        _registerKeyAA(false);
+        _assertRegistratedKey(SK, false); 
         _deal(address(_RandomOwnerSC), 5 ether);
         _assertBalances(address(0xbabe), true, 0.01 ether);
     
@@ -169,8 +169,8 @@ contract SessionKeyTest is Deploy {
     }
 
     function test_SendERC20ToAnyAddressWithSKAA() external {
-        _registerSKAA();
-        _assertRegistratedSK(SK);
+        _registerKeyAA(false);
+        _assertRegistratedKey(SK, false); 
         _mint(address(_RandomOwnerSC), 100 ether);
         _assertBalancesERC20(address(0xbabe), true, 0.01 ether);
     
@@ -197,8 +197,8 @@ contract SessionKeyTest is Deploy {
     }
 
     function test_SendBatchERC20ToAnyAddressWithSKAA() external {
-        _registerSKAA();
-        _assertRegistratedSK(SK);
+        _registerKeyAA(false);
+        _assertRegistratedKey(SK, false); 
         _mint(address(_RandomOwnerSC), 100 ether);
         _assertBalancesERC20(address(0xbabe), true, 0.01 ether);
     
@@ -272,52 +272,34 @@ contract SessionKeyTest is Deploy {
         entryPointV9.handleOps(ops, payable(_OpenfortAdmin));
     }
 
-    function _registerSKDirect() internal {
-        address[] memory whitelist = new address[](1);
-        whitelist[0] = (address(erc20));
-        vm.prank(_RandomOwner);
-        _RandomOwnerSC.registerSessionKey(SK, VALID_AFTER, VALID_UNTIL, LIMIT, whitelist);
-    }
-
-    function _registerMKDirect() internal {
+    function _registerKey(bool _isMK) internal {
         address[] memory whitelist;
+        if (!_isMK){ 
+            whitelist = new address[](1);
+            whitelist[0] = (address(erc20));
+        }
+
+        uint48 limits = _isMK ? type(uint48).max : LIMIT;
+
         vm.prank(_RandomOwner);
-        _RandomOwnerSC.registerSessionKey(SK, VALID_AFTER, VALID_UNTIL, type(uint48).max, whitelist);
+        _RandomOwnerSC.registerSessionKey(SK, VALID_AFTER, VALID_UNTIL, limits, whitelist);
     }
 
-    function _registerMKAA() internal {
+    function _registerKeyAA(bool _isMK) internal {
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
         address[] memory whitelist;
 
-        bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.registerSessionKey.selector, SK, VALID_AFTER, VALID_UNTIL, type(uint48).max, whitelist);
+        if (!_isMK) {
+            whitelist = new address[](2);
+            whitelist[0] = (address(erc20));
+            whitelist[1] = address(0xbabe);
+        }
 
-        userOp = _populateUserOpV9(
-            userOp,
-            callData,
-            _packAccountGasLimits(400_000, 600_000),
-            800_000,
-            _packGasFees(15 gwei, 80 gwei),
-            hex""
-        );
+        uint48 limits = _isMK ? type(uint48).max : LIMIT;
 
-        bytes32 userOpHash = _getUserOpHashV9(userOp);
-
-        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
-
-        _relayUserOpV9(userOp);
-     }
-
-    function _registerSKAA() internal {
-        PackedUserOperation memory userOp;
-        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
-
-        address[] memory whitelist = new address[](2);
-        whitelist[0] = (address(erc20));
-        whitelist[1] = address(0xbabe);
-
-        bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.registerSessionKey.selector, SK, VALID_AFTER, VALID_UNTIL, LIMIT, whitelist);
+        bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.registerSessionKey.selector, SK, VALID_AFTER, VALID_UNTIL, limits, whitelist);
 
         userOp = _populateUserOpV9(
             userOp,
@@ -342,7 +324,7 @@ contract SessionKeyTest is Deploy {
         assertEq(address(_RandomOwnerSC.entryPoint()), address(entryPointV9));
     }
 
-    function _assertRegistratedSK(address _sK) internal {
+    function _assertRegistratedKey(address _sK, bool _isMK) internal {
         (
             uint48 validAfter,
             uint48 validUntil,
@@ -353,27 +335,16 @@ contract SessionKeyTest is Deploy {
         ) = _RandomOwnerSC.sessionKeys(_sK);
         assertEq(validAfter, VALID_AFTER);
         assertEq(validUntil, VALID_UNTIL);
-        assertEq(limit, LIMIT);
-        assertEq(masterSessionKey, false);
-        assertEq(whitelisting, true);
-        assertEq(registrarAddress, _RandomOwner);
-    }
+        if (!_isMK) {
+            assertEq(limit, LIMIT);
+            assertEq(masterSessionKey, false);
+            assertEq(whitelisting, true);
+        } else {
+            assertEq(limit, type(uint48).max);
+            assertEq(masterSessionKey, true);
+            assertEq(whitelisting, false);
+        }
 
-    function _assertRegistratedMK(address _sK) internal {
-        (
-            uint48 validAfter,
-            uint48 validUntil,
-            uint48 limit,
-            bool masterSessionKey,
-            bool whitelisting,
-            address registrarAddress
-        ) = _RandomOwnerSC.sessionKeys(_sK);
-
-        assertEq(validAfter, VALID_AFTER);
-        assertEq(validUntil, VALID_UNTIL);
-        assertEq(limit, type(uint48).max);
-        assertEq(masterSessionKey, true);
-        assertEq(whitelisting, false);
         assertEq(registrarAddress, _RandomOwner);
     }
 
