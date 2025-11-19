@@ -63,6 +63,16 @@ contract SessionKeyTest is Deploy {
         _assertRegistratedKey(SK, false);
     }
 
+    function test_RevokeMKDirect() external {
+        _registerKeyAA(true);
+        _assertRegistratedKey(SK, true);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.revokeSessionKey(SK);
+
+        _assertRevokationSK(SK);
+    }
+
     function test_RevokeSKDirect() external {
         _registerKeyAA(false);
         _assertRegistratedKey(SK, false);
