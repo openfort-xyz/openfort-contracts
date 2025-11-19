@@ -39,12 +39,7 @@ contract UpgradeTest is Deploy {
         bytes memory callData = abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
 
         userOp = _populateUserOpV9(
-            userOp,
-            callData,
-            _packAccountGasLimits(400_000, 600_000),
-            800_000,
-            _packGasFees(15 gwei, 80 gwei),
-            hex""
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
         );
 
         bytes32 userOpHash = _getUserOpHashV9(userOp);
@@ -70,12 +65,16 @@ contract UpgradeTest is Deploy {
         bytes memory callData = abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
 
         userOp = _populateUserOpV9(
-            userOp, _createExecuteCall(address(_RandomOwnerSC), 0, callData), _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
+            userOp,
+            _createExecuteCall(address(_RandomOwnerSC), 0, callData),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
         );
 
-        bytes memory initCode = abi.encodeWithSignature(
-            "createAccountWithNonce(address,bytes32,bool)", _Random, _RandomOwnerSalt, false
-        );
+        bytes memory initCode =
+            abi.encodeWithSignature("createAccountWithNonce(address,bytes32,bool)", _Random, _RandomOwnerSalt, false);
         userOp.initCode = abi.encodePacked(address(openfortFactoryV9), initCode);
 
         bytes32 userOpHash = _getUserOpHashV9(userOp);
@@ -102,12 +101,7 @@ contract UpgradeTest is Deploy {
         bytes memory callData = abi.encodeWithSignature("updateEntryPoint(address)", ENTRY_POINT_V6);
 
         userOp = _populateUserOpV9(
-            userOp,
-            callData,
-            _packAccountGasLimits(400_000, 600_000),
-            800_000,
-            _packGasFees(15 gwei, 80 gwei),
-            hex""
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
         );
 
         bytes32 userOpHash = _getUserOpHashV9(userOp);
@@ -119,7 +113,8 @@ contract UpgradeTest is Deploy {
     }
 
     function test_UpdateAndUpgradeDirect() external {
-        bytes memory upgradeTo = abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
+        bytes memory upgradeTo =
+            abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
         bytes memory updateEntryPoint = abi.encodeWithSignature("updateEntryPoint(address)", address(entryPointV6));
         address[] memory addrs = new address[](2);
         uint256[] memory values = new uint256[](2);
@@ -134,13 +129,14 @@ contract UpgradeTest is Deploy {
 
         vm.prank(_RandomOwner);
         _RandomOwnerSC.executeBatch(addrs, values, datas);
-        
+
         _assertAfterUpdateImpl();
         _assertAfterUpdateEPAddress();
     }
 
     function test_UpdateAndUpgradeAA() external {
-        bytes memory upgradeTo = abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
+        bytes memory upgradeTo =
+            abi.encodeWithSignature("upgradeTo(address)", address(upgradeableOpenfortAccountImplV6));
         bytes memory updateEntryPoint = abi.encodeWithSignature("updateEntryPoint(address)", address(entryPointV6));
         address[] memory addrs = new address[](2);
         uint256[] memory values = new uint256[](2);
@@ -201,7 +197,7 @@ contract UpgradeTest is Deploy {
         _assertAfterCreation();
     }
 
-    function _relayUserOpV9(PackedUserOperation memory _userOp) internal {  
+    function _relayUserOpV9(PackedUserOperation memory _userOp) internal {
         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
         ops[0] = _userOp;
 

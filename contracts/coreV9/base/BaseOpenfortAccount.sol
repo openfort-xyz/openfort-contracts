@@ -312,9 +312,7 @@ abstract contract BaseOpenfortAccount is
     }
 
     function _requireFromEntryPointOrOwnerOrSC() internal view virtual {
-        if (msg.sender != address(entryPoint()) && 
-            msg.sender != owner() && 
-            msg.sender != address(this)) {
+        if (msg.sender != address(entryPoint()) && msg.sender != owner() && msg.sender != address(this)) {
             revert NotOwnerOrEntrypoint();
         }
     }

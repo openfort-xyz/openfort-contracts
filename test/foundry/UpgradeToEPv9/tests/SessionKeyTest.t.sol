@@ -12,6 +12,7 @@ import {PackedUserOperation} from "lib/account-abstraction-v09/contracts/interfa
 import {
     UpgradeableOpenfortAccount as UpgradeableOpenfortAccountV9
 } from "contracts/coreV9/upgradeable/UpgradeableOpenfortAccount.sol";
+import {console2 as console} from "lib/forge-std/src/console2.sol";
 
 contract SessionKeyTest is Deploy {
     address internal _RandomOwner;
@@ -40,6 +41,11 @@ contract SessionKeyTest is Deploy {
         _RandomOwnerSalt = keccak256(abi.encodePacked("0xbebe_0001"));
         _createAccountV9();
         _deal(address(_RandomOwnerSC), 5 ether);
+    }
+
+    function test_RegisterMKDirect() external {
+        _registerMKDirect();
+        _assertRegistratedMK(SK);
     }
 
     function test_RegisterSKDirect() external {
@@ -268,6 +274,12 @@ contract SessionKeyTest is Deploy {
         _RandomOwnerSC.registerSessionKey(SK, VALID_AFTER, VALID_UNTIL, LIMIT, whitelist);
     }
 
+    function _registerMKDirect() internal {
+        address[] memory whitelist;
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(SK, VALID_AFTER, VALID_UNTIL, type(uint48).max, whitelist);
+    }
+
     function _registerSKAA() internal {
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
@@ -315,6 +327,24 @@ contract SessionKeyTest is Deploy {
         assertEq(limit, LIMIT);
         assertEq(masterSessionKey, false);
         assertEq(whitelisting, true);
+        assertEq(registrarAddress, _RandomOwner);
+    }
+
+    function _assertRegistratedMK(address _sK) internal {
+        (
+            uint48 validAfter,
+            uint48 validUntil,
+            uint48 limit,
+            bool masterSessionKey,
+            bool whitelisting,
+            address registrarAddress
+        ) = _RandomOwnerSC.sessionKeys(_sK);
+
+        assertEq(validAfter, VALID_AFTER);
+        assertEq(validUntil, VALID_UNTIL);
+        assertEq(limit, type(uint48).max);
+        assertEq(masterSessionKey, true);
+        assertEq(whitelisting, false);
         assertEq(registrarAddress, _RandomOwner);
     }
 
