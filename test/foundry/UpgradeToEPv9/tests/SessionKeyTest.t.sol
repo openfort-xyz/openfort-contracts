@@ -82,7 +82,37 @@ contract SessionKeyTest is Deploy {
 
         _assertRevokationSK(SK);
     }
-    
+
+    function test_RevokeMKAA() external {
+        _registerKeyAA(true);
+        _assertRegistratedKey(SK, true);
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = (address(erc20));
+
+        bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.revokeSessionKey.selector, SK);
+
+        userOp = _populateUserOpV9(
+            userOp,
+            callData,
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        _relayUserOpV9(userOp);
+
+        _assertRevokationSK(SK);
+    }
+
     function test_RevokeSKAA() external {
         _registerKeyAA(false);
         _assertRegistratedKey(SK, false); 
