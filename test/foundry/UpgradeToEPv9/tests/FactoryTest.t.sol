@@ -85,4 +85,38 @@ contract FactoryTest is Deploy {
 
         assertEq(address(0xbabe).balance, 0.1 ether);
     }
+
+    function test_CreateAccountWithNonceViaFactoryV6() external {
+        vm.prank(_OpenfortAdmin);
+        address accountAddress2 = openfortFactoryV6.getAddressWithNonce(_OpenfortAdmin, "2");
+
+        vm.expectEmit(true, true, false, true);
+        emit AccountCreated(accountAddress2, _OpenfortAdmin);
+
+        vm.prank(_OpenfortAdmin);
+        openfortFactoryV6.createAccountWithNonce(_OpenfortAdmin, "2", true);
+
+        vm.prank(_OpenfortAdmin);
+        openfortFactoryV6.createAccountWithNonce(_OpenfortAdmin, "2", true);
+        
+        vm.prank(_OpenfortAdmin);
+        assertEq(accountAddress2, openfortFactoryV6.getAddressWithNonce(_OpenfortAdmin, "2"));
+    }
+
+    function test_CreateAccountWithNonceViaFactoryV9() external {
+        vm.prank(_OpenfortAdmin);
+        address accountAddress2 = openfortFactoryV9.getAddressWithNonce(_OpenfortAdmin, "2");
+
+        vm.expectEmit(true, true, false, true);
+        emit AccountCreated(accountAddress2, _OpenfortAdmin);
+
+        vm.prank(_OpenfortAdmin);
+        openfortFactoryV9.createAccountWithNonce(_OpenfortAdmin, "2", true);
+
+        vm.prank(_OpenfortAdmin);
+        openfortFactoryV9.createAccountWithNonce(_OpenfortAdmin, "2", true);
+        
+        vm.prank(_OpenfortAdmin);
+        assertEq(accountAddress2, openfortFactoryV9.getAddressWithNonce(_OpenfortAdmin, "2"));
+    }
 }
