@@ -185,6 +185,47 @@ contract SessionKeyTest is Deploy {
         _assertBalancesERC20(address(0xbabe), false, 5 ether);
     }
 
+    function test_SendBatchERC20ToAnyAddressWithSKAA() external {
+        _registerSKAA();
+        _assertRegistratedSK(SK);
+        _mint(address(_RandomOwnerSC), 100 ether);
+        _assertBalancesERC20(address(0xbabe), true, 0.01 ether);
+    
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        address[] memory addrs = new address[](5);
+        uint256[] memory values = new uint256[](5);
+        bytes[] memory datas = new bytes[](5);
+
+        bytes memory callData = abi.encodeWithSignature("transfer(address,uint256)", address(0xbabe), 5 ether);
+
+        for (uint256 i = 0; i < 5;) {
+            addrs[i] = address(erc20);
+            values[i] = 0;
+            datas[i] = callData;
+            unchecked {
+                ++i;
+            }
+        }
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteBatchCall(addrs, values, datas),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, SK_PK);
+
+        _relayUserOpV9(userOp);
+        _assertBalancesERC20(address(0xbabe), false, 5 ether * 5);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
