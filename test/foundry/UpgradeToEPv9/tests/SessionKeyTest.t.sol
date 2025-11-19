@@ -53,6 +53,11 @@ contract SessionKeyTest is Deploy {
         _assertRegistratedSK(SK);
     }
 
+    function test_RegisterMKAA() external {
+        _registerMKAA();
+        _assertRegistratedMK(SK);
+    }
+
     function test_RegisterSKAA() external {
         _registerSKAA();
         _assertRegistratedSK(SK);
@@ -279,6 +284,30 @@ contract SessionKeyTest is Deploy {
         vm.prank(_RandomOwner);
         _RandomOwnerSC.registerSessionKey(SK, VALID_AFTER, VALID_UNTIL, type(uint48).max, whitelist);
     }
+
+    function _registerMKAA() internal {
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        address[] memory whitelist;
+
+        bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.registerSessionKey.selector, SK, VALID_AFTER, VALID_UNTIL, type(uint48).max, whitelist);
+
+        userOp = _populateUserOpV9(
+            userOp,
+            callData,
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        _relayUserOpV9(userOp);
+     }
 
     function _registerSKAA() internal {
         PackedUserOperation memory userOp;
