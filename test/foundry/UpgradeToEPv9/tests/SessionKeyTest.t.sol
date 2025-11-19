@@ -143,6 +143,32 @@ contract SessionKeyTest is Deploy {
         _assertRevokationSK(SK);
     }
 
+    function test_SendEthToAnyAddressWithMKAA() external {
+        _registerKeyAA(true);
+        _assertRegistratedKey(SK, true);
+        _deal(address(_RandomOwnerSC), 5 ether);
+        _assertBalances(address(0xdeadbabe), true, 0.01 ether);
+    
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteCall(address(0xdeadbabe), 0.01 ether, hex""),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, SK_PK);
+
+        _relayUserOpV9(userOp);
+        _assertBalances(address(0xdeadbabe), false, 0.01 ether);
+    }
+
     function test_SendEthToAnyAddressWithSKAA() external {
         _registerKeyAA(false);
         _assertRegistratedKey(SK, false); 
