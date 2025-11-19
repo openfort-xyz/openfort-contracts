@@ -98,7 +98,7 @@ contract FactoryTest is Deploy {
 
         vm.prank(_OpenfortAdmin);
         openfortFactoryV6.createAccountWithNonce(_OpenfortAdmin, "2", true);
-        
+
         vm.prank(_OpenfortAdmin);
         assertEq(accountAddress2, openfortFactoryV6.getAddressWithNonce(_OpenfortAdmin, "2"));
     }
@@ -115,7 +115,7 @@ contract FactoryTest is Deploy {
 
         vm.prank(_OpenfortAdmin);
         openfortFactoryV9.createAccountWithNonce(_OpenfortAdmin, "2", true);
-        
+
         vm.prank(_OpenfortAdmin);
         assertEq(accountAddress, openfortFactoryV9.getAddressWithNonce(_OpenfortAdmin, "2"));
     }
