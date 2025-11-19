@@ -44,6 +44,8 @@ abstract contract Data is Test, Constants {
     bytes32 public versionSaltV6;
     bytes32 public versionSaltV9;
 
+    event AccountCreated(address indexed account, address indexed openfortAdmin);
+
     function setUp() public virtual {
         (_OpenfortAdmin, _OpenfortAdminPK) = makeAddrAndKey("_OpenfortAdmin");
         (_AccountOwner, _AccountOwnerPK) = makeAddrAndKey("_AccountOwner");
