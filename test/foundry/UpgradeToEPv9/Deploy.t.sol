@@ -4,7 +4,8 @@ pragma solidity ^0.8.19;
 
 import {MockERC20} from "test/foundry/UpgradeToEPv9/mocks/MockERC20.sol";
 import {AAHelper} from "test/foundry/UpgradeToEPv9/helpers/AAHelper.t.sol";
-import {IStakeManager} from "lib/account-abstraction/contracts/interfaces/IStakeManager.sol";
+import {IStakeManager as IStakeManagerV6} from "lib/account-abstraction/contracts/interfaces/IStakeManager.sol";
+import {IStakeManager as IStakeManagerV9} from "lib/account-abstraction-v09/contracts/interfaces/IStakeManager.sol";
 import {
     EntryPoint as EntryPointV6,
     IEntryPoint as IEntryPointv6
@@ -71,7 +72,7 @@ contract Deploy is AAHelper {
         _depositToEp();
     }
 
-    function test_AfterDeploy() external {
+    function test_AfterDeployV6() external {
         assertEq(address(entryPointV6), ENTRY_POINT_V6);
         assertTrue(address(entryPointV9) != address(0), "EntryPointV9 not deployed");
         assertEq(openfortFactoryV6.owner(), _OpenfortAdmin);
@@ -82,7 +83,42 @@ contract Deploy is AAHelper {
         assertEq(openfortFactoryV6.recoveryPeriod(), RECOVERY_PERIOD);
         assertEq(openfortFactoryV6.securityPeriod(), SECURITY_PERIOD);
         assertEq(openfortFactoryV6.securityWindow(), SECURITY_WINDOW);
-        _assertEPDeposits();
+        _assertEPDepositsV6();
+
+        vm.expectRevert("Initializable: contract is already initialized");
+        upgradeableOpenfortAccountImplV6.initialize(
+            _OpenfortAdmin,
+            address(entryPointV6),
+            RECOVERY_PERIOD,
+            SECURITY_PERIOD,
+            SECURITY_WINDOW,
+            LOCK_PERIOD,
+            _Guardian
+        );
+    }
+
+    function test_AfterDeployV9() external {
+        assertTrue(address(entryPointV9) != address(0), "EntryPointV9 not deployed");
+        assertEq(openfortFactoryV9.owner(), _OpenfortAdmin);
+        assertEq(openfortFactoryV9.initialGuardian(), _Guardian);
+        assertEq(openfortFactoryV9.implementation(), address(upgradeableOpenfortAccountImplV9));
+        assertEq(openfortFactoryV9.entrypointContract(), address(entryPointV9));
+        assertEq(openfortFactoryV9.lockPeriod(), LOCK_PERIOD);
+        assertEq(openfortFactoryV9.recoveryPeriod(), RECOVERY_PERIOD);
+        assertEq(openfortFactoryV9.securityPeriod(), SECURITY_PERIOD);
+        assertEq(openfortFactoryV9.securityWindow(), SECURITY_WINDOW);
+        _assertEPDepositsV9();
+
+        vm.expectRevert("Initializable: contract is already initialized");
+        upgradeableOpenfortAccountImplV9.initialize(
+            _OpenfortAdmin,
+            address(entryPointV9),
+            RECOVERY_PERIOD,
+            SECURITY_PERIOD,
+            SECURITY_WINDOW,
+            LOCK_PERIOD,
+            _Guardian
+        );
     }
 
     function _dealAll() internal {
@@ -98,8 +134,8 @@ contract Deploy is AAHelper {
         _depositTo(_AccountOwner, _AccountOwner, EP_Version.V9);
     }
 
-    function _assertEPDeposits() internal {
-        IStakeManager.DepositInfo memory DI;
+    function _assertEPDepositsV6() internal {
+        IStakeManagerV6.DepositInfo memory DI;
         DI = entryPointV6.getDepositInfo(_OpenfortAdmin);
         assertEq(DI.deposit, 0.1 ether);
         DI = entryPointV6.getDepositInfo(_OpenfortAdmin);
@@ -107,6 +143,18 @@ contract Deploy is AAHelper {
         DI = entryPointV6.getDepositInfo(_AccountOwner);
         assertEq(DI.deposit, 0.1 ether);
         DI = entryPointV6.getDepositInfo(_AccountOwner);
+        assertEq(DI.deposit, 0.1 ether);
+    }
+
+    function _assertEPDepositsV9() internal {
+        IStakeManagerV9.DepositInfo memory DI;
+        DI = entryPointV9.getDepositInfo(_OpenfortAdmin);
+        assertEq(DI.deposit, 0.1 ether);
+        DI = entryPointV9.getDepositInfo(_OpenfortAdmin);
+        assertEq(DI.deposit, 0.1 ether);
+        DI = entryPointV9.getDepositInfo(_AccountOwner);
+        assertEq(DI.deposit, 0.1 ether);
+        DI = entryPointV9.getDepositInfo(_AccountOwner);
         assertEq(DI.deposit, 0.1 ether);
     }
 }
