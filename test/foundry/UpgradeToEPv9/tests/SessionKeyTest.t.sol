@@ -195,6 +195,45 @@ contract SessionKeyTest is Deploy {
         _assertBalances(address(0xbabe), false, 0.01 ether);
     }
 
+    function test_SendBatchEthToAnyAddressWithMKAA() external {
+        _registerKeyAA(true);
+        _assertRegistratedKey(SK, true);
+        _deal(address(_RandomOwnerSC), 5 ether);
+        _assertBalances(address(0xdeadbabe), true, 0.01 ether);
+    
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        address[] memory addrs = new address[](5);
+        uint256[] memory values = new uint256[](5);
+        bytes[] memory datas = new bytes[](5);
+
+        for (uint256 i = 0; i < 5;) {
+            addrs[i] = address(0xdeadbabe);
+            values[i] = 0.01 ether;
+            datas[i] = hex"";
+            unchecked {
+                ++i;
+            }
+        }
+        
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteBatchCall(addrs, values, datas),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, SK_PK);
+
+        _relayUserOpV9(userOp);
+        _assertBalances(address(0xdeadbabe), false, 0.01 ether * 5);
+    }
+
     function test_SendBatchEthToAnyAddressWithSKAA() external {
         _registerKeyAA(false);
         _assertRegistratedKey(SK, false); 
