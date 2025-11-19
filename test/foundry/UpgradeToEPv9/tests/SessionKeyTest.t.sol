@@ -37,21 +37,36 @@ contract SessionKeyTest is Deploy {
     }
 
     function test_RegisterSKDirect() external {
-        address[] memory whitelist = new address[](1);
-        whitelist[0] = (address(erc20));
-        vm.prank(_RandomOwner);
-        _RandomOwnerSC.registerSessionKey(SK, VALID_AFTER, VALID_UNTIL, LIMIT, whitelist);
+        _registerSKDirect();
         _assertRegistratedSK(SK);
     }
 
     function test_RegisterSKAA() external {
+        _registerSKAA();
+        _assertRegistratedSK(SK);
+    }
+
+    function test_RevokeSKDirect() external {
+        _registerSKAA();
+        _assertRegistratedSK(SK);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.revokeSessionKey(SK);
+
+        _assertRevokationSK(SK);
+    }
+    
+    function test_RevokeSKAA() external {
+        _registerSKAA();
+        _assertRegistratedSK(SK);
+
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
         address[] memory whitelist = new address[](1);
         whitelist[0] = (address(erc20));
 
-        bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.registerSessionKey.selector, SK, VALID_AFTER, VALID_UNTIL, LIMIT, whitelist);
+        bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.revokeSessionKey.selector, SK);
 
         userOp = _populateUserOpV9(
             userOp,
@@ -67,7 +82,8 @@ contract SessionKeyTest is Deploy {
         userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
 
         _relayUserOpV9(userOp);
-        _assertRegistratedSK(SK);
+
+        _assertRevokationSK(SK);
     }
 
     function _createAccountV9() internal {
@@ -105,6 +121,38 @@ contract SessionKeyTest is Deploy {
         entryPointV9.handleOps(ops, payable(_OpenfortAdmin));
     }
 
+    function _registerSKDirect() internal {
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = (address(erc20));
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(SK, VALID_AFTER, VALID_UNTIL, LIMIT, whitelist);
+    }
+
+    function _registerSKAA() internal {
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = (address(erc20));
+
+        bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.registerSessionKey.selector, SK, VALID_AFTER, VALID_UNTIL, LIMIT, whitelist);
+
+        userOp = _populateUserOpV9(
+            userOp,
+            callData,
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        _relayUserOpV9(userOp);
+     }
+
     function _assertAfterCreation() internal {
         UpgradeableOpenfortProxy proxy = UpgradeableOpenfortProxy(payable(address(_RandomOwnerSC)));
         assertEq(_RandomOwnerSC.owner(), _RandomOwner);
@@ -127,5 +175,21 @@ contract SessionKeyTest is Deploy {
         assertEq(masterSessionKey, false);
         assertEq(whitelisting, true);
         assertEq(registrarAddress, _RandomOwner);
+    }
+
+    function _assertRevokationSK(address _sK) internal {
+        (
+            uint48 validAfter,
+            uint48 validUntil,
+            uint48 limit,
+            bool masterSessionKey,
+            ,
+            address registrarAddress
+        ) = _RandomOwnerSC.sessionKeys(_sK);
+        assertEq(validAfter, 0);
+        assertEq(validUntil, 0);
+        assertEq(limit, 0);
+        assertEq(masterSessionKey, false);
+        assertEq(registrarAddress, address(0));
     }
 }
