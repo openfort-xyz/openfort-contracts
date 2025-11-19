@@ -157,6 +157,34 @@ contract SessionKeyTest is Deploy {
         _assertBalances(address(0xbabe), false, 0.01 ether * 5);
     }
 
+    function test_SendERC20ToAnyAddressWithSKAA() external {
+        _registerSKAA();
+        _assertRegistratedSK(SK);
+        _mint(address(_RandomOwnerSC), 100 ether);
+        _assertBalancesERC20(address(0xbabe), true, 0.01 ether);
+    
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        bytes memory callData = abi.encodeWithSignature("transfer(address,uint256)", address(0xbabe), 5 ether);
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteCall(address(erc20), 0, callData),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, SK_PK);
+
+        _relayUserOpV9(userOp);
+        _assertBalancesERC20(address(0xbabe), false, 5 ether);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
