@@ -3,6 +3,7 @@
 pragma solidity ^0.8.29;
 
 import {Deploy} from "test/foundry/UpgradeToEPv9/Deploy.t.sol";
+import {IERC20} from "lib/oz-v5.4.0/contracts/token/ERC20/IERC20.sol";
 import {BaseOpenfortAccount} from "contracts/coreV9/base/BaseOpenfortAccount.sol";
 import {IBaseRecoverableAccount} from "contracts/interfaces/IBaseRecoverableAccount.sol";
 import {IERC165} from "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -24,6 +25,11 @@ contract SessionKeyTest is Deploy {
     uint48 private constant VALID_AFTER = 0;
     uint48 private VALID_UNTIL;
     uint48 private constant LIMIT = 10;
+
+    uint256 private _SC_BALANCE_BEFORE;
+    uint256 private _SC_BALANCE_AFTER;
+    uint256 private _SC_RECIVER_BEFORE;
+    uint256 private _SC_RECIVER_AFTER;
 
     function setUp() public override {
         super.setUp();
@@ -86,6 +92,32 @@ contract SessionKeyTest is Deploy {
         _assertRevokationSK(SK);
     }
 
+    function test_SendEthToAnyAddressWithSKAA() external {
+        _registerSKAA();
+        _assertRegistratedSK(SK);
+        _deal(address(_RandomOwnerSC), 5 ether);
+        _assertBalances(address(0xbabe), true, 0.01 ether);
+    
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        userOp = _populateUserOpV9(
+            userOp,
+            abi.encodePacked(_createExecuteCall(address(0xbabe), 0.01 ether, hex"")),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+        userOp.signature = _signUserOp(userOpHash, SK_PK);
+
+        _relayUserOpV9(userOp);
+        _assertBalances(address(0xbabe), false, 0.01 ether);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
@@ -132,8 +164,9 @@ contract SessionKeyTest is Deploy {
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
-        address[] memory whitelist = new address[](1);
+        address[] memory whitelist = new address[](2);
         whitelist[0] = (address(erc20));
+        whitelist[1] = address(0xbabe);
 
         bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.registerSessionKey.selector, SK, VALID_AFTER, VALID_UNTIL, LIMIT, whitelist);
 
@@ -191,5 +224,49 @@ contract SessionKeyTest is Deploy {
         assertEq(limit, 0);
         assertEq(masterSessionKey, false);
         assertEq(registrarAddress, address(0));
+    }
+
+    function _assertBalances(address _reciver, bool _isBefore, uint256 _expectedTransferAmount) internal {
+        if (_isBefore) {
+            _SC_BALANCE_BEFORE = address(_RandomOwnerSC).balance;
+            _SC_RECIVER_BEFORE = _reciver.balance;
+            assertEq(_SC_BALANCE_BEFORE, 5 ether);
+            assertEq(_SC_RECIVER_BEFORE, 0);
+        } else {
+            _SC_BALANCE_AFTER = address(_RandomOwnerSC).balance;
+            _SC_RECIVER_AFTER = _reciver.balance;
+
+            assertEq(
+                _SC_RECIVER_AFTER - _SC_RECIVER_BEFORE, _expectedTransferAmount, "Receiver didn't get expected amount"
+            );
+
+            uint256 scLoss = _SC_BALANCE_BEFORE - _SC_BALANCE_AFTER;
+            assertGe(scLoss, _expectedTransferAmount, "SC didn't lose enough (less than transfer amount)");
+
+            uint256 gasFees = scLoss - _expectedTransferAmount;
+            assertLt(gasFees, 0.1 ether, "Gas fees unexpectedly high");
+        }
+    }
+
+    function _assertBalancesERC20(address _reciver, bool _isBefore, uint256 _expectedTransferAmount) internal {
+        if (_isBefore) {
+            _SC_BALANCE_BEFORE = IERC20(erc20).balanceOf(address(_RandomOwnerSC));
+            _SC_RECIVER_BEFORE = IERC20(erc20).balanceOf(_reciver);
+            assertEq(_SC_BALANCE_BEFORE, 100 ether);
+            assertEq(_SC_RECIVER_BEFORE, 0);
+        } else {
+            _SC_BALANCE_AFTER = IERC20(erc20).balanceOf(address(_RandomOwnerSC));
+            _SC_RECIVER_AFTER = IERC20(erc20).balanceOf(_reciver);
+
+            assertEq(
+                _SC_RECIVER_AFTER - _SC_RECIVER_BEFORE, _expectedTransferAmount, "Receiver didn't get expected amount"
+            );
+
+            uint256 scLoss = _SC_BALANCE_BEFORE - _SC_BALANCE_AFTER;
+            assertGe(scLoss, _expectedTransferAmount, "SC didn't lose enough (less than transfer amount)");
+
+            uint256 gasFees = scLoss - _expectedTransferAmount;
+            assertLt(gasFees, 0.1 ether, "Gas fees unexpectedly high");
+        }
     }
 }
