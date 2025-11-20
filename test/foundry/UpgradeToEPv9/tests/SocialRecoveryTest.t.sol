@@ -71,6 +71,17 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
         _assertPendingGuardians(3, true);
     }
 
+    function test_confirmGuardianProposalDirect() external createGuardians(3) {
+        _assertGuardianCount(0);
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _assertGuardianCount(0);
+        _assertPendingGuardians(3, true);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 3);
+        _assertGuardianCount(3);
+        _assertPendingGuardians(3, false);
+        _assertGuardians(3);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
@@ -126,6 +137,16 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
             } else {
                 assertTrue(getPendingStatusGuardian);
             }
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    function _assertGuardians(uint256 _count) internal {
+        for (uint256 i = 0; i < _count;) {
+            address[] memory gS = _RandomOwnerSC.getGuardians();
+            assertEq(gS[i], _Guardians[i]);
             unchecked {
                 ++i;
             }
