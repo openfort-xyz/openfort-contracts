@@ -113,7 +113,26 @@ contract RevertsOwnershipTest is SocialRecoveryHelper {
 
         assertEq(_RandomOwnerSC.owner(), _NewOwner);
     }
-    
+
+    function test_revert_renounceOwnership_notOwner() external {
+        vm.prank(_Attacker);
+        vm.expectRevert("Ownable: caller is not the owner");
+        _RandomOwnerSC.renounceOwnership();
+    }
+
+    function test_revert_cancelRecovery_notOwner() external {
+        vm.prank(_Attacker);
+        vm.expectRevert("Ownable: caller is not the owner");
+        _RandomOwnerSC.cancelRecovery();
+    }
+
+    function test_revert_cancelRecovery_noOngoingRecovery() external {
+        vm.prank(_RandomOwner);
+        vm.expectRevert(NoOngoingRecovery.selector);
+        _RandomOwnerSC.cancelRecovery();
+    }
+
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
