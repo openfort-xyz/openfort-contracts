@@ -110,4 +110,22 @@ contract RevertsFactoryTest is Test {
         vm.expectRevert("Ownable: caller is not the owner");
         factory.updateInitialGuardian(_NewGuardian);
     }
+
+    function test_revert_updateInitialGuardian_zeroAddress() external {
+        vm.prank(_Owner);
+        vm.expectRevert(ZeroAddressNotAllowed.selector);
+        factory.updateInitialGuardian(address(0));
+    }
+
+    function test_revert_createAccountWithNonce_zeroAdmin() external {
+        vm.expectRevert();
+        factory.createAccountWithNonce(address(0), bytes32(uint256(1)), false);
+    }
+
+    function test_revert_addStake_notOwner() external {
+        vm.prank(_Attacker);
+        vm.deal(_Attacker, 10 ether);
+        vm.expectRevert("Ownable: caller is not the owner");
+        factory.addStake{value: 1 ether}(7 days);
+    }
 }
