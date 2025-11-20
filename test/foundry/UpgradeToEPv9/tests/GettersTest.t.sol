@@ -269,7 +269,60 @@ contract GettersTest is SocialRecoveryHelper {
 
         assertFalse(_RandomOwnerSC.isGuardian(_Guardians[0]));
     }
-    
+
+    function test_GetRecoveryDetailsNoRecovery() external {
+        (address recoveryAddress, uint64 executeAfter, uint32 guardiansRequired) = _RandomOwnerSC.recoveryDetails();
+
+        assertEq(recoveryAddress, address(0));
+        assertEq(executeAfter, 0);
+        assertEq(guardiansRequired, 0);
+    }
+
+    function test_GetRecoveryDetailsDuringRecovery() external createGuardians(3) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 3);
+
+        vm.warp(block.timestamp + 1);
+
+        vm.prank(_Guardians[0]);
+        _RandomOwnerSC.startRecovery(_RecoveryOwner);
+
+        (address recoveryAddress, uint64 executeAfter, uint32 guardiansRequired) = _RandomOwnerSC.recoveryDetails();
+
+        assertEq(recoveryAddress, _RecoveryOwner);
+        assertEq(executeAfter, uint64(block.timestamp + RECOVERY_PERIOD));
+        assertEq(guardiansRequired, uint32(Math.ceilDiv(3, 2)));
+    }
+
+    function test_GetRecoveryDetailsAfterCompletion() external createGuardians(3) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 3);
+        _executeGuardianAction(randomOwner, GuardianAction.START_RECOVERY, 1);
+
+        _signGuardians(randomOwner, 2);
+        _executeConfirmRecovery(randomOwner);
+
+        (address recoveryAddress, uint64 executeAfter, uint32 guardiansRequired) = _RandomOwnerSC.recoveryDetails();
+
+        assertEq(recoveryAddress, address(0));
+        assertEq(executeAfter, 0);
+        assertEq(guardiansRequired, 0);
+    }
+
+    function test_GetRecoveryDetailsAfterCancellation() external createGuardians(3) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 3);
+        _executeGuardianAction(randomOwner, GuardianAction.START_RECOVERY, 1);
+
+        _executeGuardianAction(randomOwner, GuardianAction.CANCEL_RECOVERY, 0);
+
+        (address recoveryAddress, uint64 executeAfter, uint32 guardiansRequired) = _RandomOwnerSC.recoveryDetails();
+
+        assertEq(recoveryAddress, address(0));
+        assertEq(executeAfter, 0);
+        assertEq(guardiansRequired, 0);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
