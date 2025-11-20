@@ -156,6 +156,46 @@ contract RevertsExecutionTest is Deploy {
         vm.expectRevert(NotOwnerOrEntrypoint.selector);
         _RandomOwnerSC.executeBatch(targets, values, datas);
     }
+
+    function test_revert_executeBatch_arrayLengthMismatchTargetsValues() external {
+        address[] memory targets = new address[](3);
+        targets[0] = address(0xbabe);
+        targets[1] = address(0xdead);
+        targets[2] = address(0xbeef);
+
+        uint256[] memory values = new uint256[](2);
+        values[0] = 0.01 ether;
+        values[1] = 0.01 ether;
+
+        bytes[] memory datas = new bytes[](3);
+        datas[0] = hex"";
+        datas[1] = hex"";
+        datas[2] = hex"";
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert(InvalidParameterLength.selector);
+        _RandomOwnerSC.executeBatch(targets, values, datas);
+    }
+
+    function test_revert_executeBatch_arrayLengthMismatchTargetsDatas() external {
+        address[] memory targets = new address[](3);
+        targets[0] = address(0xbabe);
+        targets[1] = address(0xdead);
+        targets[2] = address(0xbeef);
+
+        uint256[] memory values = new uint256[](3);
+        values[0] = 0.01 ether;
+        values[1] = 0.01 ether;
+        values[2] = 0.01 ether;
+
+        bytes[] memory datas = new bytes[](2);
+        datas[0] = hex"";
+        datas[1] = hex"";
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert(InvalidParameterLength.selector);
+        _RandomOwnerSC.executeBatch(targets, values, datas);
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
