@@ -236,6 +236,60 @@ contract RevertsExecutionTest is Deploy {
         vm.expectRevert("Target reverted");
         _RandomOwnerSC.executeBatch(targets, values, datas);
     }
+
+    function test_revert_executeBatch_insufficientBalance() external {
+        address[] memory targets = new address[](2);
+        targets[0] = address(0xbabe);
+        targets[1] = address(0xdead);
+
+        uint256[] memory values = new uint256[](2);
+        values[0] = 100 ether;
+        values[1] = 100 ether;
+
+        bytes[] memory datas = new bytes[](2);
+        datas[0] = hex"";
+        datas[1] = hex"";
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert();
+        _RandomOwnerSC.executeBatch(targets, values, datas);
+    }
+
+    function test_revert_executeBatchAA_notOwner() external {
+        address[] memory targets = new address[](2);
+        targets[0] = address(0xbabe);
+        targets[1] = address(0xdead);
+
+        uint256[] memory values = new uint256[](2);
+        values[0] = 0.01 ether;
+        values[1] = 0.01 ether;
+
+        bytes[] memory datas = new bytes[](2);
+        datas[0] = hex"";
+        datas[1] = hex"";
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteBatchCall(targets, values, datas),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _AttackerPK);
+
+        PackedUserOperation[] memory ops = new PackedUserOperation[](1);
+        ops[0] = userOp;
+
+        vm.prank(_OpenfortAdmin, _OpenfortAdmin);
+        vm.expectRevert();
+        entryPointV9.handleOps(ops, payable(_OpenfortAdmin));
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
