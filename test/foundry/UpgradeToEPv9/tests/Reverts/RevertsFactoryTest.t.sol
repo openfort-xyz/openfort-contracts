@@ -64,6 +64,31 @@ contract RevertsFactoryTest is Test {
         );
     }
 
+    function test_revert_constructor_insecurePeriod_lockTooShort() external {
+        uint256 shortLockPeriod = 1 days;
+
+        vm.expectRevert(InsecurePeriod.selector);
+        new UpgradeableOpenfortFactoryV9(
+            _Owner, EP_V9, address(accountImpl), RECOVERY_PERIOD, SECURITY_PERIOD, SECURITY_WINDOW, shortLockPeriod, _Guardian
+        );
+    }
+
+    function test_revert_constructor_insecurePeriod_recoveryTooShort() external {
+        uint256 shortRecoveryPeriod = 1 days;
+
+        vm.expectRevert(InsecurePeriod.selector);
+        new UpgradeableOpenfortFactoryV9(
+            _Owner,
+            EP_V9,
+            address(accountImpl),
+            shortRecoveryPeriod,
+            SECURITY_PERIOD,
+            SECURITY_WINDOW,
+            LOCK_PERIOD,
+            _Guardian
+        );
+    }
+    
     function test_revert_constructor_implementationNotContract() external {
         address eoa = makeAddr("eoa");
 
