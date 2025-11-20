@@ -82,6 +82,44 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
         _assertGuardians(3);
     }
 
+    function test_confirmGuardianProposalAA() external createGuardians(3) {
+        _assertGuardianCount(0);
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _assertGuardianCount(0);
+        _assertPendingGuardians(3, true);
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        vm.warp(block.timestamp + SECURITY_PERIOD + 1);
+
+        for (uint256 i = 0; i < _Guardians.length;) {
+            bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.confirmGuardianProposal.selector, _Guardians[i]);
+
+            userOp = _populateUserOpV9(
+                userOp,
+                callData,
+                _packAccountGasLimits(400_000, 600_000),
+                800_000,
+                _packGasFees(15 gwei, 80 gwei),
+                hex""
+            );
+
+            bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+            userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+            _relayUserOpV9(userOp);
+            unchecked {
+                ++i;
+            }
+        }
+
+        _assertGuardianCount(3);
+        _assertPendingGuardians(3, false);
+        _assertGuardians(3);
+    }
+    
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
