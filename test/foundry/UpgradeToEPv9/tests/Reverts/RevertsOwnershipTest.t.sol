@@ -90,6 +90,29 @@ contract RevertsOwnershipTest is SocialRecoveryHelper {
         vm.expectRevert("Ownable2Step: caller is not the new owner");
         _RandomOwnerSC.acceptOwnership();
     }
+
+
+    function test_revert_acceptOwnership_noPendingTransfer() external {
+        vm.prank(_NewOwner);
+        vm.expectRevert("Ownable2Step: caller is not the new owner");
+        _RandomOwnerSC.acceptOwnership();
+    }
+
+    function test_acceptOwnership_whileLocked() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.transferOwnership(_NewOwner);
+
+        vm.prank(_Guardians[0]);
+        _RandomOwnerSC.lock();
+
+        vm.prank(_NewOwner);
+        _RandomOwnerSC.acceptOwnership();
+
+        assertEq(_RandomOwnerSC.owner(), _NewOwner);
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
