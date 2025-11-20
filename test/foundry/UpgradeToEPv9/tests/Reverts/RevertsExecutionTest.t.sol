@@ -138,6 +138,24 @@ contract RevertsExecutionTest is Deploy {
 
         _relayUserOpV9(userOp);
     }
+
+    function test_revert_executeBatch_notOwnerOrEntrypoint() external {
+        address[] memory targets = new address[](2);
+        targets[0] = address(0xbabe);
+        targets[1] = address(0xdead);
+
+        uint256[] memory values = new uint256[](2);
+        values[0] = 0.01 ether;
+        values[1] = 0.01 ether;
+
+        bytes[] memory datas = new bytes[](2);
+        datas[0] = hex"";
+        datas[1] = hex"";
+
+        vm.prank(_Attacker);
+        vm.expectRevert(NotOwnerOrEntrypoint.selector);
+        _RandomOwnerSC.executeBatch(targets, values, datas);
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
