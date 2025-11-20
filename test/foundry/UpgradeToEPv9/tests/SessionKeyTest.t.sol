@@ -96,12 +96,7 @@ contract SessionKeyTest is Deploy {
         bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.revokeSessionKey.selector, SK);
 
         userOp = _populateUserOpV9(
-            userOp,
-            callData,
-            _packAccountGasLimits(400_000, 600_000),
-            800_000,
-            _packGasFees(15 gwei, 80 gwei),
-            hex""
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
         );
 
         bytes32 userOpHash = _getUserOpHashV9(userOp);
@@ -115,7 +110,7 @@ contract SessionKeyTest is Deploy {
 
     function test_RevokeSKAA() external {
         _registerKeyAA(false);
-        _assertRegistratedKey(SK, false); 
+        _assertRegistratedKey(SK, false);
 
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
@@ -126,12 +121,7 @@ contract SessionKeyTest is Deploy {
         bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.revokeSessionKey.selector, SK);
 
         userOp = _populateUserOpV9(
-            userOp,
-            callData,
-            _packAccountGasLimits(400_000, 600_000),
-            800_000,
-            _packGasFees(15 gwei, 80 gwei),
-            hex""
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
         );
 
         bytes32 userOpHash = _getUserOpHashV9(userOp);
@@ -148,7 +138,7 @@ contract SessionKeyTest is Deploy {
         _assertRegistratedKey(SK, true);
         _deal(address(_RandomOwnerSC), 5 ether);
         _assertBalances(address(0xdeadbabe), true, 0.01 ether);
-    
+
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
@@ -171,10 +161,10 @@ contract SessionKeyTest is Deploy {
 
     function test_SendEthToAnyAddressWithSKAA() external {
         _registerKeyAA(false);
-        _assertRegistratedKey(SK, false); 
+        _assertRegistratedKey(SK, false);
         _deal(address(_RandomOwnerSC), 5 ether);
         _assertBalances(address(0xbabe), true, 0.01 ether);
-    
+
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
@@ -200,7 +190,7 @@ contract SessionKeyTest is Deploy {
         _assertRegistratedKey(SK, true);
         _deal(address(_RandomOwnerSC), 5 ether);
         _assertBalances(address(0xdeadbabe), true, 0.01 ether);
-    
+
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
@@ -216,7 +206,7 @@ contract SessionKeyTest is Deploy {
                 ++i;
             }
         }
-        
+
         userOp = _populateUserOpV9(
             userOp,
             _createExecuteBatchCall(addrs, values, datas),
@@ -236,10 +226,10 @@ contract SessionKeyTest is Deploy {
 
     function test_SendBatchEthToAnyAddressWithSKAA() external {
         _registerKeyAA(false);
-        _assertRegistratedKey(SK, false); 
+        _assertRegistratedKey(SK, false);
         _deal(address(_RandomOwnerSC), 5 ether);
         _assertBalances(address(0xbabe), true, 0.01 ether);
-    
+
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
@@ -255,7 +245,7 @@ contract SessionKeyTest is Deploy {
                 ++i;
             }
         }
-        
+
         userOp = _populateUserOpV9(
             userOp,
             _createExecuteBatchCall(addrs, values, datas),
@@ -278,7 +268,7 @@ contract SessionKeyTest is Deploy {
         _assertRegistratedKey(SK, true);
         _mint(address(_RandomOwnerSC), 100 ether);
         _assertBalancesERC20(address(0xdeadbabe), true, 0.01 ether);
-    
+
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
@@ -303,10 +293,10 @@ contract SessionKeyTest is Deploy {
 
     function test_SendERC20ToAnyAddressWithSKAA() external {
         _registerKeyAA(false);
-        _assertRegistratedKey(SK, false); 
+        _assertRegistratedKey(SK, false);
         _mint(address(_RandomOwnerSC), 100 ether);
         _assertBalancesERC20(address(0xbabe), true, 0.01 ether);
-    
+
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
@@ -330,11 +320,11 @@ contract SessionKeyTest is Deploy {
     }
 
     function test_SendBatchERC20ToAnyAddressWithMKAA() external {
-         _registerKeyAA(true);
+        _registerKeyAA(true);
         _assertRegistratedKey(SK, true);
         _mint(address(_RandomOwnerSC), 100 ether);
         _assertBalancesERC20(address(0xdeadbabe), true, 0.01 ether);
-    
+
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
@@ -372,10 +362,10 @@ contract SessionKeyTest is Deploy {
 
     function test_SendBatchERC20ToAnyAddressWithSKAA() external {
         _registerKeyAA(false);
-        _assertRegistratedKey(SK, false); 
+        _assertRegistratedKey(SK, false);
         _mint(address(_RandomOwnerSC), 100 ether);
         _assertBalancesERC20(address(0xbabe), true, 0.01 ether);
-    
+
         PackedUserOperation memory userOp;
         (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
 
@@ -448,7 +438,7 @@ contract SessionKeyTest is Deploy {
 
     function _registerKey(bool _isMK) internal {
         address[] memory whitelist;
-        if (!_isMK){ 
+        if (!_isMK) {
             whitelist = new address[](1);
             whitelist[0] = (address(erc20));
         }
@@ -473,15 +463,12 @@ contract SessionKeyTest is Deploy {
 
         uint48 limits = _isMK ? type(uint48).max : LIMIT;
 
-        bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.registerSessionKey.selector, SK, VALID_AFTER, VALID_UNTIL, limits, whitelist);
+        bytes memory callData = abi.encodeWithSelector(
+            _RandomOwnerSC.registerSessionKey.selector, SK, VALID_AFTER, VALID_UNTIL, limits, whitelist
+        );
 
         userOp = _populateUserOpV9(
-            userOp,
-            callData,
-            _packAccountGasLimits(400_000, 600_000),
-            800_000,
-            _packGasFees(15 gwei, 80 gwei),
-            hex""
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
         );
 
         bytes32 userOpHash = _getUserOpHashV9(userOp);
@@ -489,7 +476,7 @@ contract SessionKeyTest is Deploy {
         userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
 
         _relayUserOpV9(userOp);
-     }
+    }
 
     function _assertAfterCreation() internal {
         UpgradeableOpenfortProxy proxy = UpgradeableOpenfortProxy(payable(address(_RandomOwnerSC)));
@@ -523,14 +510,8 @@ contract SessionKeyTest is Deploy {
     }
 
     function _assertRevokationSK(address _sK) internal {
-        (
-            uint48 validAfter,
-            uint48 validUntil,
-            uint48 limit,
-            bool masterSessionKey,
-            ,
-            address registrarAddress
-        ) = _RandomOwnerSC.sessionKeys(_sK);
+        (uint48 validAfter, uint48 validUntil, uint48 limit, bool masterSessionKey,, address registrarAddress) =
+            _RandomOwnerSC.sessionKeys(_sK);
         assertEq(validAfter, 0);
         assertEq(validUntil, 0);
         assertEq(limit, 0);
