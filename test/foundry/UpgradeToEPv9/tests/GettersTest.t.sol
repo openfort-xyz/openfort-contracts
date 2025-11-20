@@ -485,6 +485,57 @@ contract GettersTest is SocialRecoveryHelper {
         assertEq(salt, bytes32(0));
         assertEq(extensions.length, 0);
     }
+
+    function test_GetFactoryImplementation() external {
+        assertEq(openfortFactoryV9.implementation(), address(upgradeableOpenfortAccountImplV9));
+    }
+
+    function test_GetFactoryEntrypointContract() external {
+        assertEq(openfortFactoryV9.entrypointContract(), address(entryPointV9));
+    }
+
+    function test_GetFactoryRecoveryPeriod() external {
+        assertEq(openfortFactoryV9.recoveryPeriod(), RECOVERY_PERIOD);
+    }
+
+    function test_GetFactorySecurityPeriod() external {
+        assertEq(openfortFactoryV9.securityPeriod(), SECURITY_PERIOD);
+    }
+
+    function test_GetFactorySecurityWindow() external {
+        assertEq(openfortFactoryV9.securityWindow(), SECURITY_WINDOW);
+    }
+
+    function test_GetFactoryLockPeriod() external {
+        assertEq(openfortFactoryV9.lockPeriod(), LOCK_PERIOD);
+    }
+
+    function test_GetFactoryInitialGuardian() external {
+        assertEq(openfortFactoryV9.initialGuardian(), _Guardian);
+    }
+
+    function test_GetAddressWithNonceCorrectPrediction() external {
+        address predictedAddress = openfortFactoryV9.getAddressWithNonce(_NewOwner, bytes32(uint256(123)));
+
+        address actualAddress = openfortFactoryV9.createAccountWithNonce(_NewOwner, bytes32(uint256(123)), false);
+
+        assertEq(predictedAddress, actualAddress);
+    }
+
+    function test_GetAddressWithNonceDifferentNonces() external {
+        address addr1 = openfortFactoryV9.getAddressWithNonce(_NewOwner, bytes32(uint256(1)));
+        address addr2 = openfortFactoryV9.getAddressWithNonce(_NewOwner, bytes32(uint256(2)));
+
+        assertTrue(addr1 != addr2);
+    }
+
+    function test_GetAddressWithNonceSameAdmin() external {
+        bytes32 salt = bytes32(uint256(999));
+        address addr1 = openfortFactoryV9.getAddressWithNonce(_NewOwner, salt);
+        address addr2 = openfortFactoryV9.getAddressWithNonce(_NewOwner, salt);
+
+        assertEq(addr1, addr2);
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
