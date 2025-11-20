@@ -2,45 +2,22 @@
 
 pragma solidity ^0.8.29;
 
-import {Deploy} from "test/foundry/UpgradeToEPv9/Deploy.t.sol";
 import {console2 as console} from "lib/forge-std/src/console2.sol";
 import {BaseOpenfortAccount} from "contracts/coreV9/base/BaseOpenfortAccount.sol";
 import {BaseRecoverableAccount} from "contracts/coreV9/base/BaseRecoverableAccount.sol";
 import {IBaseRecoverableAccount} from "contracts/interfaces/IBaseRecoverableAccount.sol";
+import {SocialRecoveryHelper} from "test/foundry/UpgradeToEPv9/helpers/SocialRecoveryHelper.t.sol";
 import {UpgradeableOpenfortProxy} from "contracts/coreV9/upgradeable/UpgradeableOpenfortProxy.sol";
 import {PackedUserOperation} from "lib/account-abstraction-v09/contracts/interfaces/PackedUserOperation.sol";
 import {
     UpgradeableOpenfortAccount as UpgradeableOpenfortAccountV9
 } from "contracts/coreV9/upgradeable/UpgradeableOpenfortAccount.sol";
 
-contract SocialRecoveryTest is Deploy {
-    enum GuardianAction {
-        PROPOSE,
-        CONFIRM_PROPOSAL,
-        CANCEL_PROPOSAL,
-        REVOKE,
-        CONFIRM_REVOCATION,
-        CANCEL_REVOCATION,
-        START_RECOVERY,
-        CANCEL_RECOVERY
-    }
-
+contract SocialRecoveryTest is SocialRecoveryHelper {
     address internal _RandomOwner;
     uint256 internal _RandomOwnerPK;
     bytes32 internal _RandomOwnerSalt;
     UpgradeableOpenfortAccountV9 internal _RandomOwnerSC;
-
-    address[] internal _Guardians;
-    uint256[] internal _GuardiansPK;
-    address internal _RecoveryOwner;
-    uint256 internal _RecoveryOwnerPK;
-
-    BaseRecoverableAccount.RecoveryConfig internal recoveryDetails;
-
-    modifier createGuardians(uint256 _indx) {
-        _createGuardians(_indx);
-        _;
-    }
 
     function setUp() public override {
         super.setUp();
@@ -118,15 +95,6 @@ contract SocialRecoveryTest is Deploy {
             unchecked {
                 ++i;
             }
-        }
-    }
-
-    function _createGuardians(uint256 _index) internal {
-        for (uint256 i = 0; i < _index; i++) {
-            (address addr, uint256 pk) = makeAddrAndKey(string.concat("guardian", vm.toString(i)));
-            _Guardians.push(addr);
-            _GuardiansPK.push(pk);
-            _deal(addr, 1e18);
         }
     }
 
