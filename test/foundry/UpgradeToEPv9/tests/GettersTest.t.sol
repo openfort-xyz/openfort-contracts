@@ -323,6 +323,88 @@ contract GettersTest is SocialRecoveryHelper {
         assertEq(guardiansRequired, 0);
     }
 
+    function test_GetSessionKeysNonExistent() external {
+        (
+            uint48 validAfter,
+            uint48 validUntil,
+            uint48 limit,
+            bool masterSessionKey,
+            bool whitelisting,
+            address registrarAddress
+        ) = _RandomOwnerSC.sessionKeys(address(0xdead));
+
+        assertEq(validAfter, 0);
+        assertEq(validUntil, 0);
+        assertEq(limit, 0);
+        assertFalse(masterSessionKey);
+        assertFalse(whitelisting);
+        assertEq(registrarAddress, address(0));
+    }
+
+    function test_GetSessionKeysMasterKey() external {
+        _registerMasterSessionKey();
+
+        (
+            uint48 validAfter,
+            uint48 validUntil,
+            uint48 limit,
+            bool masterSessionKey,
+            bool whitelisting,
+            address registrarAddress
+        ) = _RandomOwnerSC.sessionKeys(SK);
+
+        assertEq(validAfter, VALID_AFTER);
+        assertEq(validUntil, VALID_UNTIL);
+        assertEq(limit, type(uint48).max);
+        assertTrue(masterSessionKey);
+        assertFalse(whitelisting);
+        assertEq(registrarAddress, _RandomOwner);
+    }
+
+    function test_GetSessionKeysLimitedKey() external {
+        _registerLimitedSessionKey();
+
+        (
+            uint48 validAfter,
+            uint48 validUntil,
+            uint48 limit,
+            bool masterSessionKey,
+            bool whitelisting,
+            address registrarAddress
+        ) = _RandomOwnerSC.sessionKeys(SK);
+
+        assertEq(validAfter, VALID_AFTER);
+        assertEq(validUntil, VALID_UNTIL);
+        assertEq(limit, LIMIT);
+        assertFalse(masterSessionKey);
+        assertTrue(whitelisting);
+        assertEq(registrarAddress, _RandomOwner);
+    }
+
+    function test_GetSessionKeysAfterRevocation() external {
+        _registerMasterSessionKey();
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.revokeSessionKey(SK);
+
+        (
+            uint48 validAfter,
+            uint48 validUntil,
+            uint48 limit,
+            bool masterSessionKey,
+            bool whitelisting,
+            address registrarAddress
+        ) = _RandomOwnerSC.sessionKeys(SK);
+
+        assertEq(validAfter, 0);
+        assertEq(validUntil, 0);
+        assertEq(limit, 0);
+        assertFalse(masterSessionKey);
+        assertFalse(whitelisting);
+        assertEq(registrarAddress, address(0));
+    }
+
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
