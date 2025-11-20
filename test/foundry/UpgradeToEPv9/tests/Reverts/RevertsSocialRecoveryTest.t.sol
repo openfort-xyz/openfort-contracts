@@ -84,6 +84,21 @@ contract RevertsSocialRecoveryTest is SocialRecoveryHelper {
         vm.expectRevert(GuardianCannotBeOwner.selector);
         _RandomOwnerSC.proposeGuardian(_NewOwner);
     }
+
+    function test_revert_proposeGuardian_alreadyGuardian() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert(DuplicatedGuardian.selector);
+        _RandomOwnerSC.proposeGuardian(_Guardians[0]);
+    }
+
+    function test_revert_proposeGuardian_zeroAddress() external {
+        vm.prank(_RandomOwner);
+        vm.expectRevert(GuardianCannotBeOwner.selector);
+        _RandomOwnerSC.proposeGuardian(address(0));
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
