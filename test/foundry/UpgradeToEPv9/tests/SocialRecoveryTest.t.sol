@@ -96,7 +96,8 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
         vm.warp(block.timestamp + SECURITY_PERIOD + 1);
 
         for (uint256 i = 0; i < _Guardians.length;) {
-            bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.confirmGuardianProposal.selector, _Guardians[i]);
+            bytes memory callData =
+                abi.encodeWithSelector(_RandomOwnerSC.confirmGuardianProposal.selector, _Guardians[i]);
 
             userOp = _populateUserOpV9(
                 userOp,
@@ -144,7 +145,8 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
         vm.warp(block.timestamp + SECURITY_PERIOD + 1);
 
         for (uint256 i = 0; i < _Guardians.length;) {
-            bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.cancelGuardianProposal.selector, _Guardians[i]);
+            bytes memory callData =
+                abi.encodeWithSelector(_RandomOwnerSC.cancelGuardianProposal.selector, _Guardians[i]);
 
             userOp = _populateUserOpV9(
                 userOp,
@@ -263,7 +265,8 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
         vm.warp(block.timestamp + SECURITY_PERIOD + 1);
 
         for (uint256 i = 0; i < _Guardians.length;) {
-            bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.confirmGuardianRevocation.selector, _Guardians[i]);
+            bytes memory callData =
+                abi.encodeWithSelector(_RandomOwnerSC.confirmGuardianRevocation.selector, _Guardians[i]);
 
             userOp = _populateUserOpV9(
                 userOp,
@@ -327,7 +330,8 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
         vm.warp(block.timestamp + SECURITY_PERIOD + 1);
 
         for (uint256 i = 0; i < _Guardians.length;) {
-            bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.cancelGuardianRevocation.selector, _Guardians[i]);
+            bytes memory callData =
+                abi.encodeWithSelector(_RandomOwnerSC.cancelGuardianRevocation.selector, _Guardians[i]);
 
             userOp = _populateUserOpV9(
                 userOp,
@@ -364,6 +368,22 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
         _assertGuardians(3);
         _executeGuardianAction(randomOwner, GuardianAction.START_RECOVERY, 1);
         _assretStartRecovery();
+    }
+
+    function test_confirmRecoveryDirectNewOwner() external createGuardians(3) {
+        _assertGuardianCount(0);
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _assertGuardianCount(0);
+        _assertPendingGuardians(3, true);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 3);
+        _assertGuardianCount(3);
+        _assertPendingGuardians(3, false);
+        _assertGuardians(3);
+        _executeGuardianAction(randomOwner, GuardianAction.START_RECOVERY, 1);
+        _assretStartRecovery();
+        _signGuardians(randomOwner, 2);
+        _executeConfirmRecovery(randomOwner);
+        _assretConfirmRecovery();
     }
 
     function _createAccountV9() internal {
@@ -440,11 +460,17 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
     function _assretStartRecovery() internal {
         uint64 _executeAfter = SafeCast.toUint64(block.timestamp + RECOVERY_PERIOD);
         (address recoveryAddress, uint64 executeAfter, uint32 guardiansRequired) = _RandomOwnerSC.recoveryDetails();
-        assertEq(
-            guardiansRequired,
-            SafeCast.toUint32(Math.ceilDiv(_RandomOwnerSC.guardianCount(), 2))
-        );
+        assertEq(guardiansRequired, SafeCast.toUint32(Math.ceilDiv(_RandomOwnerSC.guardianCount(), 2)));
         assertEq(_executeAfter, executeAfter);
         assertEq(_RecoveryOwner, recoveryAddress);
+    }
+
+    function _assretConfirmRecovery() internal {
+        (address recoveryAddress, uint64 executeAfter, uint32 guardiansRequired) =
+            _RandomOwnerSC.recoveryDetails();
+        assertEq(executeAfter, 0);
+        assertEq(guardiansRequired, 0);
+        assertEq(recoveryAddress, address(0));
+        assertEq(_RandomOwnerSC.owner(), _RecoveryOwner);
     }
 }
