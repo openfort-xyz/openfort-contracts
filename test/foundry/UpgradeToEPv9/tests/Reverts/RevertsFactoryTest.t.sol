@@ -128,4 +128,16 @@ contract RevertsFactoryTest is Test {
         vm.expectRevert("Ownable: caller is not the owner");
         factory.addStake{value: 1 ether}(7 days);
     }
+
+    function test_revert_unlockStake_notOwner() external {
+        vm.prank(_Attacker);
+        vm.expectRevert("Ownable: caller is not the owner");
+        factory.unlockStake();
+    }
+
+    function test_revert_withdrawStake_notOwner() external {
+        vm.prank(_Attacker);
+        vm.expectRevert("Ownable: caller is not the owner");
+        factory.withdrawStake(payable(_Attacker));
+    }
 }
