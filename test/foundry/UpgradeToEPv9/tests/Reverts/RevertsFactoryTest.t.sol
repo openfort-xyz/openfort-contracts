@@ -88,7 +88,7 @@ contract RevertsFactoryTest is Test {
             _Guardian
         );
     }
-    
+
     function test_revert_constructor_implementationNotContract() external {
         address eoa = makeAddr("eoa");
 
@@ -96,5 +96,18 @@ contract RevertsFactoryTest is Test {
         new UpgradeableOpenfortFactoryV9(
             _Owner, EP_V9, eoa, RECOVERY_PERIOD, SECURITY_PERIOD, SECURITY_WINDOW, LOCK_PERIOD, _Guardian
         );
+    }
+
+    function test_revert_constructor_zeroInitialGuardian() external {
+        vm.expectRevert(ZeroAddressNotAllowed.selector);
+        new UpgradeableOpenfortFactoryV9(
+            _Owner, EP_V9, address(accountImpl), RECOVERY_PERIOD, SECURITY_PERIOD, SECURITY_WINDOW, LOCK_PERIOD, address(0)
+        );
+    }
+
+    function test_revert_updateInitialGuardian_notOwner() external {
+        vm.prank(_Attacker);
+        vm.expectRevert("Ownable: caller is not the owner");
+        factory.updateInitialGuardian(_NewGuardian);
     }
 }
