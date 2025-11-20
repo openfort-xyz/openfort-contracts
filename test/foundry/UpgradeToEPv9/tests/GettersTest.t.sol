@@ -425,6 +425,47 @@ contract GettersTest is SocialRecoveryHelper {
         assertFalse(_RandomOwnerSC.supportsInterface(bytes4(0xdeadbeef)));
     }
 
+    function test_IsValidSignatureOwner() external {
+        bytes32 hash = keccak256("test message");
+        bytes memory signature = _signMessage(hash, _RandomOwnerPK);
+
+        bytes4 result = _RandomOwnerSC.isValidSignature(hash, signature);
+        assertEq(result, bytes4(0x1626ba7e));
+    }
+
+    function test_IsValidSignatureMasterSessionKey() external {
+        _registerMasterSessionKey();
+
+        bytes32 hash = keccak256("test message");
+        bytes memory signature = _signMessage(hash, SK_PK);
+
+        bytes4 result = _RandomOwnerSC.isValidSignature(hash, signature);
+        assertEq(result, bytes4(0x1626ba7e));
+    }
+
+    function test_IsValidSignatureInvalid() external {
+        bytes32 hash = keccak256("test message");
+        bytes memory wrongSignature = _signMessage(hash, _NewOwnerPK);
+
+        bytes4 result = _RandomOwnerSC.isValidSignature(hash, wrongSignature);
+        assertEq(result, bytes4(0xffffffff));
+    }
+
+    function test_IsValidSignatureExpiredSessionKey() external {
+        vm.prank(_RandomOwner);
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = address(erc20);
+        _RandomOwnerSC.registerSessionKey(SK, VALID_AFTER, uint48(block.timestamp + 1 days), LIMIT, whitelist);
+
+        vm.warp(block.timestamp + 2 days);
+
+        bytes32 hash = keccak256("test message");
+        bytes memory signature = _signMessage(hash, SK_PK);
+
+        bytes4 result = _RandomOwnerSC.isValidSignature(hash, signature);
+        assertEq(result, bytes4(0xffffffff));
+    }
+    
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
