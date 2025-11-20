@@ -100,7 +100,6 @@ contract RevertsSocialRecoveryTest is SocialRecoveryHelper {
         _RandomOwnerSC.proposeGuardian(address(0));
     }
 
-
     function test_revert_proposeGuardian_alreadyPendingProposal() external createGuardians(1) {
         _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
 
@@ -121,6 +120,20 @@ contract RevertsSocialRecoveryTest is SocialRecoveryHelper {
         vm.prank(_Attacker);
         vm.expectRevert(AccountLocked.selector);
         _RandomOwnerSC.confirmGuardianProposal(_Guardians[1]);
+    }
+
+    function test_revert_confirmGuardianProposal_noProposal() external createGuardians(1) {
+        vm.prank(_Attacker);
+        vm.expectRevert(UnknownProposal.selector);
+        _RandomOwnerSC.confirmGuardianProposal(_Guardians[0]);
+    }
+
+    function test_revert_confirmGuardianProposal_notReady() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+
+        vm.prank(_Attacker);
+        vm.expectRevert(PendingProposalNotOver.selector);
+        _RandomOwnerSC.confirmGuardianProposal(_Guardians[0]);
     }
     
     function _createAccountV9() internal {
