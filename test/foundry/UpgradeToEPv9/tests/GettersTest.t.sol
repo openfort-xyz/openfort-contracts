@@ -236,6 +236,40 @@ contract GettersTest is SocialRecoveryHelper {
         assertEq(guardians[2], _Guardians[2]);
     }
 
+    function test_GetGuardiansAfterRemoval() external createGuardians(3) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 3);
+
+        _executeGuardianAction(randomOwner, GuardianAction.REVOKE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_REVOCATION, 1);
+
+        address[] memory guardians = _RandomOwnerSC.getGuardians();
+        assertEq(guardians.length, 2);
+    }
+
+    function test_IsGuardianNotGuardian() external {
+        assertFalse(_RandomOwnerSC.isGuardian(address(0xdead)));
+    }
+
+    function test_IsGuardianActiveGuardian() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        assertTrue(_RandomOwnerSC.isGuardian(_Guardians[0]));
+    }
+
+    function test_IsGuardianAfterRevocation() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        assertTrue(_RandomOwnerSC.isGuardian(_Guardians[0]));
+
+        _executeGuardianAction(randomOwner, GuardianAction.REVOKE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_REVOCATION, 1);
+
+        assertFalse(_RandomOwnerSC.isGuardian(_Guardians[0]));
+    }
+    
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
