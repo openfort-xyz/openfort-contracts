@@ -19,6 +19,8 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
     bytes32 internal _RandomOwnerSalt;
     UpgradeableOpenfortAccountV9 internal _RandomOwnerSC;
 
+    RandomOwner internal randomOwner;
+
     function setUp() public override {
         super.setUp();
         (_RandomOwner, _RandomOwnerPK) = makeAddrAndKey("_RandomOwner");
@@ -27,11 +29,16 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
         _RandomOwnerSalt = keccak256(abi.encodePacked("0xbebe_0001"));
         _createAccountV9();
         _deal(address(_RandomOwnerSC), 5 ether);
+        randomOwner = RandomOwner(
+            _RandomOwner,
+            _RandomOwnerSC
+        );
+
     }
 
     function test_proposeGuardianDirect() external createGuardians(3) {
         _assertGuardianCount(0);
-        _executeGuardianAction(GuardianAction.PROPOSE, 3);
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
         _assertGuardianCount(0);
         _assertPendingGuardians(3, true);
     }
@@ -96,98 +103,5 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
                 ++i;
             }
         }
-    }
-
-    function _executeGuardianAction(GuardianAction action, uint256 _count) internal {
-        if (
-            action == GuardianAction.CONFIRM_PROPOSAL || action == GuardianAction.CONFIRM_REVOCATION
-        ) {
-            vm.warp(block.timestamp + SECURITY_PERIOD + 1);
-        }
-
-        if (action == GuardianAction.START_RECOVERY) {
-            vm.warp(block.timestamp + 1);
-            vm.prank(_Guardians[_count]);
-            _RandomOwnerSC.startRecovery(_RecoveryOwner);
-            return;
-        }
-
-        if (action == GuardianAction.CANCEL_RECOVERY) {
-            _cancelRecovery();
-            return;
-        }
-
-        for (uint256 i = 0; i < _count;) {
-            if (action == GuardianAction.PROPOSE) {
-                _proposeGuardian(_Guardians[i]);
-            } else if (action == GuardianAction.CONFIRM_PROPOSAL) {
-                _confirmGuardian(_Guardians[i]);
-            } else if (action == GuardianAction.CANCEL_PROPOSAL) {
-                _cancelGuardianProposal(_Guardians[i]);
-            } else if (action == GuardianAction.REVOKE) {
-                _revokeGuardian(_Guardians[i]);
-            } else if (action == GuardianAction.CONFIRM_REVOCATION) {
-                _confirmGuardianRevocation(_Guardians[i]);
-            } else if (action == GuardianAction.CANCEL_REVOCATION) {
-                _cancelGuardianRevocation(_Guardians[i]);
-            }
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    function _proposeGuardian(address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _RandomOwnerSC.proposeGuardian.selector, _guardian
-        );
-        _executeDirectCall(data);
-    }
-
-    function _confirmGuardian(address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _RandomOwnerSC.confirmGuardianProposal.selector, _guardian
-        );
-        _executeDirectCall(data);
-    }
-
-    function _cancelGuardianProposal(address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _RandomOwnerSC.cancelGuardianProposal.selector, _guardian
-        );
-        _executeDirectCall(data);
-    }
-
-    function _revokeGuardian(address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _RandomOwnerSC.revokeGuardian.selector, _guardian
-        );
-        _executeDirectCall(data);
-    }
-
-    function _confirmGuardianRevocation(address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _RandomOwnerSC.confirmGuardianRevocation.selector, _guardian
-        );
-        _executeDirectCall(data);
-    }
-
-    function _cancelGuardianRevocation(address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _RandomOwnerSC.cancelGuardianRevocation.selector, _guardian
-        );
-        _executeDirectCall(data);
-    }
-
-    function _cancelRecovery() internal {
-        bytes memory data =
-            abi.encodeWithSelector(_RandomOwnerSC.cancelRecovery.selector);
-        _executeDirectCall(data);
-    }
-
-    function _executeDirectCall(bytes memory _data) internal {
-        vm.prank(_RandomOwner);
-        (bool success, bytes memory res) = address(_RandomOwnerSC).call{value: 0}(_data);
-        if (!success) console.log(vm.toString(res));
     }
 }
