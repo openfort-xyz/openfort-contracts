@@ -290,6 +290,71 @@ contract RevertsExecutionTest is Deploy {
         vm.expectRevert();
         entryPointV9.handleOps(ops, payable(_OpenfortAdmin));
     }
+
+    function test_revert_executeBatchAA_arrayLengthMismatch() external {
+        address[] memory targets = new address[](3);
+        targets[0] = address(0xbabe);
+        targets[1] = address(0xdead);
+        targets[2] = address(0xbeef);
+
+        uint256[] memory values = new uint256[](2);
+        values[0] = 0.01 ether;
+        values[1] = 0.01 ether;
+
+        bytes[] memory datas = new bytes[](3);
+        datas[0] = hex"";
+        datas[1] = hex"";
+        datas[2] = hex"";
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteBatchCall(targets, values, datas),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        _relayUserOpV9(userOp);
+    }
+
+    function test_revert_executeBatchAA_tooManyCalls() external {
+        address[] memory targets = new address[](10);
+        uint256[] memory values = new uint256[](10);
+        bytes[] memory datas = new bytes[](10);
+
+        for (uint256 i = 0; i < 10;) {
+            targets[i] = address(0xbabe);
+            values[i] = 0.01 ether;
+            datas[i] = hex"";
+            unchecked {
+                ++i;
+            }
+        }
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteBatchCall(targets, values, datas),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        _relayUserOpV9(userOp);
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
