@@ -70,6 +70,21 @@ contract RevertsSocialRecoveryTest is SocialRecoveryHelper {
         _RandomOwnerSC.proposeGuardian(_NewOwner);
     }
 
+    function test_revert_proposeGuardian_guardianCannotBeOwner() external {
+        vm.prank(_RandomOwner);
+        vm.expectRevert(GuardianCannotBeOwner.selector);
+        _RandomOwnerSC.proposeGuardian(_RandomOwner);
+    }
+
+    function test_revert_proposeGuardian_guardianCannotBePendingOwner() external {
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.transferOwnership(_NewOwner);
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert(GuardianCannotBeOwner.selector);
+        _RandomOwnerSC.proposeGuardian(_NewOwner);
+    }
+    
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
