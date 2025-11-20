@@ -223,6 +223,25 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
         _assertGuardians(3);
     }
 
+    function test_confirmGuardianRevocationDirect() external createGuardians(3) {
+        _assertGuardianCount(0);
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _assertGuardianCount(0);
+        _assertPendingGuardians(3, true);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 3);
+        _assertGuardianCount(3);
+        _assertPendingGuardians(3, false);
+        _assertGuardians(3);
+        _executeGuardianAction(randomOwner, GuardianAction.REVOKE, 3);
+        _assertPendingGuardians(3, false);
+        _assertGuardianCount(3);
+        _assertGuardians(3);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_REVOCATION, 3);
+        _assertGuardianCount(0);
+        _assertPendingGuardians(3, true);
+    }
+
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
