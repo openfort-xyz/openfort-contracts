@@ -59,6 +59,14 @@ contract RevertsExecutionTest is Deploy {
             address(revertingContract), 0, abi.encodeWithSelector(RevertingContract.revertWithCustomError.selector)
         );
     }
+
+    function test_revert_execute_targetCallRevertsWithMessage() external {
+        vm.prank(_RandomOwner);
+        vm.expectRevert("Target reverted");
+        _RandomOwnerSC.execute(
+            address(revertingContract), 0, abi.encodeWithSelector(RevertingContract.revertWithMessage.selector)
+        );
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
