@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.29;
 
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {console2 as console} from "lib/forge-std/src/console2.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {BaseOpenfortAccount} from "contracts/coreV9/base/BaseOpenfortAccount.sol";
 import {BaseRecoverableAccount} from "contracts/coreV9/base/BaseRecoverableAccount.sol";
 import {IBaseRecoverableAccount} from "contracts/interfaces/IBaseRecoverableAccount.sol";
@@ -351,6 +353,19 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
         _assertGuardians(3);
     }
 
+    function test_startRecoveryDirectNewOwner() external createGuardians(3) {
+        _assertGuardianCount(0);
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _assertGuardianCount(0);
+        _assertPendingGuardians(3, true);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 3);
+        _assertGuardianCount(3);
+        _assertPendingGuardians(3, false);
+        _assertGuardians(3);
+        _executeGuardianAction(randomOwner, GuardianAction.START_RECOVERY, 1);
+        _assretStartRecovery();
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
@@ -420,5 +435,16 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
                 ++i;
             }
         }
+    }
+
+    function _assretStartRecovery() internal {
+        uint64 _executeAfter = SafeCast.toUint64(block.timestamp + RECOVERY_PERIOD);
+        (address recoveryAddress, uint64 executeAfter, uint32 guardiansRequired) = _RandomOwnerSC.recoveryDetails();
+        assertEq(
+            guardiansRequired,
+            SafeCast.toUint32(Math.ceilDiv(_RandomOwnerSC.guardianCount(), 2))
+        );
+        assertEq(_executeAfter, executeAfter);
+        assertEq(_RecoveryOwner, recoveryAddress);
     }
 }
