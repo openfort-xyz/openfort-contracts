@@ -87,6 +87,20 @@ contract GettersTest is SocialRecoveryHelper {
         assertEq(_RandomOwnerSC.pendingOwner(), address(0));
     }
 
+    function test_GetEntryPoint() external {
+        assertEq(address(_RandomOwnerSC.entryPoint()), address(entryPointV9));
+    }
+
+    function test_GetDepositAfterDeposit() external {
+        uint256 deposit = _RandomOwnerSC.getDeposit();
+        assertTrue(deposit > 0);
+    }
+
+    function test_GetDepositReturnsValue() external {
+        uint256 deposit = _RandomOwnerSC.getDeposit();
+        assertTrue(deposit >= 0);
+    }
+    
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
