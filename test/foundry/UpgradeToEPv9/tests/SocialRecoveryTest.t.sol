@@ -29,16 +29,44 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
         _RandomOwnerSalt = keccak256(abi.encodePacked("0xbebe_0001"));
         _createAccountV9();
         _deal(address(_RandomOwnerSC), 5 ether);
-        randomOwner = RandomOwner(
-            _RandomOwner,
-            _RandomOwnerSC
-        );
-
+        randomOwner = RandomOwner(_RandomOwner, _RandomOwnerSC);
     }
 
     function test_proposeGuardianDirect() external createGuardians(3) {
         _assertGuardianCount(0);
         _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _assertGuardianCount(0);
+        _assertPendingGuardians(3, true);
+    }
+
+    function test_proposeGuardianAA() external createGuardians(3) {
+        _assertGuardianCount(0);
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        for (uint256 i = 0; i < _Guardians.length;) {
+            bytes memory callData = abi.encodeWithSelector(_RandomOwnerSC.proposeGuardian.selector, _Guardians[i]);
+
+            userOp = _populateUserOpV9(
+                userOp,
+                callData,
+                _packAccountGasLimits(400_000, 600_000),
+                800_000,
+                _packGasFees(15 gwei, 80 gwei),
+                hex""
+            );
+
+            bytes32 userOpHash = _getUserOpHashV9(userOp);
+
+            userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+            _relayUserOpV9(userOp);
+            unchecked {
+                ++i;
+            }
+        }
+
         _assertGuardianCount(0);
         _assertPendingGuardians(3, true);
     }
@@ -92,8 +120,7 @@ contract SocialRecoveryTest is SocialRecoveryHelper {
 
     function _assertPendingGuardians(uint256 _count, bool _isPending) internal {
         for (uint256 i = 0; i < _count;) {
-            bool getPendingStatusGuardian =
-                _RandomOwnerSC.isGuardian(_Guardians[i]);
+            bool getPendingStatusGuardian = _RandomOwnerSC.isGuardian(_Guardians[i]);
             if (_isPending) {
                 assertFalse(getPendingStatusGuardian);
             } else {

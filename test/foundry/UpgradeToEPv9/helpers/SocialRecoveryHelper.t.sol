@@ -47,9 +47,7 @@ contract SocialRecoveryHelper is Deploy {
     }
 
     function _executeGuardianAction(RandomOwner storage _randomOwner, GuardianAction action, uint256 _count) internal {
-        if (
-            action == GuardianAction.CONFIRM_PROPOSAL || action == GuardianAction.CONFIRM_REVOCATION
-        ) {
+        if (action == GuardianAction.CONFIRM_PROPOSAL || action == GuardianAction.CONFIRM_REVOCATION) {
             vm.warp(block.timestamp + SECURITY_PERIOD + 1);
         }
 
@@ -86,50 +84,41 @@ contract SocialRecoveryHelper is Deploy {
     }
 
     function _proposeGuardian(RandomOwner storage _randomOwner, address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _randomOwner._RandomOwnerSC.proposeGuardian.selector, _guardian
-        );
+        bytes memory data = abi.encodeWithSelector(_randomOwner._RandomOwnerSC.proposeGuardian.selector, _guardian);
         _executeDirectCall(_randomOwner, data);
     }
 
     function _confirmGuardian(RandomOwner storage _randomOwner, address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _randomOwner._RandomOwnerSC.confirmGuardianProposal.selector, _guardian
-        );
+        bytes memory data =
+            abi.encodeWithSelector(_randomOwner._RandomOwnerSC.confirmGuardianProposal.selector, _guardian);
         _executeDirectCall(_randomOwner, data);
     }
 
     function _cancelGuardianProposal(RandomOwner storage _randomOwner, address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _randomOwner._RandomOwnerSC.cancelGuardianProposal.selector, _guardian
-        );
+        bytes memory data =
+            abi.encodeWithSelector(_randomOwner._RandomOwnerSC.cancelGuardianProposal.selector, _guardian);
         _executeDirectCall(_randomOwner, data);
     }
 
     function _revokeGuardian(RandomOwner storage _randomOwner, address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _randomOwner._RandomOwnerSC.revokeGuardian.selector, _guardian
-        );
+        bytes memory data = abi.encodeWithSelector(_randomOwner._RandomOwnerSC.revokeGuardian.selector, _guardian);
         _executeDirectCall(_randomOwner, data);
     }
 
     function _confirmGuardianRevocation(RandomOwner storage _randomOwner, address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _randomOwner._RandomOwnerSC.confirmGuardianRevocation.selector, _guardian
-        );
+        bytes memory data =
+            abi.encodeWithSelector(_randomOwner._RandomOwnerSC.confirmGuardianRevocation.selector, _guardian);
         _executeDirectCall(_randomOwner, data);
     }
 
     function _cancelGuardianRevocation(RandomOwner storage _randomOwner, address _guardian) internal {
-        bytes memory data = abi.encodeWithSelector(
-            _randomOwner._RandomOwnerSC.cancelGuardianRevocation.selector, _guardian
-        );
+        bytes memory data =
+            abi.encodeWithSelector(_randomOwner._RandomOwnerSC.cancelGuardianRevocation.selector, _guardian);
         _executeDirectCall(_randomOwner, data);
     }
 
     function _cancelRecovery(RandomOwner storage _randomOwner) internal {
-        bytes memory data =
-            abi.encodeWithSelector(_randomOwner._RandomOwnerSC.cancelRecovery.selector);
+        bytes memory data = abi.encodeWithSelector(_randomOwner._RandomOwnerSC.cancelRecovery.selector);
         _executeDirectCall(_randomOwner, data);
     }
 
