@@ -465,6 +465,26 @@ contract GettersTest is SocialRecoveryHelper {
         bytes4 result = _RandomOwnerSC.isValidSignature(hash, signature);
         assertEq(result, bytes4(0xffffffff));
     }
+
+    function test_EIP712Domain() external {
+        (
+            bytes1 fields,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            bytes32 salt,
+            uint256[] memory extensions
+        ) = _RandomOwnerSC.eip712Domain();
+
+        assertEq(name, "Openfort");
+        assertEq(version, "0.9");
+        assertEq(chainId, block.chainid);
+        assertEq(verifyingContract, address(_RandomOwnerSC));
+        assertEq(fields, hex"0f");
+        assertEq(salt, bytes32(0));
+        assertEq(extensions.length, 0);
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
