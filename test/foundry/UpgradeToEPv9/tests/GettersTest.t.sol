@@ -404,6 +404,26 @@ contract GettersTest is SocialRecoveryHelper {
         assertEq(registrarAddress, address(0));
     }
 
+    function test_SupportsInterfaceERC165() external {
+        assertTrue(_RandomOwnerSC.supportsInterface(type(IERC165).interfaceId));
+    }
+
+    function test_SupportsInterfaceERC721() external {
+        assertTrue(_RandomOwnerSC.supportsInterface(type(IERC721Receiver).interfaceId));
+    }
+
+    function test_SupportsInterfaceERC777() external {
+        assertTrue(_RandomOwnerSC.supportsInterface(type(IERC777Recipient).interfaceId));
+    }
+
+    function test_SupportsInterfaceERC1155() external {
+        assertTrue(_RandomOwnerSC.supportsInterface(type(IERC1155Receiver).interfaceId));
+    }
+
+    function test_SupportsInterfaceInvalid() external {
+        assertFalse(_RandomOwnerSC.supportsInterface(bytes4(0x00000000)));
+        assertFalse(_RandomOwnerSC.supportsInterface(bytes4(0xdeadbeef)));
+    }
 
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
