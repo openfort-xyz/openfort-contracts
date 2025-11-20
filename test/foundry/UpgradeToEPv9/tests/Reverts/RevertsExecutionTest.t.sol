@@ -196,6 +196,46 @@ contract RevertsExecutionTest is Deploy {
         vm.expectRevert(InvalidParameterLength.selector);
         _RandomOwnerSC.executeBatch(targets, values, datas);
     }
+
+    function test_revert_executeBatch_tooManyCalls() external {
+        address[] memory targets = new address[](10);
+        uint256[] memory values = new uint256[](10);
+        bytes[] memory datas = new bytes[](10);
+
+        for (uint256 i = 0; i < 10;) {
+            targets[i] = address(0xbabe);
+            values[i] = 0.01 ether;
+            datas[i] = hex"";
+            unchecked {
+                ++i;
+            }
+        }
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert(InvalidParameterLength.selector);
+        _RandomOwnerSC.executeBatch(targets, values, datas);
+    }
+
+    function test_revert_executeBatch_oneCallFails() external {
+        address[] memory targets = new address[](3);
+        targets[0] = address(0xbabe);
+        targets[1] = address(revertingContract);
+        targets[2] = address(0xbeef);
+
+        uint256[] memory values = new uint256[](3);
+        values[0] = 0;
+        values[1] = 0;
+        values[2] = 0;
+
+        bytes[] memory datas = new bytes[](3);
+        datas[0] = hex"";
+        datas[1] = abi.encodeWithSelector(RevertingContract.revertWithMessage.selector);
+        datas[2] = hex"";
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert("Target reverted");
+        _RandomOwnerSC.executeBatch(targets, values, datas);
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
