@@ -53,6 +53,23 @@ contract RevertsOwnershipTest is SocialRecoveryHelper {
         vm.expectRevert(AccountLocked.selector);
         _RandomOwnerSC.transferOwnership(_NewOwner);
     }
+
+    function test_revert_transferOwnership_toActiveGuardian() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert(GuardianCannotBeOwner.selector);
+        _RandomOwnerSC.transferOwnership(_Guardians[0]);
+    }
+
+    function test_revert_transferOwnership_toPendingGuardian() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert(GuardianCannotBeOwner.selector);
+        _RandomOwnerSC.transferOwnership(_Guardians[0]);
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
