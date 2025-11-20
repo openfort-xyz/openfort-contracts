@@ -73,6 +73,30 @@ contract RevertsExecutionTest is Deploy {
         vm.expectRevert();
         _RandomOwnerSC.execute(address(0xbabe), 1000 ether, hex"");
     }
+
+    function test_revert_executeAA_notOwner() external {
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        userOp = _populateUserOpV9(
+            userOp,
+            _createExecuteCall(address(0xbabe), 0.01 ether, hex""),
+            _packAccountGasLimits(400_000, 600_000),
+            800_000,
+            _packGasFees(15 gwei, 80 gwei),
+            hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _AttackerPK);
+
+        PackedUserOperation[] memory ops = new PackedUserOperation[](1);
+        ops[0] = userOp;
+
+        vm.prank(_OpenfortAdmin, _OpenfortAdmin);
+        vm.expectRevert();
+        entryPointV9.handleOps(ops, payable(_OpenfortAdmin));
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
