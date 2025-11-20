@@ -100,6 +100,31 @@ contract GettersTest is SocialRecoveryHelper {
         uint256 deposit = _RandomOwnerSC.getDeposit();
         assertTrue(deposit >= 0);
     }
+
+    function test_GetNonceInitial() external {
+        uint256 nonce = _RandomOwnerSC.getNonce();
+        assertEq(nonce, 1);
+    }
+
+    function test_GetNonceAfterUserOp() external {
+        uint256 nonceBefore = _RandomOwnerSC.getNonce();
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+
+        bytes memory callData = hex"";
+        userOp = _populateUserOpV9(
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _RandomOwnerPK);
+
+        _relayUserOpV9(userOp);
+
+        uint256 nonceAfter = _RandomOwnerSC.getNonce();
+        assertEq(nonceAfter, nonceBefore + 1);
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
