@@ -8,6 +8,7 @@ import {BaseRecoverableAccount} from "contracts/coreV9/base/BaseRecoverableAccou
 import {
     UpgradeableOpenfortAccount as UpgradeableOpenfortAccountV9
 } from "contracts/coreV9/upgradeable/UpgradeableOpenfortAccount.sol";
+import {MessageHashUtils} from "lib/oz-v5.4.0/contracts/utils/cryptography/MessageHashUtils.sol";
 
 contract SocialRecoveryHelper is Deploy {
     struct RandomOwner {
@@ -25,10 +26,17 @@ contract SocialRecoveryHelper is Deploy {
         CANCEL_RECOVERY
     }
 
+    bytes32 private constant RECOVER_TYPEHASH = 0x9f7aca777caf11405930359f601a4db01fad1b2d79ef3f2f9e93c835e9feffa5;
+    bytes32 private constant EIP712_DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+    string name = "Openfort";
+    string version = "0.9";
+
     address[] internal _Guardians;
     uint256[] internal _GuardiansPK;
     address internal _RecoveryOwner;
     uint256 internal _RecoveryOwnerPK;
+    bytes[] _signatures;
 
     BaseRecoverableAccount.RecoveryConfig internal recoveryDetails;
 
@@ -126,5 +134,60 @@ contract SocialRecoveryHelper is Deploy {
         vm.prank(_randomOwner._RandomOwner);
         (bool success, bytes memory res) = address(_randomOwner._RandomOwnerSC).call{value: 0}(_data);
         if (!success) console.log(vm.toString(res));
+    }
+
+    function _executeConfirmRecovery(RandomOwner storage _randomOwner) internal {
+        vm.warp(block.timestamp + RECOVERY_PERIOD + 1);
+        vm.prank(_Guardians[0]);
+        _randomOwner._RandomOwnerSC.completeRecovery(_signatures);
+    }
+
+    function _signGuardians(RandomOwner storage _randomOwner, uint32 _quorom) internal {
+        (address recoveryAddress, uint64 executeAfter, uint32 guardiansRequired) =
+            _randomOwner._RandomOwnerSC.recoveryDetails();
+        if (_quorom < guardiansRequired) revert("Increase Quorom");
+
+        bytes32 structHash = keccak256(abi.encode(RECOVER_TYPEHASH, recoveryAddress, executeAfter, guardiansRequired));
+
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                EIP712_DOMAIN_TYPEHASH,
+                keccak256(bytes(name)),
+                keccak256(bytes(version)),
+                block.chainid,
+                address(_randomOwner._RandomOwnerSC)
+            )
+        );
+
+        bytes32 digest = MessageHashUtils.toTypedDataHash(domainSeparator, structHash);
+
+        address[] memory sortedGuardians = new address[](_quorom);
+        uint256[] memory sortedGuardiansPK = new uint256[](_quorom);
+
+        for (uint256 i; i < _quorom;) {
+            sortedGuardians[i] = _Guardians[i];
+            sortedGuardiansPK[i] = _GuardiansPK[i];
+            unchecked {
+                ++i;
+            }
+        }
+
+        for (uint256 i; i < sortedGuardians.length; ++i) {
+            for (uint256 j = i + 1; j < sortedGuardians.length; ++j) {
+                if (sortedGuardians[j] < sortedGuardians[i]) {
+                    (sortedGuardians[i], sortedGuardians[j]) = (sortedGuardians[j], sortedGuardians[i]);
+                    (sortedGuardiansPK[i], sortedGuardiansPK[j]) = (sortedGuardiansPK[j], sortedGuardiansPK[i]);
+                }
+            }
+        }
+        for (uint256 i; i < _quorom;) {
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(sortedGuardiansPK[i], digest);
+            bytes memory sig = abi.encodePacked(r, s, v);
+            _signatures.push(sig);
+
+            unchecked {
+                ++i;
+            }
+        }
     }
 }
