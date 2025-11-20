@@ -125,6 +125,77 @@ contract GettersTest is SocialRecoveryHelper {
         uint256 nonceAfter = _RandomOwnerSC.getNonce();
         assertEq(nonceAfter, nonceBefore + 1);
     }
+
+    function test_IsLockedWhenUnlocked() external {
+        assertFalse(_RandomOwnerSC.isLocked());
+    }
+
+    function test_IsLockedWhenLocked() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        vm.prank(_Guardians[0]);
+        _RandomOwnerSC.lock();
+
+        assertTrue(_RandomOwnerSC.isLocked());
+    }
+
+    function test_IsLockedAfterExpiry() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        vm.prank(_Guardians[0]);
+        _RandomOwnerSC.lock();
+
+        assertTrue(_RandomOwnerSC.isLocked());
+
+        vm.warp(block.timestamp + LOCK_PERIOD + 1);
+
+        assertFalse(_RandomOwnerSC.isLocked());
+    }
+
+    function test_GetLockWhenUnlocked() external {
+        assertEq(_RandomOwnerSC.getLock(), 0);
+    }
+
+    function test_GetLockWhenLocked() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        uint256 lockTime = block.timestamp;
+        vm.prank(_Guardians[0]);
+        _RandomOwnerSC.lock();
+
+        uint256 expectedLockRelease = lockTime + LOCK_PERIOD;
+        assertEq(_RandomOwnerSC.getLock(), expectedLockRelease);
+    }
+
+    function test_GetLockAfterExpiry() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        vm.prank(_Guardians[0]);
+        _RandomOwnerSC.lock();
+
+        vm.warp(block.timestamp + LOCK_PERIOD + 1);
+
+        assertEq(_RandomOwnerSC.getLock(), 0);
+    }
+
+    function test_GetLockAfterManualUnlock() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        vm.prank(_Guardians[0]);
+        _RandomOwnerSC.lock();
+
+        assertTrue(_RandomOwnerSC.isLocked());
+
+        vm.prank(_Guardians[0]);
+        _RandomOwnerSC.unlock();
+
+        assertEq(_RandomOwnerSC.getLock(), 0);
+    }
     
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
