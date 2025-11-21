@@ -144,6 +144,40 @@ contract RevertsTestSessionKey is Deploy {
         assertFalse(master);
     }
 
+    function test_registerSessionKey_masterKey() external {
+        address[] memory whitelist = new address[](0);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(
+            _MasterSessionKey,
+            uint48(0),
+            uint48(block.timestamp + 1 days),
+            MAX_LIMIT,
+            whitelist
+        );
+
+        (,,, bool master,,) = _RandomOwnerSC.sessionKeys(_MasterSessionKey);
+        assertTrue(master);
+    }
+
+    function test_registerSessionKey_whitelistedKey() external {
+        address[] memory whitelist = new address[](2);
+        whitelist[0] = _Target;
+        whitelist[1] = address(erc20);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(
+            _SessionKey,
+            uint48(0),
+            uint48(block.timestamp + 1 days),
+            100,
+            whitelist
+        );
+
+        (,,,, bool whitelisting,) = _RandomOwnerSC.sessionKeys(_SessionKey);
+        assertTrue(whitelisting);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
