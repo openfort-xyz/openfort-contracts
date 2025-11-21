@@ -410,6 +410,38 @@ contract RevertsSocialRecoveryTest is SocialRecoveryHelper {
         _RandomOwnerSC.completeRecovery(_signatures);
     }
 
+    function test_revert_completeRecovery_invalidSignatureCount() external createGuardians(3) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 3);
+        _executeGuardianAction(randomOwner, GuardianAction.START_RECOVERY, 0);
+
+        bytes[] memory insufficientSigs = new bytes[](1);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_GuardiansPK[0], keccak256("dummy"));
+        insufficientSigs[0] = abi.encodePacked(r, s, v);
+
+        vm.warp(block.timestamp + RECOVERY_PERIOD + 1);
+
+        vm.prank(_Attacker);
+        vm.expectRevert(InvalidSignatureAmount.selector);
+        _RandomOwnerSC.completeRecovery(insufficientSigs);
+    }
+
+    function test_revert_completeRecovery_invalidGuardianSignature() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.START_RECOVERY, 0);
+
+        bytes[] memory invalidSigs = new bytes[](1);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_RandomOwnerPK, keccak256("wrong"));
+        invalidSigs[0] = abi.encodePacked(r, s, v);
+
+        vm.warp(block.timestamp + RECOVERY_PERIOD + 1);
+
+        vm.prank(_Attacker);
+        vm.expectRevert(InvalidRecoverySignatures.selector);
+        _RandomOwnerSC.completeRecovery(invalidSigs);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
