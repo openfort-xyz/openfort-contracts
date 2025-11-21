@@ -347,6 +347,24 @@ contract RevertsSocialRecoveryTest is SocialRecoveryHelper {
         _RandomOwnerSC.unlock();
     }
 
+    function test_revert_unlock_accountNotLocked() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        vm.prank(_Guardians[0]);
+        vm.expectRevert(AccountNotLocked.selector);
+        _RandomOwnerSC.unlock();
+    }
+
+    function test_revert_startRecovery_invalidCaller() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        vm.prank(_Attacker);
+        vm.expectRevert(MustBeGuardian.selector);
+        _RandomOwnerSC.startRecovery(_RecoveryOwner);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
