@@ -605,6 +605,81 @@ contract RevertsTestSessionKey is Deploy {
         entryPointV9.handleOps(ops, payable(_OpenfortAdmin));
     }
 
+    function test_revert_executeBatchAA_tooManyInteractions_AA24() external {
+        address[] memory whitelist = new address[](0);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(
+            _SessionKey,
+            uint48(0),
+            uint48(block.timestamp + 1 days),
+            100,
+            whitelist
+        );
+
+        address[] memory targets = new address[](10);
+        uint256[] memory values = new uint256[](10);
+        bytes[] memory datas = new bytes[](10);
+
+        for (uint256 i = 0; i < 10; i++) {
+            targets[i] = _Target;
+            values[i] = 0.001 ether;
+            datas[i] = hex"";
+        }
+
+        bytes memory callData = _createExecuteBatchCall(targets, values, datas);
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+        userOp = _populateUserOpV9(
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _SessionKeyPK);
+
+        PackedUserOperation[] memory ops = new PackedUserOperation[](1);
+        ops[0] = userOp;
+
+        vm.prank(_OpenfortAdmin, _OpenfortAdmin);
+        vm.expectRevert(abi.encodeWithSelector(IEntryPoint.FailedOp.selector, 0, "AA24 signature error"));
+        entryPointV9.handleOps(ops, payable(_OpenfortAdmin));
+    }
+
+    function test_executeAA_whitelistedSessionKey() external {
+        address[] memory whitelist = new address[](1);
+        whitelist[0] = _Target;
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(
+            _SessionKey,
+            uint48(0),
+            uint48(block.timestamp + 1 days),
+            100,
+            whitelist
+        );
+
+        bytes memory callData = abi.encodeWithSelector(
+            _RandomOwnerSC.execute.selector,
+            _Target,
+            0.1 ether,
+            hex""
+        );
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+        userOp = _populateUserOpV9(
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _SessionKeyPK);
+
+        _relayUserOpV9(userOp);
+
+        assertEq(_Target.balance, 1.1 ether);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
