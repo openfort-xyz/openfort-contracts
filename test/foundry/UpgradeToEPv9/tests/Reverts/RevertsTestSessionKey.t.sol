@@ -680,6 +680,50 @@ contract RevertsTestSessionKey is Deploy {
         assertEq(_Target.balance, 1.1 ether);
     }
 
+    function test_executeBatchAA_masterSessionKey() external {
+        address[] memory whitelist = new address[](0);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(
+            _MasterSessionKey,
+            uint48(0),
+            uint48(block.timestamp + 1 days),
+            MAX_LIMIT,
+            whitelist
+        );
+
+        address target2 = makeAddr("target2");
+        _deal(target2, 1 ether);
+
+        address[] memory targets = new address[](2);
+        targets[0] = _Target;
+        targets[1] = target2;
+
+        uint256[] memory values = new uint256[](2);
+        values[0] = 0.1 ether;
+        values[1] = 0.2 ether;
+
+        bytes[] memory datas = new bytes[](2);
+        datas[0] = hex"";
+        datas[1] = hex"";
+
+        bytes memory callData = _createExecuteBatchCall(targets, values, datas);
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+        userOp = _populateUserOpV9(
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _MasterSessionKeyPK);
+
+        _relayUserOpV9(userOp);
+
+        assertEq(_Target.balance, 1.1 ether);
+        assertEq(target2.balance, 1.2 ether);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
