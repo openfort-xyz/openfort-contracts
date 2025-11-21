@@ -107,7 +107,12 @@ contract OpenfortPaymasterV2 is BaseOpenfortPaymaster {
      * paymasterAndData[ADDRESS_OFFSET:SIGNATURE_OFFSET]: abi.encode(validUntil, validAfter, strategy)
      * paymasterAndData[SIGNATURE_OFFSET:]: signature
      */
-    function _validatePaymasterUserOp(UserOperation calldata userOp, bytes32, /*userOpHash*/ uint256 requiredPreFund)
+    function _validatePaymasterUserOp(
+        UserOperation calldata userOp,
+        bytes32,
+        /*userOpHash*/
+        uint256 requiredPreFund
+    )
         internal
         view
         override

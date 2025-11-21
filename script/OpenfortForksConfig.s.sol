@@ -33,7 +33,6 @@ abstract contract OpenfortForksConfig is Script {
         ArbitrumNovaFork,
         BaseFork,
         BeamFork // NUM_ACCEPTED_CHAINS-1
-
     }
 
     address[NUM_ACCEPTED_CHAINS] internal paymasterAddresses;

@@ -1,4 +1,7 @@
 [profile.default]
+evm_version = "prague"
+bytecode_hash = "none"
+cbor_metadata = false
 src = 'contracts'
 out = 'out'
 libs = ['node_modules', 'lib']
@@ -21,5 +24,7 @@ remappings = [
 ]
 
 # default
+always_use_create_2_factory = true
+via-ir = true
 optimizer = true
 optimizer_runs = 200

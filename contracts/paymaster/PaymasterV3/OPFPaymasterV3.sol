@@ -198,7 +198,9 @@ contract OPFPaymasterV3 is BaseSingletonPaymaster, IPaymasterV8 {
         bytes calldata _context,
         uint256 _actualGasCost,
         uint256 _actualUserOpFeePerGas
-    ) internal {
+    )
+        internal
+    {
         ERC20PostOpContext memory ctx = _parsePostOpContext(_context);
 
         uint256 expectedPenaltyGasCost = _expectedPenaltyGasCost(

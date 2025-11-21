@@ -93,11 +93,7 @@ contract BasePaymasterTest is Data {
         mockERC20.mint(_addr, _amount);
     }
 
-    function _packAccountGasLimits(uint256 callGasLimit, uint256 verificationGasLimit)
-        internal
-        pure
-        returns (bytes32)
-    {
+    function _packAccountGasLimits(uint256 callGasLimit, uint256 verificationGasLimit) internal pure returns (bytes32) {
         return bytes32((callGasLimit << 128) | verificationGasLimit);
     }
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.8.19;
+pragma solidity ^0.8.19;
 
 import {IAccount} from "account-abstraction/interfaces/IAccount.sol";
 
@@ -37,9 +37,7 @@ interface IBaseOpenfortAccount is IAccount {
         );
     function entryPoint() external view returns (address);
     function execute(address dest, uint256 value, bytes memory func) external payable;
-    function executeBatch(address[] memory _target, uint256[] memory _value, bytes[] memory _calldata)
-        external
-        payable;
+    function executeBatch(address[] memory _target, uint256[] memory _value, bytes[] memory _calldata) external payable;
     function getDeposit() external view returns (uint256);
     function getNonce() external view returns (uint256);
     function isValidSessionKey(address _sessionKey, bytes memory _callData) external returns (bool);
