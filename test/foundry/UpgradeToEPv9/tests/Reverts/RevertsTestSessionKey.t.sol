@@ -55,6 +55,43 @@ contract RevertsTestSessionKey is Deploy {
         );
     }
 
+    function test_revert_registerSessionKey_invalidTimeRange() external {
+        address[] memory whitelist = new address[](0);
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert("_validAfter must be lower than _validUntil");
+        _RandomOwnerSC.registerSessionKey(
+            _SessionKey,
+            uint48(block.timestamp + 2 days),
+            uint48(block.timestamp + 1 days),
+            100,
+            whitelist
+        );
+    }
+
+    function test_revert_registerSessionKey_alreadyRegistered() external {
+        address[] memory whitelist = new address[](0);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(
+            _SessionKey,
+            uint48(0),
+            uint48(block.timestamp + 1 days),
+            100,
+            whitelist
+        );
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert("SessionKey already registered");
+        _RandomOwnerSC.registerSessionKey(
+            _SessionKey,
+            uint48(block.timestamp),
+            uint48(block.timestamp + 2 days),
+            200,
+            whitelist
+        );
+    }
+
     function test_revert_registerSessionKey_expired() external {
         address[] memory whitelist = new address[](0);
 
