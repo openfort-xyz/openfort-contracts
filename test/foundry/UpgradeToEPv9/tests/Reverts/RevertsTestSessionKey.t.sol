@@ -214,6 +214,73 @@ contract RevertsTestSessionKey is Deploy {
         assertEq(validUntil, 0);
     }
 
+    function test_executeAA_masterSessionKey() external {
+        address[] memory whitelist = new address[](0);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(
+            _MasterSessionKey,
+            uint48(0),
+            uint48(block.timestamp + 1 days),
+            MAX_LIMIT,
+            whitelist
+        );
+
+        bytes memory callData = abi.encodeWithSelector(
+            _RandomOwnerSC.execute.selector,
+            _Target,
+            0.1 ether,
+            hex""
+        );
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+        userOp = _populateUserOpV9(
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _MasterSessionKeyPK);
+
+        _relayUserOpV9(userOp);
+
+        assertEq(_Target.balance, 1.1 ether);
+    }
+
+    function test_executeAA_limitedSessionKey() external {
+        address[] memory whitelist = new address[](0);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(
+            _SessionKey,
+            uint48(0),
+            uint48(block.timestamp + 1 days),
+            10,
+            whitelist
+        );
+
+        bytes memory callData = abi.encodeWithSelector(
+            _RandomOwnerSC.execute.selector,
+            _Target,
+            0.1 ether,
+            hex""
+        );
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+        userOp = _populateUserOpV9(
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _SessionKeyPK);
+
+        _relayUserOpV9(userOp);
+
+        (, , uint48 limit,,,) = _RandomOwnerSC.sessionKeys(_SessionKey);
+        assertEq(limit, 9);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
