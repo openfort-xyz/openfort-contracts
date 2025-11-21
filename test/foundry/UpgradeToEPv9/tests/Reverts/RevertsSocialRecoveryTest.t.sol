@@ -442,6 +442,47 @@ contract RevertsSocialRecoveryTest is SocialRecoveryHelper {
         _RandomOwnerSC.completeRecovery(invalidSigs);
     }
 
+    function test_revert_completeRecovery_signaturesNotInOrder() external createGuardians(3) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 3);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 3);
+        _executeGuardianAction(randomOwner, GuardianAction.START_RECOVERY, 0);
+
+        (address recoveryAddress, uint64 executeAfter, uint32 guardiansRequired) =
+            _RandomOwnerSC.recoveryDetails();
+
+        bytes32 structHash = keccak256(abi.encode(
+            0x9f7aca777caf11405930359f601a4db01fad1b2d79ef3f2f9e93c835e9feffa5,
+            recoveryAddress,
+            executeAfter,
+            guardiansRequired
+        ));
+
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes("Openfort")),
+                keccak256(bytes("0.9")),
+                block.chainid,
+                address(_RandomOwnerSC)
+            )
+        );
+
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+
+        bytes[] memory unorderedSigs = new bytes[](2);
+        (uint8 v1, bytes32 r1, bytes32 s1) = vm.sign(_GuardiansPK[2], digest);
+        unorderedSigs[0] = abi.encodePacked(r1, s1, v1);
+
+        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(_GuardiansPK[0], digest);
+        unorderedSigs[1] = abi.encodePacked(r2, s2, v2);
+
+        vm.warp(block.timestamp + RECOVERY_PERIOD + 1);
+
+        vm.prank(_Attacker);
+        vm.expectRevert(InvalidRecoverySignatures.selector);
+        _RandomOwnerSC.completeRecovery(unorderedSigs);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
