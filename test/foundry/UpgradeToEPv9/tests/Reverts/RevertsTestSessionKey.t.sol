@@ -281,6 +281,70 @@ contract RevertsTestSessionKey is Deploy {
         assertEq(limit, 9);
     }
 
+    function test_revert_executeAA_invalidSessionKey_AA24() external {
+        bytes memory callData = abi.encodeWithSelector(
+            _RandomOwnerSC.execute.selector,
+            _Target,
+            0.1 ether,
+            hex""
+        );
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+        userOp = _populateUserOpV9(
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _SessionKeyPK);
+
+        PackedUserOperation[] memory ops = new PackedUserOperation[](1);
+        ops[0] = userOp;
+
+        vm.prank(_OpenfortAdmin, _OpenfortAdmin);
+        vm.expectRevert(abi.encodeWithSelector(IEntryPoint.FailedOp.selector, 0, "AA24 signature error"));
+        entryPointV9.handleOps(ops, payable(_OpenfortAdmin));
+    }
+
+    function test_revert_executeAA_revokedSessionKey_AA24() external {
+        address[] memory whitelist = new address[](0);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(
+            _SessionKey,
+            uint48(0),
+            uint48(block.timestamp + 1 days),
+            100,
+            whitelist
+        );
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.revokeSessionKey(_SessionKey);
+
+        bytes memory callData = abi.encodeWithSelector(
+            _RandomOwnerSC.execute.selector,
+            _Target,
+            0.1 ether,
+            hex""
+        );
+
+        PackedUserOperation memory userOp;
+        (, userOp) = _getFreshUserOp(address(_RandomOwnerSC));
+        userOp = _populateUserOpV9(
+            userOp, callData, _packAccountGasLimits(400_000, 600_000), 800_000, _packGasFees(15 gwei, 80 gwei), hex""
+        );
+
+        bytes32 userOpHash = _getUserOpHashV9(userOp);
+        userOp.signature = _signUserOp(userOpHash, _SessionKeyPK);
+
+        PackedUserOperation[] memory ops = new PackedUserOperation[](1);
+        ops[0] = userOp;
+
+        vm.prank(_OpenfortAdmin, _OpenfortAdmin);
+        vm.expectRevert(abi.encodeWithSelector(IEntryPoint.FailedOp.selector, 0, "AA24 signature error"));
+        entryPointV9.handleOps(ops, payable(_OpenfortAdmin));
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
