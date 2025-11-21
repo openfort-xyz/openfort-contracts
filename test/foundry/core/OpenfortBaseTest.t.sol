@@ -138,7 +138,7 @@ contract OpenfortBaseTest is Test, CheckOrDeployEntryPoint {
         ops[0] = op;
     }
 
-    /* 
+    /*
      * Auxiliary function to generate a userOP using the execute()
      * from the account
      */
@@ -156,7 +156,7 @@ contract OpenfortBaseTest is Test, CheckOrDeployEntryPoint {
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }
 
-    /* 
+    /*
      * Auxiliary function to generate a userOP using the executeBatch()
      * from the account
      */
@@ -168,8 +168,9 @@ contract OpenfortBaseTest is Test, CheckOrDeployEntryPoint {
         uint256[] memory _value,
         bytes[] memory _callData
     ) public returns (UserOperation[] memory) {
-        bytes memory callDataForEntrypoint =
-            abi.encodeWithSignature("executeBatch(address[],uint256[],bytes[])", _target, _value, _callData);
+        bytes memory callDataForEntrypoint = abi.encodeWithSignature(
+            "executeBatch(address[],uint256[],bytes[])", _target, _value, _callData
+        );
 
         return _setupUserOp(sender, _signerPKey, _initCode, callDataForEntrypoint);
     }

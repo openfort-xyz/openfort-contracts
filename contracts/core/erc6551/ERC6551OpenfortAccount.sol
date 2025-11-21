@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.8.19;
+pragma solidity ^0.8.19;
 
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
@@ -128,11 +128,10 @@ contract ERC6551OpenfortAccount is BaseOpenfortAccount, IERC6551Account, IERC655
     }
 
     function supportsInterface(bytes4 _interfaceId) external pure override returns (bool) {
-        return (
-            _interfaceId == type(IERC6551Account).interfaceId || _interfaceId == type(IERC6551Executable).interfaceId
-                || _interfaceId == type(IERC1155Receiver).interfaceId || _interfaceId == type(IERC721Receiver).interfaceId
-                || _interfaceId == type(IERC165).interfaceId
-        );
+        return (_interfaceId == type(IERC6551Account).interfaceId
+                || _interfaceId == type(IERC6551Executable).interfaceId
+                || _interfaceId == type(IERC1155Receiver).interfaceId
+                || _interfaceId == type(IERC721Receiver).interfaceId || _interfaceId == type(IERC165).interfaceId);
     }
 
     function onERC721Received(address, address, uint256 receivedTokenId, bytes memory)
