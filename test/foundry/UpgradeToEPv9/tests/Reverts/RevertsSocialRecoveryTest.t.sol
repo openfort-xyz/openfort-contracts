@@ -365,6 +365,27 @@ contract RevertsSocialRecoveryTest is SocialRecoveryHelper {
         _RandomOwnerSC.startRecovery(_RecoveryOwner);
     }
 
+    function test_revert_startRecovery_ongoingRecovery() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        vm.prank(_Guardians[0]);
+        _RandomOwnerSC.startRecovery(_RecoveryOwner);
+
+        vm.prank(_Guardians[0]);
+        vm.expectRevert(OngoingRecovery.selector);
+        _RandomOwnerSC.startRecovery(_RecoveryOwner);
+    }
+
+    function test_revert_startRecovery_guardianCannotBeOwner() external createGuardians(1) {
+        _executeGuardianAction(randomOwner, GuardianAction.PROPOSE, 1);
+        _executeGuardianAction(randomOwner, GuardianAction.CONFIRM_PROPOSAL, 1);
+
+        vm.prank(_Guardians[0]);
+        vm.expectRevert(GuardianCannotBeOwner.selector);
+        _RandomOwnerSC.startRecovery(_Guardians[0]);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
