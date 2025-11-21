@@ -108,6 +108,42 @@ contract RevertsTestSessionKey is Deploy {
         );
     }
 
+    function test_revert_registerSessionKey_whitelistTooBig() external {
+        address[] memory whitelist = new address[](11);
+        for (uint256 i = 0; i < 11; i++) {
+            whitelist[i] = address(uint160(i + 1));
+        }
+
+        vm.prank(_RandomOwner);
+        vm.expectRevert("Whitelist too big");
+        _RandomOwnerSC.registerSessionKey(
+            _SessionKey,
+            uint48(0),
+            uint48(block.timestamp + 1 days),
+            100,
+            whitelist
+        );
+    }
+
+    function test_registerSessionKey_limitedKey() external {
+        address[] memory whitelist = new address[](0);
+
+        vm.prank(_RandomOwner);
+        _RandomOwnerSC.registerSessionKey(
+            _SessionKey,
+            uint48(0),
+            uint48(block.timestamp + 1 days),
+            100,
+            whitelist
+        );
+
+        (uint48 validAfter, uint48 validUntil, uint48 limit, bool master,,) = _RandomOwnerSC.sessionKeys(_SessionKey);
+        assertEq(validAfter, uint48(0));
+        assertEq(validUntil, uint48(block.timestamp + 1 days));
+        assertEq(limit, 100);
+        assertFalse(master);
+    }
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
