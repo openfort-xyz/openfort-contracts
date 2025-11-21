@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity =0.8.19;
+pragma solidity ^0.8.19;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {IBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
@@ -73,15 +73,16 @@ contract ManagedOpenfortFactory is BaseOpenfortFactory, IBeacon {
         emit AccountCreated(account, _admin);
 
         account = address(new ManagedOpenfortProxy{salt: salt}(address(this), ""));
-        ManagedOpenfortAccount(payable(account)).initialize(
-            _admin,
-            entrypointContract,
-            recoveryPeriod,
-            securityPeriod,
-            securityWindow,
-            lockPeriod,
-            _initializeGuardian ? initialGuardian : address(0)
-        );
+        ManagedOpenfortAccount(payable(account))
+            .initialize(
+                _admin,
+                entrypointContract,
+                recoveryPeriod,
+                securityPeriod,
+                securityWindow,
+                lockPeriod,
+                _initializeGuardian ? initialGuardian : address(0)
+            );
     }
 
     /*
