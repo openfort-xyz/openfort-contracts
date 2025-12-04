@@ -33,7 +33,7 @@ The following standards are supported:
 - ERC-1967 and ERC-1822 for proxies (upgradeable Openfort accounts).
 - EIP-1014 for generating counterfactual addresses using Openfort factories.
 - ERC-4337 for leveraging Account Abstraction using alternative mempools.
-- ERC-6551 for leveraging Token Bound Accounts 
+- ERC-6551 for leveraging Token Bound Accounts
 
 ## Development
 

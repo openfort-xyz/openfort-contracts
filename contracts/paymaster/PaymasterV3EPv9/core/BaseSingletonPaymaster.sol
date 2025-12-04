@@ -346,7 +346,7 @@ abstract contract BaseSingletonPaymaster is ManagerAccessControl, BasePaymaster,
 
         // the limit we are allowed for everything before the userOp is executed.
         uint256 preOpGasApproximation = _userOp.preVerificationGas + _userOp.unpackVerificationGasLimit() // VerificationGasLimit
-            + 
+            +
             // is an overestimation.
             _cfg.paymasterValidationGasLimit; // paymasterValidationGasLimit has to be an under estimation to compensate
         // for

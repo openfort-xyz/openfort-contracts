@@ -1,0 +1,35 @@
+title = "Custom Gitleaks Config for Ethereum Secrets"
+
+[extend]
+useDefaultRules = true
+
+[[rules]]
+id = "ethereum-private-key-hex"
+description = "Ethereum Private Key (64 hex chars)"
+regex = '''(?i)\b(?:0x)?([a-f0-9]{64})\b'''
+tags = ["crypto", "ethereum", "private_key", "high_entropy"]
+
+# OPTIONAL: exclude likely false positives (transaction hashes)
+# You can use path or additional regex filters, e.g.:
+# pathExclude = [
+#   '''.*tx.*''',
+#   '''.*transaction.*'''
+# ]
+
+[[rules]]
+id = "ethereum-keystore"
+description = "Ethereum keystore JSON"
+regex = '''(?s)"crypto"\s*:\s*{.*"cipher"\s*:\s*"aes-128-ctr".*"kdf".*}'''
+tags = ["crypto", "ethereum", "keystore", "json"]
+
+[[rules]]
+id = "ethereum-address-exposed-private"
+description = "Ethereum address next to private key"
+regex = '''(?i)("address"\s*:\s*"0x[a-f0-9]{40}".{0,200}("private|privKey|key"\s*:\s*"?[a-f0-9]{64}"?))'''
+tags = ["crypto", "ethereum", "correlated_key"]
+
+# [[rules]]
+# id = "bip39-mnemonic-12-or-24-words"
+# description = "BIP39 seed phrase – 12 or 24 lowercase English words"
+# regex = '''(?i)\b([a-z]+(?: [a-z]+){11})\b|\b([a-z]+(?: [a-z]+){23})\b'''
+# tags = ["bip39", "mnemonic", "seed-phrase", "ethereum", "wallet"]

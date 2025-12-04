@@ -9,7 +9,7 @@ There are three types of Openfort accounts:
 Recoverable accounts are a special type of accounts that support social recovery.
 They let owners define a set of guardians to help recover the account in case the private key of the owner is compromised (forgotten, disclosed, stolen...).
 
-### Context 
+### Context
 
 As explained by Vitalik in a famous post (https://vitalik.ca/general/2021/01/11/recovery.html), guardians are the next thing after multisig wallets.
 
@@ -51,6 +51,6 @@ Anyone can:
 
 ## ERC6551 Accounts
 
-### Context 
+### Context
 
 ### How do ERC6551 Accounts work
