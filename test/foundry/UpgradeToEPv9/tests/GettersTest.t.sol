@@ -541,7 +541,7 @@ contract GettersTest is SocialRecoveryHelper {
         UpgradeableOpenfortProxy proxy = UpgradeableOpenfortProxy(payable(address(_RandomOwnerSC)));
         assertEq(proxy.implementation(), address(upgradeableOpenfortAccountImplV9));
     }
-    
+
     function _createAccountV9() internal {
         address _RandomOwnerSCAddr = openfortFactoryV9.getAddressWithNonce(_RandomOwner, _RandomOwnerSalt);
         _RandomOwnerSC = UpgradeableOpenfortAccountV9(payable(_RandomOwnerSCAddr));
