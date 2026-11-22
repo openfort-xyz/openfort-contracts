@@ -25,7 +25,7 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-n": "^15.7.0",
     "eslint-plugin-promise": "^6.1.1",
-    "hardhat": "^2.14.0",
+    "hardhat": "^2.29.2",
     "solhint": "3.6.2",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.1",
@@ -41,7 +41,7 @@
     "dotenv": "^16.0.3",
     "hardhat-gas-reporter": "^1.0.9",
     "solidity-coverage": "^0.8.2",
-    "viem": "^2.39.0"
+    "viem": "^2.54.2"
   },
   "repository": {
     "type": "git",
@@ -54,5 +54,14 @@
     "web3",
     "evm-blockchain",
     "erc-4337"
-  ]
+  ],
+  "resolutions": {
+    "**/@nomiclabs/hardhat-etherscan/undici": "^6.29.1",
+    "**/@ethersproject/providers/ws": "^8.21.0",
+    "**/@sentry/node/cookie": "^0.7.2",
+    "**/solc/tmp": "^0.2.6",
+    "**/mocha/serialize-javascript": "^7.0.5",
+    "**/ethjs-unit/bn.js": "^4.12.3",
+    "**/number-to-bn/bn.js": "^4.12.3"
+  }
 }
